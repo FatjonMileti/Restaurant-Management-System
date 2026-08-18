@@ -71,6 +71,7 @@ function Orders() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [tableNumber, setTableNumber] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchOrders();
@@ -78,13 +79,21 @@ function Orders() {
   }, []);
 
   const fetchOrders = async () => {
-    const { data } = await API.get<Order[]>('/orders');
-    setOrders(data);
+    try {
+      const { data } = await API.get<Order[]>('/orders');
+      setOrders(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load orders');
+    }
   };
 
   const fetchMenu = async () => {
-    const { data } = await API.get<MenuItem[]>('/menu');
-    setMenuItems(data.filter((i) => i.available));
+    try {
+      const { data } = await API.get<MenuItem[]>('/menu');
+      setMenuItems(data.filter((i) => i.available));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load menu');
+    }
   };
 
   const addToCart = (item: MenuItem) => {
@@ -103,16 +112,24 @@ function Orders() {
 
   const handleCreateOrder = async () => {
     if (cart.length === 0) return;
-    await API.post('/orders', { items: cart, tableNumber: Number(tableNumber) || undefined });
-    setCart([]);
-    setTableNumber('');
-    setShowCreate(false);
-    fetchOrders();
+    try {
+      await API.post('/orders', { items: cart, tableNumber: Number(tableNumber) || undefined });
+      setCart([]);
+      setTableNumber('');
+      setShowCreate(false);
+      fetchOrders();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to place order');
+    }
   };
 
   const handleUpdateStatus = async (id: string, status: string) => {
-    await API.put(`/orders/${id}/status`, { status });
-    fetchOrders();
+    try {
+      await API.put(`/orders/${id}/status`, { status });
+      fetchOrders();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update order status');
+    }
   };
 
   return (
@@ -154,6 +171,7 @@ function Orders() {
         </div>
       )}
 
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       {orders.map((order) => (
         <div key={order._id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 15, marginBottom: 15 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>

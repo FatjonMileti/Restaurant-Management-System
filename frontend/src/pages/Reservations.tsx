@@ -41,6 +41,7 @@ function Reservations() {
   const { user } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({ date: '', time: '', guests: 2, specialRequests: '' });
 
   useEffect(() => {
@@ -48,23 +49,35 @@ function Reservations() {
   }, []);
 
   const fetchReservations = async () => {
-    const { data } = await API.get<Reservation[]>('/reservations');
-    setReservations(data);
+    try {
+      const { data } = await API.get<Reservation[]>('/reservations');
+      setReservations(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load reservations');
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    await API.post('/reservations', { ...form, guests: Number(form.guests) });
-    setForm({ date: '', time: '', guests: 2, specialRequests: '' });
-    setShowForm(false);
-    fetchReservations();
+    try {
+      await API.post('/reservations', { ...form, guests: Number(form.guests) });
+      setForm({ date: '', time: '', guests: 2, specialRequests: '' });
+      setShowForm(false);
+      fetchReservations();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create reservation');
+    }
   };
 
   const handleCancel = async (id: string) => {
-    await API.put(`/reservations/${id}/cancel`);
-    fetchReservations();
+    try {
+      await API.put(`/reservations/${id}/cancel`);
+      fetchReservations();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel reservation');
+    }
   };
 
   return (
@@ -86,6 +99,7 @@ function Reservations() {
         </form>
       )}
 
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       {reservations.length === 0 ? (
         <p style={{ color: '#888', marginTop: 20 }}>No reservations yet.</p>
       ) : (

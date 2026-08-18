@@ -28,6 +28,7 @@ function Menu() {
   const { user } = useAuth();
   const [items, setItems] = useState<MenuItem[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({ name: '', description: '', price: '', category: 'main', image: '' });
 
   useEffect(() => {
@@ -35,23 +36,35 @@ function Menu() {
   }, []);
 
   const fetchMenu = async () => {
-    const { data } = await API.get<MenuItem[]>('/menu');
-    setItems(data);
+    try {
+      const { data } = await API.get<MenuItem[]>('/menu');
+      setItems(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load menu');
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    await API.post('/menu', { ...form, price: Number(form.price) });
-    setForm({ name: '', description: '', price: '', category: 'main', image: '' });
-    setShowForm(false);
-    fetchMenu();
+    try {
+      await API.post('/menu', { ...form, price: Number(form.price) });
+      setForm({ name: '', description: '', price: '', category: 'main', image: '' });
+      setShowForm(false);
+      fetchMenu();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create item');
+    }
   };
 
   const handleDelete = async (id: string) => {
-    await API.delete(`/menu/${id}`);
-    fetchMenu();
+    try {
+      await API.delete(`/menu/${id}`);
+      fetchMenu();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete item');
+    }
   };
 
   const categories = ['appetizer', 'main', 'dessert', 'beverage'];
@@ -79,6 +92,7 @@ function Menu() {
         </form>
       )}
 
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20, marginTop: 20 }}>
         {items.map((item) => (
           <div key={item._id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 20 }}>
