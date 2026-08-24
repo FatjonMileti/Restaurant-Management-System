@@ -41,7 +41,12 @@ function Orders() {
     if (cart.items.length === 0) return;
     try {
       await createOrder.mutateAsync({
-        items: cart.items.map((c) => ({ menuItem: c.menuItem, quantity: c.quantity })),
+        items: cart.items.map((c) => ({
+          menuItem: c.menuItem,
+          name: c.name,
+          price: c.price,
+          quantity: c.quantity,
+        })),
         tableNumber: Number(data.tableNumber) || undefined,
       });
       cart.clear();
