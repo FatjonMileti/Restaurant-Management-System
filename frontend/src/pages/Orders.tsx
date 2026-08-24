@@ -1,42 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import API from '../api/axios';
-import { useAuth } from '../context/AuthContext';
-
-interface MenuItem {
-  _id: string;
-  name: string;
-  price: number;
-  available: boolean;
-}
-
-interface CartItem {
-  menuItem: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
-
-interface OrderItem {
-  name: string;
-  price: number;
-  quantity: number;
-}
-
-interface OrderUser {
-  _id: string;
-  name: string;
-  email: string;
-}
-
-interface Order {
-  _id: string;
-  user?: OrderUser;
-  items: OrderItem[];
-  totalAmount: number;
-  status: string;
-  tableNumber?: number;
-  createdAt: string;
-}
+import React, { useState } from 'react';
+import { useAuth } from '../store/authStore';
+import { useCartStore } from '../store/cartStore';
+import {
+  useCreateOrder,
+  useMenu,
+  useOrders,
+  useUpdateOrderStatus,
+} from '../api/queries';
 
 const statusColors: Record<string, string> = {
   pending: '#f39c12', preparing: '#3498db', completed: '#27ae60', cancelled: '#e74c3c',
@@ -66,69 +36,38 @@ const actionBtnStyle: React.CSSProperties = {
 
 function Orders() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const { data: orders = [], error: ordersError } = useOrders();
+  const { data: menu = [] } = useMenu();
+  const createOrder = useCreateOrder();
+  const updateStatus = useUpdateOrderStatus();
+  const cart = useCartStore();
+  const menuItems = menu.filter((i) => i.available);
+
   const [tableNumber, setTableNumber] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetchOrders();
-    if (user?.role !== 'customer') fetchMenu();
-  }, []);
-
-  const fetchOrders = async () => {
-    try {
-      const { data } = await API.get<Order[]>('/orders');
-      setOrders(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load orders');
-    }
-  };
-
-  const fetchMenu = async () => {
-    try {
-      const { data } = await API.get<MenuItem[]>('/menu');
-      setMenuItems(data.filter((i) => i.available));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load menu');
-    }
-  };
-
-  const addToCart = (item: MenuItem) => {
-    setCart((prev) => {
-      const existing = prev.find((c) => c.menuItem === item._id);
-      if (existing) {
-        return prev.map((c) => c.menuItem === item._id ? { ...c, quantity: c.quantity + 1 } : c);
-      }
-      return [...prev, { menuItem: item._id, name: item.name, price: item.price, quantity: 1 }];
-    });
-  };
-
-  const removeFromCart = (id: string) => {
-    setCart((prev) => prev.filter((c) => c.menuItem !== id));
-  };
+  const [actionError, setActionError] = useState('');
+  const error = ordersError instanceof Error ? ordersError.message : actionError;
 
   const handleCreateOrder = async () => {
-    if (cart.length === 0) return;
+    if (cart.items.length === 0) return;
     try {
-      await API.post('/orders', { items: cart, tableNumber: Number(tableNumber) || undefined });
-      setCart([]);
+      await createOrder.mutateAsync({
+        items: cart.items.map((c) => ({ menuItem: c.menuItem, quantity: c.quantity })),
+        tableNumber: Number(tableNumber) || undefined,
+      });
+      cart.clear();
       setTableNumber('');
       setShowCreate(false);
-      fetchOrders();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to place order');
+      setActionError(err instanceof Error ? err.message : 'Failed to place order');
     }
   };
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      await API.put(`/orders/${id}/status`, { status });
-      fetchOrders();
+      await updateStatus.mutateAsync({ id, status });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update order status');
+      setActionError(err instanceof Error ? err.message : 'Failed to update order status');
     }
   };
 
@@ -148,24 +87,24 @@ function Orders() {
           <h3>Create Order</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 15 }}>
             {menuItems.map((item) => (
-              <button key={item._id} onClick={() => addToCart(item)} style={menuBtnStyle}>
+              <button key={item._id} onClick={() => cart.addItem(item)} style={menuBtnStyle}>
                 {item.name} - ${item.price.toFixed(2)}
               </button>
             ))}
           </div>
 
-          {cart.length > 0 && (
+          {cart.items.length > 0 && (
             <div>
               <h4>Cart</h4>
-              {cart.map((c) => (
+              {cart.items.map((c) => (
                 <div key={c.menuItem} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                   <span>{c.name} x{c.quantity} - ${(c.price * c.quantity).toFixed(2)}</span>
-                  <button onClick={() => removeFromCart(c.menuItem)} style={{ background: '#e74c3c', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer' }}>Remove</button>
+                  <button onClick={() => cart.removeItem(c.menuItem)} style={{ background: '#e74c3c', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer' }}>Remove</button>
                 </div>
               ))}
-              <p><strong>Total: ${cart.reduce((s, c) => s + c.price * c.quantity, 0).toFixed(2)}</strong></p>
+              <p><strong>Total: ${cart.items.reduce((s, c) => s + c.price * c.quantity, 0).toFixed(2)}</strong></p>
               <input type="number" placeholder="Table number" value={tableNumber} onChange={(e) => setTableNumber(e.target.value)} style={{ padding: 8, marginRight: 10, borderRadius: 4, border: '1px solid #ccc' }} />
-              <button onClick={handleCreateOrder} style={submitStyle}>Place Order</button>
+              <button onClick={handleCreateOrder} disabled={createOrder.isPending} style={submitStyle}>Place Order</button>
             </div>
           )}
         </div>

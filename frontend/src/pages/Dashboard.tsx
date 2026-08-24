@@ -1,12 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import API from '../api/axios';
-import { useAuth } from '../context/AuthContext';
-
-interface Stats {
-  orders: number;
-  reservations: number;
-  menuItems: number;
-}
+import React from 'react';
+import { useAuth } from '../store/authStore';
+import { useMenu, useOrders, useReservations } from '../api/queries';
 
 interface CardProps {
   title: string;
@@ -27,36 +21,18 @@ function Card({ title, value, color }: CardProps) {
 
 function Dashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState<Stats>({ orders: 0, reservations: 0, menuItems: 0 });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [ordersRes, reservationsRes, menuRes] = await Promise.all([
-          API.get('/orders'),
-          API.get('/reservations'),
-          API.get('/menu'),
-        ]);
-        setStats({
-          orders: ordersRes.data.length,
-          reservations: reservationsRes.data.length,
-          menuItems: menuRes.data.length,
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: orders = [] } = useOrders();
+  const { data: reservations = [] } = useReservations();
+  const { data: menuItems = [] } = useMenu();
 
   return (
     <div>
       <h2>Dashboard</h2>
       <p>Welcome, <strong>{user?.name}</strong>!</p>
       <div style={{ display: 'flex', gap: 20, marginTop: 30 }}>
-        <Card title="Total Orders" value={stats.orders} color="#e94560" />
-        <Card title="Reservations" value={stats.reservations} color="#0f3460" />
-        <Card title="Menu Items" value={stats.menuItems} color="#16a085" />
+        <Card title="Total Orders" value={orders.length} color="#e94560" />
+        <Card title="Reservations" value={reservations.length} color="#0f3460" />
+        <Card title="Menu Items" value={menuItems.length} color="#16a085" />
       </div>
     </div>
   );

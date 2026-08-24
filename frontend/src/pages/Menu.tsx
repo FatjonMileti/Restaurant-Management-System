@@ -1,15 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import API from '../api/axios';
-import { useAuth } from '../context/AuthContext';
-
-interface MenuItem {
-  _id: string;
-  name: string;
-  description?: string;
-  price: number;
-  category: string;
-  image?: string;
-}
+import React, { useState } from 'react';
+import { useAuth } from '../store/authStore';
+import { useCreateMenuItem, useDeleteMenuItem, useMenu, MenuItem } from '../api/queries';
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: 10, marginBottom: 10, borderRadius: 5, border: '1px solid #ccc', fontSize: '1rem',
@@ -26,44 +17,31 @@ const addBtnStyle: React.CSSProperties = {
 
 function Menu() {
   const { user } = useAuth();
-  const [items, setItems] = useState<MenuItem[]>([]);
+  const { data: items = [], error } = useMenu();
+  const createItem = useCreateMenuItem();
+  const deleteItem = useDeleteMenuItem();
   const [showForm, setShowForm] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
   const [form, setForm] = useState({ name: '', description: '', price: '', category: 'main', image: '' });
-
-  useEffect(() => {
-    fetchMenu();
-  }, []);
-
-  const fetchMenu = async () => {
-    try {
-      const { data } = await API.get<MenuItem[]>('/menu');
-      setItems(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load menu');
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await API.post('/menu', { ...form, price: Number(form.price) });
+      await createItem.mutateAsync({ ...form, price: Number(form.price) });
       setForm({ name: '', description: '', price: '', category: 'main', image: '' });
       setShowForm(false);
-      fetchMenu();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create item');
+      setFormError(err instanceof Error ? err.message : 'Failed to create item');
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      await API.delete(`/menu/${id}`);
-      fetchMenu();
+      await deleteItem.mutateAsync(id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete item');
+      setFormError(err instanceof Error ? err.message : 'Failed to delete item');
     }
   };
 
@@ -88,13 +66,14 @@ function Menu() {
           <select name="category" value={form.category} onChange={handleChange} style={inputStyle}>
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          <button type="submit" style={submitStyle}>Create</button>
+          {formError && <p style={{ color: 'red' }}>{formError}</p>}
+          <button type="submit" disabled={createItem.isPending} style={submitStyle}>Create</button>
         </form>
       )}
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error instanceof Error ? error.message : 'Failed to load menu'}</p>}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20, marginTop: 20 }}>
-        {items.map((item) => (
+        {items.map((item: MenuItem) => (
           <div key={item._id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 20 }}>
             <h3>{item.name}</h3>
             <p style={{ color: '#666' }}>{item.description}</p>

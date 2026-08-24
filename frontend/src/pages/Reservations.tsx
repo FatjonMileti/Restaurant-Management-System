@@ -1,24 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import API from '../api/axios';
-import { useAuth } from '../context/AuthContext';
-
-interface ReservationUser {
-  _id: string;
-  name: string;
-  email: string;
-}
-
-interface Reservation {
-  _id: string;
-  user?: ReservationUser;
-  date: string;
-  time: string;
-  guests: number;
-  tableNumber?: number;
-  status: string;
-  specialRequests?: string;
-  createdAt: string;
-}
+import React, { useState } from 'react';
+import { useAuth } from '../store/authStore';
+import { useCancelReservation, useCreateReservation, useReservations } from '../api/queries';
 
 const statusColors: Record<string, string> = {
   confirmed: '#27ae60', cancelled: '#e74c3c', completed: '#3498db',
@@ -39,44 +21,33 @@ const addBtnStyle: React.CSSProperties = {
 
 function Reservations() {
   const { user } = useAuth();
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const { data: reservations = [], error: fetchError } = useReservations();
+  const createReservation = useCreateReservation();
+  const cancelReservation = useCancelReservation();
+
   const [showForm, setShowForm] = useState(false);
-  const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [form, setForm] = useState({ date: '', time: '', guests: 2, specialRequests: '' });
-
-  useEffect(() => {
-    fetchReservations();
-  }, []);
-
-  const fetchReservations = async () => {
-    try {
-      const { data } = await API.get<Reservation[]>('/reservations');
-      setReservations(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load reservations');
-    }
-  };
+  const error = fetchError instanceof Error ? fetchError.message : actionError;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await API.post('/reservations', { ...form, guests: Number(form.guests) });
+      await createReservation.mutateAsync({ ...form, guests: Number(form.guests) });
       setForm({ date: '', time: '', guests: 2, specialRequests: '' });
       setShowForm(false);
-      fetchReservations();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create reservation');
+      setActionError(err instanceof Error ? err.message : 'Failed to create reservation');
     }
   };
 
   const handleCancel = async (id: string) => {
     try {
-      await API.put(`/reservations/${id}/cancel`);
-      fetchReservations();
+      await cancelReservation.mutateAsync(id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel reservation');
+      setActionError(err instanceof Error ? err.message : 'Failed to cancel reservation');
     }
   };
 
@@ -95,7 +66,8 @@ function Reservations() {
           <input name="time" type="time" value={form.time} onChange={handleChange} required style={inputStyle} />
           <input name="guests" type="number" min="1" value={form.guests} onChange={handleChange} required style={inputStyle} />
           <textarea name="specialRequests" placeholder="Special requests" value={form.specialRequests} onChange={handleChange} style={inputStyle} />
-          <button type="submit" style={submitStyle}>Reserve</button>
+          {actionError && <p style={{ color: 'red' }}>{actionError}</p>}
+          <button type="submit" disabled={createReservation.isPending} style={submitStyle}>Reserve</button>
         </form>
       )}
 

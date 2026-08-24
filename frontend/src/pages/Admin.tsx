@@ -1,15 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import API from '../api/axios';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
 import { AxiosError } from 'axios';
-
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  phone?: string;
-}
+import { useAuth } from '../store/authStore';
+import {
+  useCreateUser,
+  useDeleteUser,
+  useUpdateUserRole,
+  useUsers,
+} from '../api/queries';
 
 const ROLES = ['customer', 'staff', 'admin'] as const;
 const roleColors: Record<string, string> = { admin: '#e74c3c', staff: '#3498db', customer: '#27ae60' };
@@ -32,31 +29,23 @@ const tdStyle: React.CSSProperties = { padding: 10 };
 
 function Admin() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<User[]>([]);
+  const { data: users = [] } = useUsers();
+  const createUser = useCreateUser();
+  const deleteUser = useDeleteUser();
+  const updateUserRole = useUpdateUserRole();
+
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', role: 'customer' });
   const [editingRole, setEditingRole] = useState<string | null>(null);
-
-  useEffect(() => { fetchUsers(); }, []);
-
-  const fetchUsers = async () => {
-    try {
-      const { data } = await API.get<User[]>('/auth/users');
-      setUsers(data);
-    } catch (err) {
-      console.error('Failed to fetch users', err);
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await API.post('/auth/users', form);
+      await createUser.mutateAsync(form);
       setForm({ name: '', email: '', password: '', phone: '', role: 'customer' });
       setShowForm(false);
-      fetchUsers();
     } catch (err) {
       const axiosErr = err as AxiosError<{ message: string }>;
       alert(axiosErr.response?.data?.message || 'Create failed');
@@ -66,8 +55,7 @@ function Admin() {
   const handleDeleteUser = async (id: string) => {
     if (!window.confirm('Delete this user?')) return;
     try {
-      await API.delete(`/auth/users/${id}`);
-      fetchUsers();
+      await deleteUser.mutateAsync(id);
     } catch (err) {
       const axiosErr = err as AxiosError<{ message: string }>;
       alert(axiosErr.response?.data?.message || 'Delete failed');
@@ -76,9 +64,8 @@ function Admin() {
 
   const handleRoleChange = async (id: string, role: string) => {
     try {
-      await API.patch(`/auth/users/${id}/role`, { role });
+      await updateUserRole.mutateAsync({ id, role });
       setEditingRole(null);
-      fetchUsers();
     } catch (err) {
       const axiosErr = err as AxiosError<{ message: string }>;
       alert(axiosErr.response?.data?.message || 'Role update failed');
