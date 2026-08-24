@@ -2,22 +2,6 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/authStore';
 
-const linkStyle: React.CSSProperties = {
-  color: '#fff',
-  textDecoration: 'none',
-  marginRight: 20,
-  fontSize: '1rem',
-};
-
-const btnStyle: React.CSSProperties = {
-  background: '#e94560',
-  color: '#fff',
-  border: 'none',
-  padding: '8px 16px',
-  borderRadius: 5,
-  cursor: 'pointer',
-};
-
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -28,25 +12,25 @@ function Navbar() {
   };
 
   return (
-    <nav style={{ background: '#1a1a2e', padding: '15px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '1.3rem', fontWeight: 'bold' }}>
+    <nav className="bg-[#1a1a2e] px-8 py-4 flex justify-between items-center">
+      <Link to="/" className="text-white no-underline text-xl font-bold">
         Restaurant MS
       </Link>
-      <div>
-        <Link to="/menu" style={linkStyle}>Menu</Link>
+      <div className="flex items-center">
+        <Link to="/menu" className="text-white no-underline mr-5 text-base">Menu</Link>
         {user ? (
           <>
-            <Link to="/dashboard" style={linkStyle}>Dashboard</Link>
-            <Link to="/orders" style={linkStyle}>Orders</Link>
-            <Link to="/reservations" style={linkStyle}>Reservations</Link>
-            {user.role === 'admin' && <Link to="/admin" style={linkStyle}>Admin</Link>}
-            <span style={{ color: '#fff', marginRight: 15 }}>{user.name}</span>
-            <button onClick={handleLogout} style={btnStyle}>Logout</button>
+            <Link to="/dashboard" className="text-white no-underline mr-5 text-base">Dashboard</Link>
+            <Link to="/orders" className="text-white no-underline mr-5 text-base">Orders</Link>
+            <Link to="/reservations" className="text-white no-underline mr-5 text-base">Reservations</Link>
+            {user.role === 'admin' && <Link to="/admin" className="text-white no-underline mr-5 text-base">Admin</Link>}
+            <span className="text-white mr-4">{user.name}</span>
+            <button onClick={handleLogout} className="bg-[#e94560] text-white border-none px-4 py-2 rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors">Logout</button>
           </>
         ) : (
           <>
-            <Link to="/login" style={linkStyle}>Login</Link>
-            <Link to="/register" style={linkStyle}>Register</Link>
+            <Link to="/login" className="text-white no-underline mr-5 text-base">Login</Link>
+            <Link to="/register" className="text-white no-underline text-base">Register</Link>
           </>
         )}
       </div>

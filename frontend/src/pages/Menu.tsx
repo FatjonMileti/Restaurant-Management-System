@@ -2,19 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../store/authStore';
 import { useCreateMenuItem, useDeleteMenuItem, useMenu, MenuItem } from '../api/queries';
 
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: 10, marginBottom: 10, borderRadius: 5, border: '1px solid #ccc', fontSize: '1rem',
-  boxSizing: 'border-box',
-};
-
-const submitStyle: React.CSSProperties = {
-  padding: '10px 25px', background: '#e94560', color: '#fff', border: 'none', borderRadius: 5, cursor: 'pointer',
-};
-
-const addBtnStyle: React.CSSProperties = {
-  padding: '10px 20px', background: '#16a085', color: '#fff', border: 'none', borderRadius: 5, cursor: 'pointer',
-};
-
 function Menu() {
   const { user } = useAuth();
   const { data: items = [], error } = useMenu();
@@ -46,40 +33,41 @@ function Menu() {
   };
 
   const categories = ['appetizer', 'main', 'dessert', 'beverage'];
+  const inputClass = "w-full p-2.5 mb-2.5 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560] box-border";
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Menu</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Menu</h2>
         {user?.role === 'admin' && (
-          <button onClick={() => setShowForm(!showForm)} style={addBtnStyle}>
+          <button onClick={() => setShowForm(!showForm)} className="px-5 py-2.5 bg-[#16a085] text-white border-none rounded-md cursor-pointer hover:bg-[#138d75] transition-colors">
             {showForm ? 'Cancel' : '+ Add Item'}
           </button>
         )}
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} style={{ background: '#f5f5f5', padding: 20, borderRadius: 8, marginBottom: 20 }}>
-          <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required style={inputStyle} />
-          <input name="description" placeholder="Description" value={form.description} onChange={handleChange} style={inputStyle} />
-          <input name="price" type="number" step="0.01" placeholder="Price" value={form.price} onChange={handleChange} required style={inputStyle} />
-          <select name="category" value={form.category} onChange={handleChange} style={inputStyle}>
+        <form onSubmit={handleCreate} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
+          <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required className={inputClass} />
+          <input name="description" placeholder="Description" value={form.description} onChange={handleChange} className={inputClass} />
+          <input name="price" type="number" step="0.01" placeholder="Price" value={form.price} onChange={handleChange} required className={inputClass} />
+          <select name="category" value={form.category} onChange={handleChange} className={inputClass}>
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          {formError && <p style={{ color: 'red' }}>{formError}</p>}
-          <button type="submit" disabled={createItem.isPending} style={submitStyle}>Create</button>
+          {formError && <p className="text-red-600">{formError}</p>}
+          <button type="submit" disabled={createItem.isPending} className="px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors disabled:opacity-50">Create</button>
         </form>
       )}
 
-      {error && <p style={{ color: 'red' }}>{error instanceof Error ? error.message : 'Failed to load menu'}</p>}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20, marginTop: 20 }}>
+      {error && <p className="text-red-600">{error instanceof Error ? error.message : 'Failed to load menu'}</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-5">
         {items.map((item: MenuItem) => (
-          <div key={item._id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 20 }}>
-            <h3>{item.name}</h3>
-            <p style={{ color: '#666' }}>{item.description}</p>
-            <p><strong>${item.price.toFixed(2)}</strong> <span style={{ color: '#888' }}>({item.category})</span></p>
+          <div key={item._id} className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-shadow">
+            <h3 className="text-lg font-semibold">{item.name}</h3>
+            <p className="text-gray-500">{item.description}</p>
+            <p className="mt-2"><strong>${item.price.toFixed(2)}</strong> <span className="text-gray-400">({item.category})</span></p>
             {user?.role === 'admin' && (
-              <button onClick={() => handleDelete(item._id)} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 4, cursor: 'pointer' }}>Delete</button>
+              <button onClick={() => handleDelete(item._id)} className="mt-3 bg-red-500 text-white border-none px-3 py-1.5 rounded cursor-pointer hover:bg-red-600 transition-colors">Delete</button>
             )}
           </div>
         ))}

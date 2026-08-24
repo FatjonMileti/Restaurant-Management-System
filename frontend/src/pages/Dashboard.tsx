@@ -10,11 +10,9 @@ interface CardProps {
 
 function Card({ title, value, color }: CardProps) {
   return (
-    <div style={{
-      flex: 1, padding: 30, borderRadius: 10, background: color, color: '#fff', textAlign: 'center',
-    }}>
-      <h3>{title}</h3>
-      <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{value}</p>
+    <div className="flex-1 p-8 rounded-xl text-white text-center" style={{ background: color }}>
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="text-4xl font-bold mt-2">{value}</p>
     </div>
   );
 }
@@ -27,9 +25,9 @@ function Dashboard() {
 
   return (
     <div>
-      <h2>Dashboard</h2>
-      <p>Welcome, <strong>{user?.name}</strong>!</p>
-      <div style={{ display: 'flex', gap: 20, marginTop: 30 }}>
+      <h2 className="text-2xl font-bold">Dashboard</h2>
+      <p className="mt-2">Welcome, <strong>{user?.name}</strong>!</p>
+      <div className="flex gap-5 mt-8 flex-col md:flex-row">
         <Card title="Total Orders" value={orders.length} color="#e94560" />
         <Card title="Reservations" value={reservations.length} color="#0f3460" />
         <Card title="Menu Items" value={menuItems.length} color="#16a085" />

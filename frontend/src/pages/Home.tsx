@@ -2,39 +2,20 @@ import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../store/authStore';
 
-const btnPrimary: React.CSSProperties = {
-  background: '#e94560',
-  color: '#fff',
-  padding: '12px 30px',
-  borderRadius: 5,
-  textDecoration: 'none',
-  marginRight: 15,
-  fontWeight: 'bold',
-};
-
-const btnSecondary: React.CSSProperties = {
-  background: '#16213e',
-  color: '#fff',
-  padding: '12px 30px',
-  borderRadius: 5,
-  textDecoration: 'none',
-  fontWeight: 'bold',
-};
-
 function Home() {
   const { user } = useAuth();
 
   if (user) return <Navigate to="/menu" />;
 
   return (
-    <div style={{ textAlign: 'center', marginTop: 80 }}>
-      <h1>Welcome to Restaurant Management System</h1>
-      <p style={{ color: '#666', fontSize: '1.1rem', margin: '20px 0' }}>
+    <div className="text-center mt-20">
+      <h1 className="text-3xl font-bold">Welcome to Restaurant Management System</h1>
+      <p className="text-gray-500 text-lg my-5">
         Manage your menu, orders, and reservations all in one place.
       </p>
-      <div style={{ marginTop: 30 }}>
-        <Link to="/register" style={btnPrimary}>Get Started</Link>
-        <Link to="/login" style={btnSecondary}>Login</Link>
+      <div className="mt-8 flex justify-center gap-4">
+        <Link to="/register" className="bg-[#e94560] text-white px-8 py-3 rounded-md no-underline font-bold hover:bg-[#d63d54] transition-colors">Get Started</Link>
+        <Link to="/login" className="bg-[#16213e] text-white px-8 py-3 rounded-md no-underline font-bold hover:bg-[#1a2a4a] transition-colors">Login</Link>
       </div>
     </div>
   );
