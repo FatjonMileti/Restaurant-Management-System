@@ -9,23 +9,7 @@ import {
 } from '../api/queries';
 
 const ROLES = ['customer', 'staff', 'admin'] as const;
-const roleColors: Record<string, string> = { admin: '#e74c3c', staff: '#3498db', customer: '#27ae60' };
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: 10, marginBottom: 10, borderRadius: 5, border: '1px solid #ccc', fontSize: '1rem',
-  boxSizing: 'border-box',
-};
-
-const submitStyle: React.CSSProperties = {
-  padding: '10px 25px', background: '#e94560', color: '#fff', border: 'none', borderRadius: 5, cursor: 'pointer',
-};
-
-const addBtnStyle: React.CSSProperties = {
-  padding: '10px 20px', background: '#16a085', color: '#fff', border: 'none', borderRadius: 5, cursor: 'pointer',
-};
-
-const thStyle: React.CSSProperties = { padding: 12, textAlign: 'left', fontSize: '0.9rem' };
-const tdStyle: React.CSSProperties = { padding: 10 };
+const roleColors: Record<string, string> = { admin: 'bg-red-500', staff: 'bg-blue-500', customer: 'bg-green-600' };
 
 function Admin() {
   const { user: currentUser } = useAuth();
@@ -72,76 +56,80 @@ function Admin() {
     }
   };
 
+  const inputClass = "w-full p-2.5 mb-2.5 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560]";
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Admin Panel</h2>
-        <button onClick={() => setShowForm(!showForm)} style={addBtnStyle}>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Admin Panel</h2>
+        <button onClick={() => setShowForm(!showForm)} className="px-5 py-2.5 bg-[#16a085] text-white border-none rounded-md cursor-pointer hover:bg-[#138d75] transition-colors">
           {showForm ? 'Cancel' : '+ Add User'}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} style={{ background: '#f5f5f5', padding: 20, borderRadius: 8, marginBottom: 20 }}>
-          <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required style={inputStyle} />
-          <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required style={inputStyle} />
-          <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required style={inputStyle} />
-          <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} style={inputStyle} />
-          <select name="role" value={form.role} onChange={handleChange} style={inputStyle}>
+        <form onSubmit={handleCreate} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
+          <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required className={inputClass} />
+          <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required className={inputClass} />
+          <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required className={inputClass} />
+          <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} className={inputClass} />
+          <select name="role" value={form.role} onChange={handleChange} className={inputClass}>
             {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
-          <button type="submit" style={submitStyle}>Create User</button>
+          <button type="submit" className="px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors">Create User</button>
         </form>
       )}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 20 }}>
-        <thead>
-          <tr style={{ background: '#1a1a2e', color: '#fff' }}>
-            <th style={thStyle}>Name</th>
-            <th style={thStyle}>Email</th>
-            <th style={thStyle}>Role</th>
-            <th style={thStyle}>Phone</th>
-            <th style={thStyle}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u._id} style={{ borderBottom: '1px solid #ddd' }}>
-              <td style={tdStyle}>{u.name}</td>
-              <td style={tdStyle}>{u.email}</td>
-              <td style={tdStyle}>
-                {editingRole === u._id ? (
-                  <select
-                    value={u.role}
-                    onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                    onBlur={() => setEditingRole(null)}
-                    style={{ padding: 4, borderRadius: 4, border: '1px solid #ccc' }}
-                    autoFocus
-                  >
-                    {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                ) : (
-                  <span
-                    style={{ background: roleColors[u.role], color: '#fff', padding: '2px 10px', borderRadius: 10, fontSize: '0.85rem', cursor: 'pointer' }}
-                    onClick={() => u._id !== currentUser?._id && setEditingRole(u._id)}
-                    title="Click to change role"
-                  >
-                    {u.role}
-                  </span>
-                )}
-              </td>
-              <td style={tdStyle}>{u.phone || '-'}</td>
-              <td style={tdStyle}>
-                {u._id !== currentUser?._id && (
-                  <button onClick={() => handleDeleteUser(u._id)} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 4, cursor: 'pointer' }}>
-                    Delete
-                  </button>
-                )}
-              </td>
+      <div className="overflow-x-auto mt-5">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-[#1a1a2e] text-white">
+              <th className="p-3 text-left text-sm font-semibold">Name</th>
+              <th className="p-3 text-left text-sm font-semibold">Email</th>
+              <th className="p-3 text-left text-sm font-semibold">Role</th>
+              <th className="p-3 text-left text-sm font-semibold">Phone</th>
+              <th className="p-3 text-left text-sm font-semibold">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u._id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                <td className="p-2.5">{u.name}</td>
+                <td className="p-2.5">{u.email}</td>
+                <td className="p-2.5">
+                  {editingRole === u._id ? (
+                    <select
+                      value={u.role}
+                      onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                      onBlur={() => setEditingRole(null)}
+                      className="p-1 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      autoFocus
+                    >
+                      {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  ) : (
+                    <span
+                      className={`${roleColors[u.role]} text-white px-2.5 py-0.5 rounded-full text-xs cursor-pointer hover:opacity-90 transition-opacity inline-block`}
+                      onClick={() => u._id !== currentUser?._id && setEditingRole(u._id)}
+                      title="Click to change role"
+                    >
+                      {u.role}
+                    </span>
+                  )}
+                </td>
+                <td className="p-2.5">{u.phone || '-'}</td>
+                <td className="p-2.5">
+                  {u._id !== currentUser?._id && (
+                    <button onClick={() => handleDeleteUser(u._id)} className="bg-red-500 text-white border-none px-3 py-1.5 rounded cursor-pointer hover:bg-red-600 transition-colors text-sm">
+                      Delete
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

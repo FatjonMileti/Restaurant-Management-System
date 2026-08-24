@@ -29,20 +29,12 @@ class ErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'sans-serif' }}>
-          <h1>Something went wrong</h1>
-          <p>An unexpected error occurred while rendering this page.</p>
+        <div className="text-center p-10 font-sans">
+          <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
+          <p className="text-gray-600 mb-4">An unexpected error occurred while rendering this page.</p>
           <button
             onClick={this.handleReset}
-            style={{
-              background: '#e94560',
-              color: '#fff',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: 5,
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
+            className="bg-[#e94560] text-white border-none px-4 py-2 rounded-md cursor-pointer text-base hover:bg-[#d63d54] transition-colors"
           >
             Try again
           </button>
