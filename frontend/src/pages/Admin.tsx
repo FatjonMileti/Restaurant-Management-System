@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { AxiosError } from 'axios';
 import { useAuth } from '../store/authStore';
 import {
@@ -11,6 +12,14 @@ import {
 const ROLES = ['customer', 'staff', 'admin'] as const;
 const roleColors: Record<string, string> = { admin: 'bg-red-500', staff: 'bg-blue-500', customer: 'bg-green-600' };
 
+interface UserForm {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  role: string;
+}
+
 function Admin() {
   const { user: currentUser } = useAuth();
   const { data: users = [] } = useUsers();
@@ -19,16 +28,15 @@ function Admin() {
   const updateUserRole = useUpdateUserRole();
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', role: 'customer' });
   const [editingRole, setEditingRole] = useState<string | null>(null);
+  const { register, handleSubmit, reset } = useForm<UserForm>({
+    defaultValues: { name: '', email: '', password: '', phone: '', role: 'customer' },
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: UserForm) => {
     try {
-      await createUser.mutateAsync(form);
-      setForm({ name: '', email: '', password: '', phone: '', role: 'customer' });
+      await createUser.mutateAsync(data);
+      reset();
       setShowForm(false);
     } catch (err) {
       const axiosErr = err as AxiosError<{ message: string }>;
@@ -68,12 +76,12 @@ function Admin() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
-          <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required className={inputClass} />
-          <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required className={inputClass} />
-          <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required className={inputClass} />
-          <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} className={inputClass} />
-          <select name="role" value={form.role} onChange={handleChange} className={inputClass}>
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
+          <input placeholder="Name" {...register('name', { required: true })} className={inputClass} />
+          <input type="email" placeholder="Email" {...register('email', { required: true })} className={inputClass} />
+          <input type="password" placeholder="Password" {...register('password', { required: true })} className={inputClass} />
+          <input placeholder="Phone" {...register('phone')} className={inputClass} />
+          <select {...register('role')} className={inputClass}>
             {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
           <button type="submit" className="px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors">Create User</button>

@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '../store/authStore';
 import { useCreateMenuItem, useDeleteMenuItem, useMenu, MenuItem } from '../api/queries';
+
+interface MenuItemForm {
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+}
 
 function Menu() {
   const { user } = useAuth();
@@ -9,15 +18,14 @@ function Menu() {
   const deleteItem = useDeleteMenuItem();
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState('');
-  const [form, setForm] = useState({ name: '', description: '', price: '', category: 'main', image: '' });
+  const { register, handleSubmit, reset } = useForm<MenuItemForm>({
+    defaultValues: { name: '', description: '', price: 0, category: 'main', image: '' },
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: MenuItemForm) => {
     try {
-      await createItem.mutateAsync({ ...form, price: Number(form.price) });
-      setForm({ name: '', description: '', price: '', category: 'main', image: '' });
+      await createItem.mutateAsync({ ...data, price: Number(data.price) });
+      reset();
       setShowForm(false);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to create item');
@@ -47,11 +55,11 @@ function Menu() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
-          <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required className={inputClass} />
-          <input name="description" placeholder="Description" value={form.description} onChange={handleChange} className={inputClass} />
-          <input name="price" type="number" step="0.01" placeholder="Price" value={form.price} onChange={handleChange} required className={inputClass} />
-          <select name="category" value={form.category} onChange={handleChange} className={inputClass}>
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
+          <input placeholder="Name" {...register('name', { required: true })} className={inputClass} />
+          <input placeholder="Description" {...register('description')} className={inputClass} />
+          <input type="number" step="0.01" placeholder="Price" {...register('price', { required: true, valueAsNumber: true })} className={inputClass} />
+          <select {...register('category')} className={inputClass}>
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           {formError && <p className="text-red-600">{formError}</p>}

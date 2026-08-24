@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import {
@@ -15,6 +16,10 @@ const statusColorMap: Record<string, string> = {
   cancelled: 'bg-red-500',
 };
 
+interface OrderForm {
+  tableNumber: string;
+}
+
 function Orders() {
   const { user } = useAuth();
   const { data: orders = [], error: ordersError } = useOrders();
@@ -24,20 +29,23 @@ function Orders() {
   const cart = useCartStore();
   const menuItems = menu.filter((i) => i.available);
 
-  const [tableNumber, setTableNumber] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [actionError, setActionError] = useState('');
+  const { register, handleSubmit, reset, watch } = useForm<OrderForm>({
+    defaultValues: { tableNumber: '' },
+  });
+  const tableNumber = watch('tableNumber');
   const error = ordersError instanceof Error ? ordersError.message : actionError;
 
-  const handleCreateOrder = async () => {
+  const onSubmit = async (data: OrderForm) => {
     if (cart.items.length === 0) return;
     try {
       await createOrder.mutateAsync({
         items: cart.items.map((c) => ({ menuItem: c.menuItem, quantity: c.quantity })),
-        tableNumber: Number(tableNumber) || undefined,
+        tableNumber: Number(data.tableNumber) || undefined,
       });
       cart.clear();
-      setTableNumber('');
+      reset();
       setShowCreate(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to place order');
@@ -64,7 +72,7 @@ function Orders() {
       </div>
 
       {showCreate && (
-        <div className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
           <h3 className="text-lg font-semibold mb-3">Create Order</h3>
           <div className="flex flex-wrap gap-2.5 mb-4">
             {menuItems.map((item) => (
@@ -85,12 +93,12 @@ function Orders() {
               ))}
               <p className="mt-3"><strong>Total: ${cart.items.reduce((s, c) => s + c.price * c.quantity, 0).toFixed(2)}</strong></p>
               <div className="flex gap-2.5 mt-3 items-center">
-                <input type="number" placeholder="Table number" value={tableNumber} onChange={(e) => setTableNumber(e.target.value)} className="p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#e94560] w-36" />
-                <button onClick={handleCreateOrder} disabled={createOrder.isPending} className="px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors disabled:opacity-50">Place Order</button>
+                <input type="number" placeholder="Table number" {...register('tableNumber')} className="p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#e94560] w-36" />
+                <button type="submit" disabled={createOrder.isPending} className="px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors disabled:opacity-50">Place Order</button>
               </div>
             </div>
           )}
-        </div>
+        </form>
       )}
 
       {error && <p className="text-red-600 mt-3">{error}</p>}

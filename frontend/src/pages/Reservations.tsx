@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '../store/authStore';
 import { useCancelReservation, useCreateReservation, useReservations } from '../api/queries';
 
@@ -8,6 +9,13 @@ const statusColorMap: Record<string, string> = {
   completed: 'bg-blue-500',
 };
 
+interface ReservationForm {
+  date: string;
+  time: string;
+  guests: number;
+  specialRequests: string;
+}
+
 function Reservations() {
   const { user } = useAuth();
   const { data: reservations = [], error: fetchError } = useReservations();
@@ -16,16 +24,15 @@ function Reservations() {
 
   const [showForm, setShowForm] = useState(false);
   const [actionError, setActionError] = useState('');
-  const [form, setForm] = useState({ date: '', time: '', guests: 2, specialRequests: '' });
+  const { register, handleSubmit, reset } = useForm<ReservationForm>({
+    defaultValues: { date: '', time: '', guests: 2, specialRequests: '' },
+  });
   const error = fetchError instanceof Error ? fetchError.message : actionError;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: ReservationForm) => {
     try {
-      await createReservation.mutateAsync({ ...form, guests: Number(form.guests) });
-      setForm({ date: '', time: '', guests: 2, specialRequests: '' });
+      await createReservation.mutateAsync({ ...data, guests: Number(data.guests) });
+      reset();
       setShowForm(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to create reservation');
@@ -52,11 +59,11 @@ function Reservations() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
-          <input name="date" type="date" value={form.date} onChange={handleChange} required className={inputClass} />
-          <input name="time" type="time" value={form.time} onChange={handleChange} required className={inputClass} />
-          <input name="guests" type="number" min={1} value={form.guests} onChange={handleChange} required className={inputClass} />
-          <textarea name="specialRequests" placeholder="Special requests" value={form.specialRequests} onChange={handleChange} className={inputClass} />
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
+          <input type="date" {...register('date', { required: true })} className={inputClass} />
+          <input type="time" {...register('time', { required: true })} className={inputClass} />
+          <input type="number" min={1} {...register('guests', { required: true, valueAsNumber: true })} className={inputClass} />
+          <textarea placeholder="Special requests" {...register('specialRequests')} className={inputClass} />
           {actionError && <p className="text-red-600">{actionError}</p>}
           <button type="submit" disabled={createReservation.isPending} className="px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors disabled:opacity-50">Reserve</button>
         </form>

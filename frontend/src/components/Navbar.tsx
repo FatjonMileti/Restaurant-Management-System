@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/authStore';
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -13,11 +14,13 @@ function Navbar() {
 
   return (
     <nav className="bg-[#1a1a2e] px-8 py-4 flex justify-between items-center">
-      <Link to="/" className="text-white no-underline text-xl font-bold">
+      <Link to="/menu" className="text-white no-underline text-xl font-bold">
         Restaurant MS
       </Link>
       <div className="flex items-center">
-        <Link to="/menu" className="text-white no-underline mr-5 text-base">Menu</Link>
+        {location.pathname != "/menu" && (
+          <Link to="/menu" className="text-white no-underline mr-5 text-base">Menu</Link>
+        )}
         {user ? (
           <>
             <Link to="/dashboard" className="text-white no-underline mr-5 text-base">Dashboard</Link>
