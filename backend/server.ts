@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
+import swaggerUI from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import menuRoutes from './routes/menu.js';
@@ -21,6 +23,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reservations', reservationRoutes);
+
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 app.get('/', (_req, res) => {
   res.send('Restaurant Management API is running...');
