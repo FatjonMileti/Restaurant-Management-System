@@ -15,7 +15,7 @@ backend/              Express API server
   config/             Database connection
   controllers/        Route handlers
   middleware/         Auth middleware (protect, admin, staff)
-  models/             Mongoose schemas (User, MenuItem, Order, Reservation)
+  models/             Mongoose schemas (User, MenuItem, Category, Order, Reservation)
   routes/             Express routers
   types/              TypeScript declarations
   server.ts           Entry point
@@ -27,7 +27,7 @@ frontend/             React SPA
     components/       Navbar, ProtectedRoute
     context/          AuthContext (login, register, logout)
     pages/            Home, Login, Register, Dashboard, Menu,
-                      Orders, Reservations, Admin
+                      Orders, Reservations, Settings
 ```
 
 ## Getting Started
@@ -99,8 +99,17 @@ cd frontend && npm run build    # Creates optimized build/
 | `/api/orders/:id`            | GET    | User   | Get order              |
 | `/api/orders`                | POST   | User   | Create order           |
 | `/api/orders/:id/status`     | PUT    | Staff  | Update order status    |
+| `/api/categories`            | GET    | —      | List categories         |
+| `/api/categories`            | POST   | Admin  | Create category         |
+| `/api/categories/:id`        | PUT    | Admin  | Update category         |
+| `/api/categories/:id`        | DELETE | Admin  | Delete category         |
 | `/api/reservations`          | GET    | User   | List reservations      |
 | `/api/reservations/:id`      | GET    | User   | Get reservation        |
 | `/api/reservations`          | POST   | User   | Create reservation     |
 | `/api/reservations/:id`      | PUT    | Admin  | Update reservation     |
 | `/api/reservations/:id/cancel` | PUT  | User   | Cancel reservation     |
+
+## Notes
+
+- **Settings Page:** The admin page has been renamed to `Settings` (`/settings`) where admins manage users and categories.
+- **Dynamic Categories:** Menu item categories are managed via `/api/categories` and are no longer hardcoded. The Settings page allows adding, editing, and deleting categories with default data pulled from the database.
