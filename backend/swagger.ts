@@ -36,6 +36,13 @@ const options = {
             phone: { type: 'string' },
           },
         },
+        Category: {
+          type: 'object',
+          properties: {
+            _id: { type: 'string' },
+            name: { type: 'string' },
+          },
+        },
         MenuItem: {
           type: 'object',
           properties: {
@@ -43,7 +50,7 @@ const options = {
             name: { type: 'string' },
             description: { type: 'string' },
             price: { type: 'number' },
-            category: { type: 'string', enum: ['appetizer', 'main', 'dessert', 'beverage'] },
+            category: { type: 'string' },
             image: { type: 'string' },
             available: { type: 'boolean' },
           },

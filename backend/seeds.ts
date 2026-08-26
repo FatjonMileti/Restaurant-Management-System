@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import User from './models/User.js';
 import MenuItem from './models/MenuItem.js';
+import Category from './models/Category.js';
 import Order from './models/Order.js';
 import Reservation from './models/Reservation.js';
 
@@ -15,10 +16,19 @@ const seed = async (): Promise<void> => {
     await Promise.all([
       User.deleteMany({}),
       MenuItem.deleteMany({}),
+      Category.deleteMany({}),
       Order.deleteMany({}),
       Reservation.deleteMany({}),
     ]);
     console.log('Cleared existing data');
+
+    const categories = await Category.create([
+      { name: 'appetizer' },
+      { name: 'main' },
+      { name: 'dessert' },
+      { name: 'beverage' },
+    ]);
+    console.log(`Created ${categories.length} categories`);
 
     const users = await User.create([
       { name: 'Admin User', email: 'admin@restaurant.com', password: 'admin123', role: 'admin', phone: '555-0100' },

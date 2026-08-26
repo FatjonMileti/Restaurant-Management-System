@@ -26,7 +26,7 @@ function Navbar() {
             <Link to="/dashboard" className="text-white no-underline mr-5 text-base">Dashboard</Link>
             <Link to="/orders" className="text-white no-underline mr-5 text-base">Orders</Link>
             <Link to="/reservations" className="text-white no-underline mr-5 text-base">Reservations</Link>
-            {user.role === 'admin' && <Link to="/admin" className="text-white no-underline mr-5 text-base">Admin</Link>}
+            {user.role === 'admin' && <Link to="/settings" className="text-white no-underline mr-5 text-base">Settings</Link>}
             <span className="text-white mr-4">{user.name}</span>
             <button onClick={handleLogout} className="bg-[#e94560] text-white border-none px-4 py-2 rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors">Logout</button>
           </>

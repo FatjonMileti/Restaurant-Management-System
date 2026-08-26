@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import API from './axios';
 
+export interface Category {
+  _id: string;
+  name: string;
+}
+
 export interface MenuItem {
   _id: string;
   name: string;
@@ -82,6 +87,35 @@ export interface NewUserPayload {
 const getJSON = async <T>(url: string): Promise<T> => {
   const { data } = await API.get<T>(url);
   return data;
+};
+
+// ---- Categories ----
+
+export const useCategories = () =>
+  useQuery({ queryKey: ['categories'], queryFn: () => getJSON<Category[]>('/categories') });
+
+export const useCreateCategory = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { name: string }) => API.post('/categories', payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
+  });
+};
+
+export const useUpdateCategory = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => API.put(`/categories/${id}`, { name }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
+  });
+};
+
+export const useDeleteCategory = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => API.delete(`/categories/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
+  });
 };
 
 // ---- Menu ----

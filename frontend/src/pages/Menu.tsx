@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../store/authStore';
-import { useCreateMenuItem, useDeleteMenuItem, useMenu, MenuItem } from '../api/queries';
+import { useCreateMenuItem, useDeleteMenuItem, useMenu, MenuItem, useCategories, Category } from '../api/queries';
 
 interface MenuItemForm {
   name: string;
@@ -14,13 +14,17 @@ interface MenuItemForm {
 function Menu() {
   const { user } = useAuth();
   const { data: items = [], error } = useMenu();
+  const { data: categoriesData = [] } = useCategories();
   const createItem = useCreateMenuItem();
   const deleteItem = useDeleteMenuItem();
+
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState('');
   const { register, handleSubmit, reset } = useForm<MenuItemForm>({
-    defaultValues: { name: '', description: '', price: 0, category: 'main', image: '' },
+    defaultValues: { name: '', description: '', price: 0, category: categoriesData.length > 0 ? categoriesData[0].name : '', image: '' },
   });
+
+  const categories = categoriesData.map((c: Category) => c.name);
 
   const onSubmit = async (data: MenuItemForm) => {
     try {
@@ -40,7 +44,6 @@ function Menu() {
     }
   };
 
-  const categories = ['appetizer', 'main', 'dessert', 'beverage'];
   const inputClass = "w-full p-2.5 mb-2.5 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560] box-border";
 
   return (
@@ -62,6 +65,7 @@ function Menu() {
           <select {...register('category')} className={inputClass}>
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
+          <input placeholder="Image URL" {...register('image')} className={inputClass} />
           {formError && <p className="text-red-600">{formError}</p>}
           <button type="submit" disabled={createItem.isPending} className="px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors disabled:opacity-50">Create</button>
         </form>

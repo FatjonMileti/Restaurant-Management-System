@@ -4,7 +4,7 @@ export interface IMenuItem extends Document {
   name: string;
   description?: string;
   price: number;
-  category: 'appetizer' | 'main' | 'dessert' | 'beverage';
+  category: string;
   image?: string;
   available: boolean;
 }
@@ -14,7 +14,7 @@ const menuItemSchema = new Schema<IMenuItem>(
     name: { type: String, required: true },
     description: { type: String },
     price: { type: Number, required: true },
-    category: { type: String, enum: ['appetizer', 'main', 'dessert', 'beverage'], required: true },
+    category: { type: String, required: true },
     image: { type: String },
     available: { type: Boolean, default: true },
   },
