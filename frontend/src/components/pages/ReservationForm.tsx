@@ -7,6 +7,7 @@ interface ReservationFormData {
   date: string;
   time: string;
   guests: number;
+  tableNumber?: number;
   specialRequests: string;
 }
 
@@ -26,8 +27,9 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
       date: editingReservation.date ? new Date(editingReservation.date).toISOString().split('T')[0] : '',
       time: editingReservation.time || '',
       guests: editingReservation.guests || 2,
+      tableNumber: editingReservation.tableNumber || undefined,
       specialRequests: editingReservation.specialRequests || '',
-    } : { date: '', time: '', guests: 2, specialRequests: '' },
+    } : { date: '', time: '', guests: 2, tableNumber: undefined, specialRequests: '' },
   });
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
         date: editingReservation.date ? new Date(editingReservation.date).toISOString().split('T')[0] : '',
         time: editingReservation.time || '',
         guests: editingReservation.guests || 2,
+        tableNumber: editingReservation.tableNumber || undefined,
         specialRequests: editingReservation.specialRequests || '',
       });
     }
@@ -43,11 +46,12 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
 
   const onSubmit = async (data: ReservationFormData) => {
     try {
+      const payload = { ...data, guests: Number(data.guests), tableNumber: data.tableNumber ? Number(data.tableNumber) : undefined };
       if (editingReservation) {
-        await updateReservation.mutateAsync({ id: editingReservation._id, data: { ...data, guests: Number(data.guests) } });
+        await updateReservation.mutateAsync({ id: editingReservation._id, data: payload });
         onEditDone?.();
       } else {
-        await createReservation.mutateAsync({ ...data, guests: Number(data.guests) });
+        await createReservation.mutateAsync(payload);
         setShowForm(false);
       }
       reset();
@@ -64,6 +68,7 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
       <input type="date" {...register('date', { required: true })} className="form-input-sm" />
       <input type="time" {...register('time', { required: true })} className="form-input-sm" />
       <input type="number" min={1} {...register('guests', { required: true, valueAsNumber: true })} className="form-input-sm" />
+      <input type="number" min={1} placeholder="Table number" {...register('tableNumber', { valueAsNumber: true })} className="form-input-sm" />
       <textarea placeholder="Special requests" {...register('specialRequests')} className="form-input-sm" />
       {actionError && <p className="error-text">{actionError}</p>}
       <div className="flex gap-2 mt-2">
