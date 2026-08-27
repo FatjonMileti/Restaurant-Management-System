@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
@@ -28,8 +28,10 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
     defaultValues: { tableNumber: editingOrder?.tableNumber ? String(editingOrder.tableNumber) : '' },
   });
 
+  const prevEditingOrder = React.useRef(editingOrder);
   useEffect(() => {
-    if (editingOrder) {
+    if (editingOrder && editingOrder !== prevEditingOrder.current) {
+      prevEditingOrder.current = editingOrder;
       reset({ tableNumber: editingOrder.tableNumber ? String(editingOrder.tableNumber) : '' });
       cart.replaceItems(editingOrder.items.map(i => ({
         menuItem: i.menuItem || '',
@@ -37,8 +39,11 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
         price: i.price,
         quantity: i.quantity,
       })));
+    } else if (!editingOrder && prevEditingOrder.current) {
+      prevEditingOrder.current = editingOrder;
+      cart.clear();
     }
-  }, [editingOrder, reset, cart]);
+  }, [editingOrder]);
 
   const onSubmit = async (data: OrderFormData) => {
     if (cart.items.length === 0) return;
