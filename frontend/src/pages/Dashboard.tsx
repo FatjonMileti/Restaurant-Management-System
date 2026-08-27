@@ -31,7 +31,7 @@ function Dashboard() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold">Dashboard</h2>
+      <h2 className="page-title">Dashboard</h2>
       <p className="mt-2">Welcome, <strong>{user?.name}</strong>!</p>
       <div className="flex gap-5 mt-8 flex-col md:flex-row">
         <Card title="Total Orders" value={orders.length} color="#e94560" />

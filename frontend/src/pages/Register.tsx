@@ -28,15 +28,15 @@ function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20">
-      <h2 className="text-2xl font-bold mb-4">Register</h2>
-      {error && <p className="text-red-600 mb-3">{error}</p>}
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded-lg shadow">
-        <input placeholder="Name" {...register('name', { required: true })} className="w-full p-3 mb-4 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560]" />
-        <input type="email" placeholder="Email" {...register('email', { required: true })} className="w-full p-3 mb-4 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560]" />
-        <input type="password" placeholder="Password (min 6 chars)" {...register('password', { required: true, minLength: 6 })} className="w-full p-3 mb-4 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560]" />
-        <input placeholder="Phone" {...register('phone')} className="w-full p-3 mb-4 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560]" />
-        <button type="submit" className="w-full p-3 bg-[#e94560] text-white border-none rounded-md text-base cursor-pointer hover:bg-[#d63d54] transition-colors">Register</button>
+    <div className="auth-wrapper">
+      <h2 className="page-title mb-4">Register</h2>
+      {error && <p className="error-text mb-3">{error}</p>}
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-card">
+        <input placeholder="Name" {...register('name', { required: true })} className="form-input" />
+        <input type="email" placeholder="Email" {...register('email', { required: true })} className="form-input" />
+        <input type="password" placeholder="Password (min 6 chars)" {...register('password', { required: true, minLength: 6 })} className="form-input" />
+        <input placeholder="Phone" {...register('phone')} className="form-input" />
+        <button type="submit" className="btn-primary-block">Register</button>
       </form>
       <p className="mt-4">Already have an account? <Link to="/login" className="text-[#e94560] hover:underline">Login</Link></p>
     </div>

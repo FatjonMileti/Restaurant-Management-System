@@ -13,26 +13,26 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-[#1a1a2e] px-8 py-4 flex justify-between items-center">
+    <nav className="navbar">
       <Link to="/menu" className="text-white no-underline text-xl font-bold">
         Restaurant MS
       </Link>
       <div className="flex items-center">
         {location.pathname != "/menu" && (
-          <Link to="/menu" className="text-white no-underline mr-5 text-base">Menu</Link>
+          <Link to="/menu" className="nav-link">Menu</Link>
         )}
         {user ? (
           <>
-            <Link to="/dashboard" className="text-white no-underline mr-5 text-base">Dashboard</Link>
-            <Link to="/orders" className="text-white no-underline mr-5 text-base">Orders</Link>
-            <Link to="/reservations" className="text-white no-underline mr-5 text-base">Reservations</Link>
-            {user.role === 'admin' && <Link to="/settings" className="text-white no-underline mr-5 text-base">Settings</Link>}
+            <Link to="/dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/orders" className="nav-link">Orders</Link>
+            <Link to="/reservations" className="nav-link">Reservations</Link>
+            {user.role === 'admin' && <Link to="/settings" className="nav-link">Settings</Link>}
             <span className="text-white mr-4">{user.name}</span>
             <button onClick={handleLogout} className="bg-[#e94560] text-white border-none px-4 py-2 rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors">Logout</button>
           </>
         ) : (
           <>
-            <Link to="/login" className="text-white no-underline mr-5 text-base">Login</Link>
+            <Link to="/login" className="nav-link">Login</Link>
             <Link to="/register" className="text-white no-underline text-base">Register</Link>
           </>
         )}

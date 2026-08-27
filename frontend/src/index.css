@@ -1,3 +1,82 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* Navigation */
+  .nav-link {
+    @apply text-white no-underline mr-5 text-base;
+  }
+  .navbar {
+    @apply bg-[#1a1a2e] px-8 py-4 flex justify-between items-center;
+  }
+
+  /* Layout */
+  .page-title {
+    @apply text-2xl font-bold;
+  }
+  .page-header {
+    @apply flex justify-between items-center;
+  }
+  .auth-wrapper {
+    @apply max-w-md mx-auto mt-20;
+  }
+  .auth-card {
+    @apply bg-white p-6 rounded-lg shadow;
+  }
+  .form-panel {
+    @apply bg-gray-100 p-5 rounded-lg mb-5 mt-4;
+  }
+
+  /* Cards */
+  .card {
+    @apply border border-gray-200 rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-md transition-shadow;
+  }
+  .card-grid {
+    @apply border border-gray-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-shadow;
+  }
+
+  /* Inputs */
+  .form-input {
+    @apply w-full p-3 mb-4 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560];
+  }
+  .form-input-sm {
+    @apply w-full p-2.5 mb-2.5 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560];
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors disabled:opacity-50;
+  }
+  .btn-primary-block {
+    @apply w-full p-3 bg-[#e94560] text-white border-none rounded-md text-base cursor-pointer hover:bg-[#d63d54] transition-colors;
+  }
+  .btn-secondary {
+    @apply px-5 py-2.5 bg-[#16a085] text-white border-none rounded-md cursor-pointer hover:bg-[#138d75] transition-colors;
+  }
+  .btn-danger {
+    @apply bg-red-500 text-white border-none px-3 py-1.5 rounded cursor-pointer hover:bg-red-600 transition-colors text-sm;
+  }
+  .btn-danger-sm {
+    @apply bg-red-500 text-white border-none px-3 py-1.5 rounded cursor-pointer hover:bg-red-600 transition-colors text-xs;
+  }
+  .btn-danger-xs {
+    @apply bg-red-500 text-white border-none rounded px-2 py-1 cursor-pointer hover:bg-red-600 transition-colors text-xs;
+  }
+  .btn-blue-sm {
+    @apply px-3 py-1.5 bg-blue-500 text-white border-none rounded cursor-pointer hover:bg-blue-600 transition-colors text-xs;
+  }
+
+  /* Table */
+  .table-th {
+    @apply p-3 text-left text-sm font-semibold;
+  }
+  .table-td {
+    @apply p-2.5;
+  }
+
+  /* Utilities */
+  .error-text {
+    @apply text-red-600;
+  }
+}

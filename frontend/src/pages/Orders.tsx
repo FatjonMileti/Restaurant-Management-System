@@ -67,17 +67,17 @@ function Orders() {
 
   return (
     <div>
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Orders</h2>
+      <div className="page-header">
+        <h2 className="page-title">Orders</h2>
         {user?.role !== 'customer' && (
-          <button onClick={() => setShowCreate(!showCreate)} className="px-5 py-2.5 bg-[#16a085] text-white border-none rounded-md cursor-pointer hover:bg-[#138d75] transition-colors">
+          <button onClick={() => setShowCreate(!showCreate)} className="btn-secondary">
             {showCreate ? 'Cancel' : '+ New Order'}
           </button>
         )}
       </div>
 
       {showCreate && (
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="form-panel">
           <h3 className="text-lg font-semibold mb-3">Create Order</h3>
           <div className="flex flex-wrap gap-2.5 mb-4">
             {menuItems.map((item) => (
@@ -93,22 +93,22 @@ function Orders() {
               {cart.items.map((c) => (
                 <div key={c.menuItem} className="flex justify-between mb-1.5 items-center">
                   <span className="text-sm">{c.name} x{c.quantity} - ${(c.price * c.quantity).toFixed(2)}</span>
-                  <button onClick={() => cart.removeItem(c.menuItem)} className="bg-red-500 text-white border-none rounded px-2 py-1 cursor-pointer hover:bg-red-600 transition-colors text-xs">Remove</button>
+                  <button onClick={() => cart.removeItem(c.menuItem)} className="btn-danger-xs">Remove</button>
                 </div>
               ))}
               <p className="mt-3"><strong>Total: ${cart.items.reduce((s, c) => s + c.price * c.quantity, 0).toFixed(2)}</strong></p>
               <div className="flex gap-2.5 mt-3 items-center">
                 <input type="number" placeholder="Table number" {...register('tableNumber')} className="p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#e94560] w-36" />
-                <button type="submit" disabled={createOrder.isPending} className="px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors disabled:opacity-50">Place Order</button>
+                <button type="submit" disabled={createOrder.isPending} className="btn-primary">Place Order</button>
               </div>
             </div>
           )}
         </form>
       )}
 
-      {error && <p className="text-red-600 mt-3">{error}</p>}
+      {error && <p className="error-text mt-3">{error}</p>}
       {orders.map((order) => (
-        <div key={order._id} className="border border-gray-200 rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+        <div key={order._id} className="card">
           <div className="flex justify-between">
             <div>
               <strong>Order #{order._id.slice(-6).toUpperCase()}</strong>
@@ -128,9 +128,9 @@ function Orders() {
               </span>
               {user?.role !== 'customer' && order.status !== 'completed' && order.status !== 'cancelled' && (
                 <div className="flex flex-col gap-1.5 items-end">
-                  {order.status === 'pending' && <button onClick={() => handleUpdateStatus(order._id, 'preparing')} className="px-3 py-1.5 bg-blue-500 text-white border-none rounded cursor-pointer hover:bg-blue-600 transition-colors text-xs">Start Preparing</button>}
-                  {order.status === 'preparing' && <button onClick={() => handleUpdateStatus(order._id, 'completed')} className="px-3 py-1.5 bg-blue-500 text-white border-none rounded cursor-pointer hover:bg-blue-600 transition-colors text-xs">Mark Completed</button>}
-                  <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="px-3 py-1.5 bg-red-500 text-white border-none rounded cursor-pointer hover:bg-red-600 transition-colors text-xs">Cancel</button>
+                  {order.status === 'pending' && <button onClick={() => handleUpdateStatus(order._id, 'preparing')} className="btn-blue-sm">Start Preparing</button>}
+                  {order.status === 'preparing' && <button onClick={() => handleUpdateStatus(order._id, 'completed')} className="btn-blue-sm">Mark Completed</button>}
+                  <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="btn-danger-sm">Cancel</button>
                 </div>
               )}
             </div>

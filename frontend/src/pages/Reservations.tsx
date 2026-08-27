@@ -47,34 +47,32 @@ function Reservations() {
     }
   };
 
-  const inputClass = "w-full p-2.5 mb-2.5 rounded-md border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-[#e94560]";
-
   return (
     <div>
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Reservations</h2>
-        <button onClick={() => setShowForm(!showForm)} className="px-5 py-2.5 bg-[#16a085] text-white border-none rounded-md cursor-pointer hover:bg-[#138d75] transition-colors">
+      <div className="page-header">
+        <h2 className="page-title">Reservations</h2>
+        <button onClick={() => setShowForm(!showForm)} className="btn-secondary">
           {showForm ? 'Cancel' : '+ New Reservation'}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-100 p-5 rounded-lg mb-5 mt-4">
-          <input type="date" {...register('date', { required: true })} className={inputClass} />
-          <input type="time" {...register('time', { required: true })} className={inputClass} />
-          <input type="number" min={1} {...register('guests', { required: true, valueAsNumber: true })} className={inputClass} />
-          <textarea placeholder="Special requests" {...register('specialRequests')} className={inputClass} />
-          {actionError && <p className="text-red-600">{actionError}</p>}
-          <button type="submit" disabled={createReservation.isPending} className="px-6 py-2.5 bg-[#e94560] text-white border-none rounded-md cursor-pointer hover:bg-[#d63d54] transition-colors disabled:opacity-50">Reserve</button>
+        <form onSubmit={handleSubmit(onSubmit)} className="form-panel">
+          <input type="date" {...register('date', { required: true })} className="form-input-sm" />
+          <input type="time" {...register('time', { required: true })} className="form-input-sm" />
+          <input type="number" min={1} {...register('guests', { required: true, valueAsNumber: true })} className="form-input-sm" />
+          <textarea placeholder="Special requests" {...register('specialRequests')} className="form-input-sm" />
+          {actionError && <p className="error-text">{actionError}</p>}
+          <button type="submit" disabled={createReservation.isPending} className="btn-primary">Reserve</button>
         </form>
       )}
 
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p className="error-text">{error}</p>}
       {reservations.length === 0 ? (
         <p className="text-gray-400 mt-5">No reservations yet.</p>
       ) : (
         reservations.map((res) => (
-          <div key={res._id} className="border border-gray-200 rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+          <div key={res._id} className="card">
             <div className="flex justify-between">
               <div>
                 <strong>{new Date(res.date).toLocaleDateString()} at {res.time}</strong>
@@ -89,7 +87,7 @@ function Reservations() {
                 </span>
                 {res.status === 'confirmed' && (user?.role !== 'customer' || res.user?._id === user?._id) && (
                   <div className="mt-2.5">
-                    <button onClick={() => handleCancel(res._id)} className="bg-red-500 text-white border-none px-3 py-1.5 rounded cursor-pointer hover:bg-red-600 transition-colors text-xs">Cancel</button>
+                    <button onClick={() => handleCancel(res._id)} className="btn-danger-sm">Cancel</button>
                   </div>
                 )}
               </div>
