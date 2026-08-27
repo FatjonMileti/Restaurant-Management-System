@@ -65,6 +65,19 @@ export const updateReservation = async (req: Request, res: Response): Promise<vo
   }
 };
 
+export const deleteReservation = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const reservation = await Reservation.findByIdAndDelete(req.params.id);
+    if (!reservation) {
+      res.status(404).json({ message: 'Reservation not found' });
+      return;
+    }
+    res.json({ message: 'Reservation removed' });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Server error' });
+  }
+};
+
 export const cancelReservation = async (req: Request, res: Response): Promise<void> => {
   try {
     const reservation = await Reservation.findById(req.params.id);

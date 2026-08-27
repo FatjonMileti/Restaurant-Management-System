@@ -1,5 +1,5 @@
 import React from 'react';
-import { useReservations, useCancelReservation, Reservation } from '../../api/queries';
+import { useReservations, useCancelReservation, useDeleteReservation, Reservation } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
 
 const statusColorMap: Record<string, string> = {
@@ -8,10 +8,15 @@ const statusColorMap: Record<string, string> = {
   completed: 'bg-blue-500',
 };
 
-export default function ReservationList() {
+interface Props {
+  onEditReservation?: (res: Reservation) => void;
+}
+
+export default function ReservationList({ onEditReservation }: Props) {
   const { user } = useAuth();
   const { data: reservations = [], error: fetchError } = useReservations();
   const cancelReservation = useCancelReservation();
+  const deleteReservation = useDeleteReservation();
   const [actionError, setActionError] = React.useState('');
 
   const handleCancel = async (id: string) => {
@@ -19,6 +24,15 @@ export default function ReservationList() {
       await cancelReservation.mutateAsync(id);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to cancel reservation');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this reservation?')) return;
+    try {
+      await deleteReservation.mutateAsync(id);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to delete reservation');
     }
   };
 
@@ -44,9 +58,17 @@ export default function ReservationList() {
                 <span className={`${statusColorMap[res.status] || 'bg-gray-500'} text-white px-3 py-1 rounded-full inline-block text-sm capitalize`}>
                   {res.status}
                 </span>
-                {res.status === 'confirmed' && (user?.role !== 'customer' || res.user?._id === user?._id) && (
+                {(user?.role !== 'customer' || (user?.role === 'customer' && res.user?._id === user?._id)) && (
                   <div className="mt-2.5">
-                    <button onClick={() => handleCancel(res._id)} className="btn-danger-sm">Cancel</button>
+                    {res.status === 'confirmed' && (
+                      <>
+                        <button onClick={() => onEditReservation?.(res)} className="btn-blue-sm">Edit</button>
+                        <button onClick={() => handleCancel(res._id)} className="btn-danger-sm ml-1">Cancel</button>
+                      </>
+                    )}
+                    {(res.status === 'cancelled' || res.status === 'completed') && (
+                      <button onClick={() => handleDelete(res._id)} className="btn-danger-sm">Delete</button>
+                    )}
                   </div>
                 )}
               </div>

@@ -199,6 +199,22 @@ export const useCreateReservation = () => {
   });
 };
 
+export const useDeleteReservation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => API.delete(`/reservations/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
+  });
+};
+
+export const useUpdateReservation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { id: string; data: Partial<Reservation> }) => API.put(`/reservations/${payload.id}`, payload.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
+  });
+};
+
 export const useCancelReservation = () => {
   const qc = useQueryClient();
   return useMutation({

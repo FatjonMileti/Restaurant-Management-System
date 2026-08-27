@@ -1,5 +1,5 @@
 import express from 'express';
-import { getReservations, getReservation, createReservation, updateReservation, cancelReservation } from '../controllers/reservations.js';
+import { getReservations, getReservation, createReservation, updateReservation, cancelReservation, deleteReservation } from '../controllers/reservations.js';
 import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -137,6 +137,8 @@ router.put('/:id', protect, admin, updateReservation);
  *       200:
  *         description: Reservation cancelled
  */
+router.delete('/:id', protect, admin, deleteReservation);
+
 router.put('/:id/cancel', protect, cancelReservation);
 
 export default router;
