@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
-import { useCreateOrder, useMenu, useUpdateOrderStatus } from '../../api/queries';
+import { useCreateOrder, useMenu, useUpdateOrder, Order } from '../../api/queries';
 
 interface OrderFormData {
   tableNumber: string;
@@ -11,36 +11,67 @@ interface OrderFormData {
 interface Props {
   showCreate: boolean;
   setShowCreate: (v: boolean) => void;
+  editingOrder?: Order | null;
+  onEditDone?: () => void;
 }
 
-export default function OrderFormComponent({ showCreate, setShowCreate }: Props) {
+export default function OrderFormComponent({ showCreate, setShowCreate, editingOrder, onEditDone }: Props) {
   const { user } = useAuth();
   const { data: menu = [] } = useMenu();
   const createOrder = useCreateOrder();
+  const updateOrder = useUpdateOrder();
   const cart = useCartStore();
   const menuItems = menu.filter((i) => i.available);
 
   const [actionError, setActionError] = useState('');
-  const { register, handleSubmit, reset } = useForm<OrderFormData>({ defaultValues: { tableNumber: '' } });
+  const { register, handleSubmit, reset } = useForm<OrderFormData>({
+    defaultValues: { tableNumber: editingOrder?.tableNumber ? String(editingOrder.tableNumber) : '' },
+  });
+
+  useEffect(() => {
+    if (editingOrder) {
+      reset({ tableNumber: editingOrder.tableNumber ? String(editingOrder.tableNumber) : '' });
+      cart.replaceItems(editingOrder.items.map(i => ({
+        menuItem: i.menuItem || '',
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+      })));
+    }
+  }, [editingOrder, reset, cart]);
 
   const onSubmit = async (data: OrderFormData) => {
     if (cart.items.length === 0) return;
     try {
-      await createOrder.mutateAsync({
-        items: cart.items.map((c) => ({ menuItem: c.menuItem, name: c.name, price: c.price, quantity: c.quantity })),
-        tableNumber: Number(data.tableNumber) || undefined,
-      });
+      if (editingOrder) {
+        await updateOrder.mutateAsync({
+          id: editingOrder._id,
+          data: {
+            items: cart.items.map((c) => ({ menuItem: c.menuItem, name: c.name, price: c.price, quantity: c.quantity })),
+            tableNumber: Number(data.tableNumber) || undefined,
+            status: 'pending',
+          },
+        });
+        onEditDone?.();
+      } else {
+        await createOrder.mutateAsync({
+          items: cart.items.map((c) => ({ menuItem: c.menuItem, name: c.name, price: c.price, quantity: c.quantity })),
+          tableNumber: Number(data.tableNumber) || undefined,
+        });
+        setShowCreate(false);
+      }
       cart.clear();
       reset();
-      setShowCreate(false);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to place order');
+      setActionError(err instanceof Error ? err.message : editingOrder ? 'Failed to edit order' : 'Failed to place order');
     }
   };
 
-  return showCreate ? (
+  if (!showCreate && !editingOrder) return null;
+
+  return (
     <form onSubmit={handleSubmit(onSubmit)} className="form-panel">
-      <h3 className="text-lg font-semibold mb-3">Create Order</h3>
+      <h3 className="text-lg font-semibold mb-3">{editingOrder ? 'Edit Order' : 'Create Order'}</h3>
       <div className="flex flex-wrap gap-2.5 mb-4">
         {menuItems.map((item) => (
           <button key={item._id} type="button" onClick={() => cart.addItem(item)} className="px-4 py-2 bg-[#0f3460] text-white border-none rounded-md cursor-pointer hover:bg-[#16213e] transition-colors text-sm">
@@ -60,11 +91,12 @@ export default function OrderFormComponent({ showCreate, setShowCreate }: Props)
           <p className="mt-3"><strong>Total: ${cart.items.reduce((s, c) => s + c.price * c.quantity, 0).toFixed(2)}</strong></p>
           <div className="flex gap-2.5 mt-3 items-center">
             <input type="number" placeholder="Table number" {...register('tableNumber')} className="p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#e94560] w-36" />
-            <button type="submit" disabled={createOrder.isPending} className="btn-primary">Place Order</button>
+            <button type="submit" disabled={(editingOrder ? updateOrder.isPending : createOrder.isPending)} className="btn-primary">{editingOrder ? 'Save Changes' : 'Place Order'}</button>
+            <button type="button" onClick={() => { if (editingOrder && onEditDone) { onEditDone(); } else { setShowCreate(false); } cart.clear(); }} className="btn-secondary">Cancel</button>
           </div>
         </div>
       )}
       {actionError && <p className="error-text mt-3">{actionError}</p>}
     </form>
-  ) : null;
+  );
 }

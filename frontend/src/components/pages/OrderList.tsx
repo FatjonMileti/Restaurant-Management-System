@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { useOrders, useUpdateOrderStatus, useDeleteOrder, useUpdateOrder, Order } from '../../api/queries';
+import { useOrders, useUpdateOrderStatus, useDeleteOrder, Order } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
-import { useMenu } from '../../api/queries';
-import { useCartStore } from '../../store/cartStore';
 
 const statusColorMap: Record<string, string> = {
   pending: 'bg-amber-500',
@@ -11,19 +9,16 @@ const statusColorMap: Record<string, string> = {
   cancelled: 'bg-red-500',
 };
 
-export default function OrderList() {
+interface Props {
+  onEditOrder: (order: Order) => void;
+}
+
+export default function OrderList({ onEditOrder }: Props) {
   const { user } = useAuth();
   const { data: orders = [], error: ordersError } = useOrders();
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
-  const updateOrder = useUpdateOrder();
   const [actionError, setActionError] = React.useState('');
-  const [editingId, setEditingId] = React.useState<string | null>(null);
-  const [editOrder, setEditOrder] = React.useState<Order | null>(null);
-
-  const { data: menu = [] } = useMenu();
-  const cart = useCartStore();
-  const menuItems = menu.filter((i) => i.available);
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
@@ -39,16 +34,6 @@ export default function OrderList() {
       await deleteOrder.mutateAsync(id);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to delete order');
-    }
-  };
-
-  const handleEditSubmit = async (id: string, items: any[], tableNumber?: number) => {
-    try {
-      await updateOrder.mutateAsync({ id, data: { items, tableNumber, status: 'pending' } });
-      setEditingId(null);
-      cart.clear();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to edit order');
     }
   };
 
@@ -80,7 +65,7 @@ export default function OrderList() {
                 <div className="flex flex-col gap-1.5 items-end">
                   {order.status === 'pending' && (
                     <>
-                      <button onClick={() => { const isEditing = editingId === order._id; setEditingId(isEditing ? null : order._id); setEditOrder(isEditing ? null : order); if (!isEditing) { cart.replaceItems(order.items.map(i => ({ menuItem: i.menuItem || '', name: i.name, price: i.price, quantity: i.quantity }))); } else { cart.clear(); } }} className="btn-blue-sm">Edit</button>
+                      <button onClick={() => onEditOrder(order)} className="btn-blue-sm">Edit</button>
                       <button onClick={() => handleUpdateStatus(order._id, 'preparing')} className="btn-blue-sm">Start Preparing</button>
                       <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="btn-danger-sm">Cancel</button>
                     </>
@@ -98,32 +83,6 @@ export default function OrderList() {
               )}
             </div>
           </div>
-          {editingId === order._id && order.status === 'pending' && (
-            <div className="bg-gray-100 p-4 rounded-md mt-3">
-              <h4 className="font-semibold mb-2">Edit Order</h4>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {menuItems.map((item) => (
-                  <button key={item._id} type="button" onClick={() => cart.addItem(item)} className="px-3 py-1 bg-[#0f3460] text-white border-none rounded-md cursor-pointer hover:bg-[#16213e] transition-colors text-xs">
-                    {item.name} - ${item.price.toFixed(2)}
-                  </button>
-                ))}
-              </div>
-              {cart.items.length > 0 && (
-                <>
-                  <div className="bg-white p-3 rounded-md mb-2">
-                    {cart.items.map((c) => (
-                      <div key={c.menuItem} className="flex justify-between text-sm mb-1">
-                        <span>{c.name} x{c.quantity}</span>
-                        <span>${(c.price * c.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <button onClick={() => handleEditSubmit(order._id, cart.items.map(i => ({ menuItem: i.menuItem, name: i.name, price: i.price, quantity: i.quantity })), order.tableNumber)} className="btn-primary">Save Changes</button>
-                  <button onClick={() => { setEditingId(null); cart.clear(); }} className="btn-secondary ml-2">Cancel</button>
-                </>
-              )}
-            </div>
-          )}
         </div>
       ))}
     </>
