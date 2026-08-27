@@ -57,7 +57,7 @@ export default function OrderList() {
               <span className={`${statusColorMap[order.status] || 'bg-gray-500'} text-white px-3 py-1 rounded-full inline-block mb-2.5 text-sm capitalize`}>
                 {order.status}
               </span>
-              {user?.role !== 'customer' && (
+              {((user?.role !== 'customer') || (user?.role === 'customer' && order.user?._id === user?._id)) && (
                 <div className="flex flex-col gap-1.5 items-end">
                   {order.status === 'pending' && (
                     <>
