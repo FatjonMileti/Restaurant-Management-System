@@ -23,7 +23,7 @@ function Card({ title, value, color }: CardProps) {
   );
 }
 
-function Dashboard() {
+export default function Dashboard() {
   const { user } = useAuth();
   const { data: orders = [] } = useOrders();
   const { data: reservations = [] } = useReservations();
@@ -41,5 +41,3 @@ function Dashboard() {
     </div>
   );
 }
-
-export default Dashboard;
