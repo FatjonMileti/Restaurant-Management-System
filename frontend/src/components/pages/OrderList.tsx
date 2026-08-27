@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useOrders, useUpdateOrderStatus, useDeleteOrder, Order } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
+import LoadingSpinner from '../LoadingSpinner';
 
 const statusColorMap: Record<string, string> = {
   pending: 'bg-amber-500',
@@ -15,7 +16,7 @@ interface Props {
 
 export default function OrderList({ onEditOrder }: Props) {
   const { user } = useAuth();
-  const { data: orders = [], error: ordersError } = useOrders();
+  const { data: orders = [], error: ordersError, isLoading } = useOrders();
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
   const [actionError, setActionError] = React.useState('');
@@ -41,7 +42,8 @@ export default function OrderList({ onEditOrder }: Props) {
 
   return (
     <>
-      {error && <p className="error-text mt-3">{error}</p>}
+      {isLoading && <LoadingSpinner />}
+      {error && !isLoading && <p className="error-text mt-3">{error}</p>}
       {orders.map((order: Order) => (
         <div key={order._id} className="card">
           <div className="flex justify-between">

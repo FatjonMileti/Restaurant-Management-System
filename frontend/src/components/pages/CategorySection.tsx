@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAuth } from '../../store/authStore';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, Category } from '../../api/queries';
+import LoadingSpinner from '../LoadingSpinner';
 
 export default function CategorySection() {
-  const { data: categoriesData = [] } = useCategories();
+  const { data: categoriesData = [], isLoading } = useCategories();
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
@@ -39,7 +40,8 @@ export default function CategorySection() {
         <input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="New category name" className="form-input-sm !mb-0 flex-1" />
         <button onClick={handleCreateCategory} className="px-4 py-2.5 bg-[#3498db] text-white border-none rounded-md cursor-pointer hover:bg-[#2980b9] transition-colors whitespace-nowrap">Add Category</button>
       </div>
-      <div className="flex flex-wrap gap-2">
+        {isLoading ? <LoadingSpinner /> : (
+        <div className="flex flex-wrap gap-2">
         {categoriesData.map((cat: Category) => (
           <div key={cat._id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-blue-200 shadow-sm">
             {editCategoryId === cat._id ? (
@@ -58,6 +60,7 @@ export default function CategorySection() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

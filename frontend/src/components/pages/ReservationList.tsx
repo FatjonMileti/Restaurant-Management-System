@@ -1,6 +1,7 @@
 import React from 'react';
 import { useReservations, useCancelReservation, useDeleteReservation, Reservation } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
+import LoadingSpinner from '../LoadingSpinner';
 
 const statusColorMap: Record<string, string> = {
   confirmed: 'bg-green-600',
@@ -14,7 +15,7 @@ interface Props {
 
 export default function ReservationList({ onEditReservation }: Props) {
   const { user } = useAuth();
-  const { data: reservations = [], error: fetchError } = useReservations();
+  const { data: reservations = [], error: fetchError, isLoading } = useReservations();
   const cancelReservation = useCancelReservation();
   const deleteReservation = useDeleteReservation();
   const [actionError, setActionError] = React.useState('');
@@ -40,7 +41,8 @@ export default function ReservationList({ onEditReservation }: Props) {
 
   return (
     <>
-      {error && <p className="error-text">{error}</p>}
+      {isLoading && <LoadingSpinner />}
+      {error && !isLoading && <p className="error-text">{error}</p>}
       {reservations.length === 0 ? (
         <p className="text-gray-400 mt-5">No reservations yet.</p>
       ) : (

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { AxiosError } from 'axios';
 import { useAuth } from '../../store/authStore';
 import { useCreateUser, useDeleteUser, useUpdateUserRole, useUsers } from '../../api/queries';
+import LoadingSpinner from '../LoadingSpinner';
 
 const ROLES = ['customer', 'staff', 'admin'] as const;
 const roleColors: Record<string, string> = { admin: 'bg-red-500', staff: 'bg-blue-500', customer: 'bg-green-600' };
@@ -13,7 +14,7 @@ interface UserForm {
 
 export default function UserSection() {
   const { user: currentUser } = useAuth();
-  const { data: users = [] } = useUsers();
+  const { data: users = [], isLoading } = useUsers();
   const createUser = useCreateUser();
   const deleteUser = useDeleteUser();
   const updateUserRole = useUpdateUserRole();
@@ -45,7 +46,8 @@ export default function UserSection() {
           <button type="submit" className="btn-primary">Create User</button>
         </form>
       )}
-      <div className="overflow-x-auto">
+      {isLoading ? <LoadingSpinner /> : (
+        <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead><tr className="bg-[#1a1a2e] text-white">
             <th className="table-th">Name</th><th className="table-th">Email</th><th className="table-th">Role</th><th className="table-th">Phone</th><th className="table-th">Actions</th>
@@ -70,6 +72,7 @@ export default function UserSection() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }
