@@ -8,23 +8,30 @@ function Menu() {
   const { data: items = [], error } = useMenu();
   const { data: categoriesData = [] } = useCategories();
   const [showForm, setShowForm] = useState(false);
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
 
   const categories = categoriesData.map((c: Category) => c.name);
 
+  const handleEdit = (item: MenuItem) => {
+    setEditingItem(item);
+    setShowForm(true);
+  };
+
   return (
     <div>
-      <MenuHeader showForm={showForm} toggleForm={() => setShowForm(!showForm)} />
+      <MenuHeader showForm={showForm} toggleForm={() => { setShowForm(!showForm); setEditingItem(null); }} />
       {showForm && (
         <MenuItemForm
           categories={categories}
-          onSuccess={() => setShowForm(false)}
-          onCancel={() => setShowForm(false)}
+          item={editingItem || undefined}
+          onSuccess={() => { setShowForm(false); setEditingItem(null); }}
+          onCancel={() => { setShowForm(false); setEditingItem(null); }}
         />
       )}
       {error && <p className="error-text">{error instanceof Error ? error.message : 'Failed to load menu'}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-5">
         {items.map((item: MenuItem) => (
-          <MenuItemCard key={item._id} item={item} />
+          <MenuItemCard key={item._id} item={item} onEdit={handleEdit} />
         ))}
       </div>
     </div>

@@ -131,6 +131,14 @@ export const useCreateMenuItem = () => {
   });
 };
 
+export const useUpdateMenuItem = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { id: string; data: Partial<MenuItem> }) => API.put(`/menu/${payload.id}`, payload.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['menu'] }),
+  });
+};
+
 export const useDeleteMenuItem = () => {
   const qc = useQueryClient();
   return useMutation({

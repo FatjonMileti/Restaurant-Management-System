@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useCreateMenuItem, Category } from '../../api/queries';
+import { useCreateMenuItem, useUpdateMenuItem, MenuItem } from '../../api/queries';
 
 interface MenuItemFormData {
   name: string;
@@ -12,23 +12,48 @@ interface MenuItemFormData {
 
 interface Props {
   categories: string[];
+  item?: MenuItem;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export default function MenuItemForm({ categories, onSuccess, onCancel }: Props) {
+export default function MenuItemForm({ categories, item, onSuccess, onCancel }: Props) {
+  const isEdit = !!item;
   const createItem = useCreateMenuItem();
+  const updateItem = useUpdateMenuItem();
   const { register, handleSubmit, reset } = useForm<MenuItemFormData>({
-    defaultValues: { name: '', description: '', price: 0, category: categories.length > 0 ? categories[0] : '', image: '' },
+    defaultValues: item ? {
+      name: item.name,
+      description: item.description || '',
+      price: item.price,
+      category: item.category,
+      image: item.image || '',
+    } : { name: '', description: '', price: 0, category: categories.length > 0 ? categories[0] : '', image: '' },
   });
+
+  useEffect(() => {
+    if (item) {
+      reset({
+        name: item.name,
+        description: item.description || '',
+        price: item.price,
+        category: item.category,
+        image: item.image || '',
+      });
+    }
+  }, [item, reset]);
 
   const onSubmit = async (data: MenuItemFormData) => {
     try {
-      await createItem.mutateAsync({ ...data, price: Number(data.price) });
+      if (isEdit && item) {
+        await updateItem.mutateAsync({ id: item._id, data: { ...data, price: Number(data.price) } });
+      } else {
+        await createItem.mutateAsync({ ...data, price: Number(data.price) });
+      }
       reset();
       onSuccess();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create item');
+      alert(err instanceof Error ? err.message : isEdit ? 'Failed to update item' : 'Failed to create item');
     }
   };
 
@@ -42,7 +67,7 @@ export default function MenuItemForm({ categories, onSuccess, onCancel }: Props)
       </select>
       <input placeholder="Image URL" {...register('image')} className="form-input-sm" />
       <div className="flex gap-2 mt-2">
-        <button type="submit" disabled={createItem.isPending} className="btn-primary">Create</button>
+        <button type="submit" disabled={isEdit ? updateItem.isPending : createItem.isPending} className="btn-primary">{isEdit ? 'Update' : 'Create'}</button>
         <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
       </div>
     </form>
