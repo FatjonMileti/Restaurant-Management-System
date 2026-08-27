@@ -160,6 +160,14 @@ export const useCreateOrder = () => {
   });
 };
 
+export const useDeleteOrder = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => API.delete(`/orders/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  });
+};
+
 export const useUpdateOrderStatus = () => {
   const qc = useQueryClient();
   return useMutation({

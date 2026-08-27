@@ -1,5 +1,5 @@
 import React from 'react';
-import { useOrders, useUpdateOrderStatus, Order } from '../../api/queries';
+import { useOrders, useUpdateOrderStatus, useDeleteOrder, Order } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
 
 const statusColorMap: Record<string, string> = {
@@ -13,6 +13,7 @@ export default function OrderList() {
   const { user } = useAuth();
   const { data: orders = [], error: ordersError } = useOrders();
   const updateStatus = useUpdateOrderStatus();
+  const deleteOrder = useDeleteOrder();
   const [actionError, setActionError] = React.useState('');
 
   const handleUpdateStatus = async (id: string, status: string) => {
@@ -20,6 +21,15 @@ export default function OrderList() {
       await updateStatus.mutateAsync({ id, status });
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to update order status');
+    }
+  };
+
+  const handleDeleteOrder = async (id: string) => {
+    if (!window.confirm('Delete this order?')) return;
+    try {
+      await deleteOrder.mutateAsync(id);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to delete order');
     }
   };
 
@@ -47,11 +57,23 @@ export default function OrderList() {
               <span className={`${statusColorMap[order.status] || 'bg-gray-500'} text-white px-3 py-1 rounded-full inline-block mb-2.5 text-sm capitalize`}>
                 {order.status}
               </span>
-              {user?.role !== 'customer' && order.status !== 'completed' && order.status !== 'cancelled' && (
+              {user?.role !== 'customer' && (
                 <div className="flex flex-col gap-1.5 items-end">
-                  {order.status === 'pending' && <button onClick={() => handleUpdateStatus(order._id, 'preparing')} className="btn-blue-sm">Start Preparing</button>}
-                  {order.status === 'preparing' && <button onClick={() => handleUpdateStatus(order._id, 'completed')} className="btn-blue-sm">Mark Completed</button>}
-                  <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="btn-danger-sm">Cancel</button>
+                  {order.status === 'pending' && (
+                    <>
+                      <button onClick={() => handleUpdateStatus(order._id, 'preparing')} className="btn-blue-sm">Edit / Start Preparing</button>
+                      <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="btn-danger-sm">Cancel</button>
+                    </>
+                  )}
+                  {order.status === 'preparing' && (
+                    <>
+                      <button onClick={() => handleUpdateStatus(order._id, 'completed')} className="btn-blue-sm">Mark Completed</button>
+                      <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="btn-danger-sm">Cancel</button>
+                    </>
+                  )}
+                  {(order.status === 'completed' || order.status === 'cancelled') && (
+                    <button onClick={() => handleDeleteOrder(order._id)} className="btn-danger-sm">Delete</button>
+                  )}
                 </div>
               )}
             </div>
