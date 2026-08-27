@@ -1,5 +1,5 @@
 import express from 'express';
-import { getOrders, getOrder, createOrder, updateOrderStatus, deleteOrder } from '../controllers/orders.js';
+import { getOrders, getOrder, createOrder, updateOrderStatus, deleteOrder, updateOrder } from '../controllers/orders.js';
 import { protect, staff } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -122,6 +122,8 @@ router.post('/', protect, createOrder);
  *         description: Status updated
  */
 router.delete('/:id', protect, staff, deleteOrder);
+
+router.put('/:id', protect, staff, updateOrder);
 
 router.put('/:id/status', protect, staff, updateOrderStatus);
 

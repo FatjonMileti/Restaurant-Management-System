@@ -82,6 +82,21 @@ export const deleteOrder = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
+export const updateOrder = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { items, tableNumber, paymentMethod } = req.body;
+    const totalAmount = items ? items.reduce((sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity, 0) : req.body.totalAmount;
+    const order = await Order.findByIdAndUpdate(req.params.id, { ...req.body, totalAmount }, { new: true, runValidators: true });
+    if (!order) {
+      res.status(404).json({ message: 'Order not found' });
+      return;
+    }
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Server error' });
+  }
+};
+
 export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { status } = req.body;

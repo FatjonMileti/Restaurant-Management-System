@@ -17,6 +17,7 @@ export interface MenuItem {
 }
 
 export interface OrderItem {
+  menuItem?: string;
   name: string;
   price: number;
   quantity: number;
@@ -156,6 +157,14 @@ export const useCreateOrder = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: NewOrderPayload) => API.post('/orders', payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  });
+};
+
+export const useUpdateOrder = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { id: string; data: Partial<Order> }) => API.put(`/orders/${payload.id}`, payload.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
   });
 };
