@@ -99,6 +99,8 @@ cd frontend && npm run build    # Creates optimized build/
 | `/api/orders/:id`            | GET    | User   | Get order              |
 | `/api/orders`                | POST   | User   | Create order           |
 | `/api/orders/:id/status`     | PUT    | Staff  | Update order status    |
+| `/api/orders/:id`            | PUT    | Staff  | Update order details   |
+| `/api/orders/:id`            | DELETE | Staff  | Delete order           |
 | `/api/categories`            | GET    | —      | List categories         |
 | `/api/categories`            | POST   | Admin  | Create category         |
 | `/api/categories/:id`        | PUT    | Admin  | Update category         |
@@ -108,8 +110,10 @@ cd frontend && npm run build    # Creates optimized build/
 | `/api/reservations`          | POST   | User   | Create reservation     |
 | `/api/reservations/:id`      | PUT    | Admin  | Update reservation     |
 | `/api/reservations/:id/cancel` | PUT  | User   | Cancel reservation     |
+| `/api/reservations/:id`      | DELETE | Admin  | Delete reservation     |
 
 ## Notes
 
 - **Settings Page:** The admin page has been renamed to `Settings` (`/settings`) where admins manage users and categories.
+- **Filtering:** Menu supports category filter; Orders support status and table number filters; Reservations support status and table number filters.
 - **Dynamic Categories:** Menu item categories are managed via `/api/categories` and are no longer hardcoded. The Settings page allows adding, editing, and deleting categories with default data pulled from the database.

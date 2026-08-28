@@ -121,9 +121,51 @@ router.post('/', protect, createOrder);
  *       200:
  *         description: Status updated
  */
-router.delete('/:id', protect, staff, deleteOrder);
-
+/**
+ * @swagger
+ * /api/orders/{id}:
+ *   put:
+ *     summary: Update an order (staff/admin only)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Order'
+ *     responses:
+ *       200:
+ *         description: Order updated
+ */
 router.put('/:id', protect, staff, updateOrder);
+
+/**
+ * @swagger
+ * /api/orders/{id}:
+ *   delete:
+ *     summary: Delete an order (staff/admin only)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order removed
+ */
+router.delete('/:id', protect, staff, deleteOrder);
 
 router.put('/:id/status', protect, staff, updateOrderStatus);
 

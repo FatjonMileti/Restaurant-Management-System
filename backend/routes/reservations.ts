@@ -137,6 +137,24 @@ router.put('/:id', protect, admin, updateReservation);
  *       200:
  *         description: Reservation cancelled
  */
+/**
+ * @swagger
+ * /api/reservations/{id}:
+ *   delete:
+ *     summary: Delete a reservation (admin only)
+ *     tags: [Reservations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Reservation removed
+ */
 router.delete('/:id', protect, admin, deleteReservation);
 
 router.put('/:id/cancel', protect, cancelReservation);
