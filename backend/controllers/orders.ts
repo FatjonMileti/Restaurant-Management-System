@@ -94,6 +94,18 @@ export const updateOrder = async (req: Request, res: Response): Promise<void> =>
   try {
     const { items, tableNumber, paymentMethod } = req.body;
     const totalAmount = items ? items.reduce((sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity, 0) : req.body.totalAmount;
+    if (tableNumber) {
+      const busyTable = await Order.findOne({
+        tableNumber,
+        status: { $in: ['pending', 'preparing'] },
+        _id: { $ne: req.params.id },
+      });
+      if (busyTable) {
+        res.status(409).json({ message: 'Table is busy (order pending or preparing)' });
+        return;
+      }
+    }
+
     const order = await Order.findByIdAndUpdate(req.params.id, { ...req.body, totalAmount }, { new: true, runValidators: true });
     if (!order) {
       res.status(404).json({ message: 'Order not found' });
