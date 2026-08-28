@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../store/authStore';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, Category } from '../../api/queries';
+import SectionCard from '../SectionCard';
 
 export default function CategorySection() {
   const { data: categoriesData = [] } = useCategories();
@@ -33,8 +34,7 @@ export default function CategorySection() {
   };
 
   return (
-    <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 shadow-sm">
-      <h3 className="text-xl font-semibold mb-4">Categories</h3>
+    <SectionCard title="Categories">
       <div className="flex gap-2 mb-5">
         <input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="New category name" className="form-input-sm !mb-0 flex-1" />
         <button onClick={handleCreateCategory} className="px-4 py-2.5 bg-[#3498db] text-white border-none rounded-md cursor-pointer hover:bg-[#2980b9] transition-colors whitespace-nowrap">Add Category</button>
@@ -58,6 +58,6 @@ export default function CategorySection() {
           </div>
         ))}
       </div>
-    </div>
+    </SectionCard>
   );
 }

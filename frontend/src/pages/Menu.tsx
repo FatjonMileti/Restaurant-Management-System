@@ -31,7 +31,7 @@ function Menu() {
           {showForm ? 'Cancel' : '+ Add Item'}
         </Button>
       </Box>
-      <Box sx={{ display: 'flex', gap: 2, mb: 2, bgcolor: 'grey.100', p: 2, borderRadius: 1 }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 2, bgcolor: 'grey.100', p: 2, borderRadius: 1, alignItems: 'center' }}>
         <Typography variant="body2" sx={{ fontWeight: 600 }}>Filter:</Typography>
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="form-input-sm w-40">
           <option value="">All</option>

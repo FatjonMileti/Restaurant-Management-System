@@ -4,6 +4,7 @@ import { AxiosError } from 'axios';
 import { Box, Typography, Button, Paper, TextField, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useAuth } from '../../store/authStore';
 import { useCreateUser, useDeleteUser, useUpdateUserRole, useUsers } from '../../api/queries';
+import SectionCard from '../SectionCard';
 
 const ROLES = ['customer', 'staff', 'admin'] as const;
 const roleColors: Record<string, string> = { admin: 'bg-red-500', staff: 'bg-blue-500', customer: 'bg-green-600' };
@@ -29,11 +30,11 @@ export default function UserSection() {
   const handleRoleChange = async (id: string, role: string) => { try { await updateUserRole.mutateAsync({ id, role }); setEditingRole(null); } catch (err) { alert((err as AxiosError<{message:string}>).response?.data?.message || 'Role update failed'); } };
 
   return (
-    <Box sx={{ p: 3, borderRadius: 2, boxShadow: 1, mb: 4, bgcolor: "white", border: 1, borderColor: "divider" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Users</Typography>
-        <Button onClick={() => setShowForm(!showForm)} variant="contained" color="secondary">{showForm ? 'Cancel' : '+ Add User'}</Button>
-      </Box>
+    <SectionCard title="Users">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold">Users</h3>
+        <button onClick={() => setShowForm(!showForm)} className="btn-secondary">{showForm ? 'Cancel' : '+ Add User'}</button>
+      </div>
       {showForm && (
         <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-100 p-5 rounded-lg mb-5">
           <input placeholder="Name" {...register('name', { required: true })} className="form-input-sm" />
@@ -71,6 +72,6 @@ export default function UserSection() {
           </tbody>
         </table>
       </div>
-    </Box>
+    </SectionCard>
   );
 }

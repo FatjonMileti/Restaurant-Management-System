@@ -20,9 +20,9 @@ function Navbar() {
           Restaurant MS
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {location.pathname !== "/menu" && (
+          {/* {location.pathname !== "/menu" && ( */}
             <Button component={Link} to="/menu" sx={{ color: '#fff' }}>Menu</Button>
-          )}
+          {/* )} */}
           {user ? (
             <>
               <Button component={Link} to="/dashboard" sx={{ color: '#fff' }}>Dashboard</Button>

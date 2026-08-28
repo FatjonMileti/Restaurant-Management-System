@@ -2,14 +2,8 @@ import React, { useState } from 'react';
 import { useOrders, useUpdateOrderStatus, useDeleteOrder, Order } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
 import LoadingSpinner from '../LoadingSpinner';
+import StatusBadge from '../StatusBadge';
 import FilterBar from '../FilterBar';
-
-const statusColorMap: Record<string, string> = {
-  pending: 'bg-amber-500',
-  preparing: 'bg-blue-500',
-  completed: 'bg-green-600',
-  cancelled: 'bg-red-500',
-};
 
 interface Props {
   onEditOrder: (order: Order) => void;
@@ -80,9 +74,7 @@ export default function OrderList({ onEditOrder }: Props) {
               <p className="mt-2"><strong>Total: ${order.totalAmount.toFixed(2)}</strong></p>
             </div>
             <div className="text-right">
-              <span className={`${statusColorMap[order.status] || 'bg-gray-500'} text-white px-3 py-1 rounded-full inline-block mb-2.5 text-sm capitalize`}>
-                {order.status}
-              </span>
+              <StatusBadge status={order.status} className="mb-2.5 text-sm" />
               {((user?.role !== 'customer') || (user?.role === 'customer' && order.user?._id === user?._id)) && (
                 <div className="flex flex-col gap-1.5 items-end">
                   {order.status === 'pending' && (

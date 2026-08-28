@@ -3,12 +3,7 @@ import { useReservations, useCancelReservation, useDeleteReservation, Reservatio
 import { useAuth } from '../../store/authStore';
 import LoadingSpinner from '../LoadingSpinner';
 import FilterBar from '../FilterBar';
-
-const statusColorMap: Record<string, string> = {
-  confirmed: 'bg-green-600',
-  cancelled: 'bg-red-500',
-  completed: 'bg-blue-500',
-};
+import StatusBadge from '../StatusBadge';
 
 interface Props {
   onEditReservation?: (res: Reservation) => void;
@@ -77,9 +72,7 @@ export default function ReservationList({ onEditReservation }: Props) {
                 <p className="text-gray-400 text-xs">{new Date(res.createdAt).toLocaleString()}</p>
               </div>
               <div className="text-right">
-                <span className={`${statusColorMap[res.status] || 'bg-gray-500'} text-white px-3 py-1 rounded-full inline-block text-sm capitalize`}>
-                  {res.status}
-                </span>
+                <StatusBadge status={res.status} className="text-sm" />
                 {(user?.role !== 'customer' || (user?.role === 'customer' && res.user?._id === user?._id)) && (
                   <div className="mt-2.5">
                     {res.status === 'confirmed' && (
