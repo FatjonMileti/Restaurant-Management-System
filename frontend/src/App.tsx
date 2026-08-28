@@ -23,7 +23,7 @@ function App() {
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         {(isFetching > 0 || isMutating > 0) && (
-          <div className="fixed top-4 right-4 z-50">
+          <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/10 backdrop-blur-sm">
             <LoadingSpinner />
           </div>
         )}
