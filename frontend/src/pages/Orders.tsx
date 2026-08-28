@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Box, Typography, Button } from '@mui/material';
 import { useAuth } from '../store/authStore';
 import OrderFormComponent from '../components/pages/OrderForm';
 import OrderList from '../components/pages/OrderList';
@@ -10,15 +11,15 @@ export default function Orders() {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
 
   return (
-    <div>
-      <div className="page-header">
-        <h2 className="page-title">Orders</h2>
+    <Box>
+      <Box className="flex justify-between items-center mb-2">
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Orders</Typography>
         {user?.role !== 'customer' && (
-          <button onClick={() => { setShowCreate(!showCreate); setEditingOrder(null); }} className="btn-secondary">
+          <Button variant="contained" color="secondary" onClick={() => { setShowCreate(!showCreate); setEditingOrder(null); }}>
             {showCreate ? 'Cancel' : '+ New Order'}
-          </button>
+          </Button>
         )}
-      </div>
+      </Box>
       <OrderFormComponent
         showCreate={showCreate}
         setShowCreate={setShowCreate}
@@ -26,6 +27,6 @@ export default function Orders() {
         onEditDone={() => { setEditingOrder(null); }}
       />
       <OrderList onEditOrder={(order) => { setEditingOrder(order); }} />
-    </div>
+    </Box>
   );
 }

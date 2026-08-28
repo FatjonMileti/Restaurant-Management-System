@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
+import { Box, Typography, TextField, Button, Paper } from '@mui/material';
 import { AxiosError } from 'axios';
 
 interface RegisterFormData {
@@ -28,17 +29,19 @@ export default function RegisterFormComponent() {
   };
 
   return (
-    <div className="auth-wrapper">
-      <h2 className="page-title mb-4">Register</h2>
-      {error && <p className="error-text mb-3">{error}</p>}
-      <form onSubmit={handleSubmit(onSubmit)} className="auth-card">
-        <input placeholder="Name" {...register('name', { required: true })} className="form-input" />
-        <input type="email" placeholder="Email" {...register('email', { required: true })} className="form-input" />
-        <input type="password" placeholder="Password (min 6 chars)" {...register('password', { required: true, minLength: 6 })} className="form-input" />
-        <input placeholder="Phone" {...register('phone')} className="form-input" />
-        <button type="submit" className="btn-primary-block">Register</button>
-      </form>
-      <p className="mt-4">Already have an account? <Link to="/login" className="text-[#e94560] hover:underline">Login</Link></p>
-    </div>
+    <Box className="max-w-md mx-auto mt-20">
+      <Paper className="p-5 rounded-xl">
+        <Typography variant="h4" className="text-2xl font-bold mb-4">Register</Typography>
+        {error && <Typography sx={{ color: 'error.main', mb: 2 }}>{error}</Typography>}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <TextField fullWidth placeholder="Name" {...register('name', { required: true })} margin="normal" />
+          <TextField fullWidth type="email" placeholder="Email" {...register('email', { required: true })} margin="normal" />
+          <TextField fullWidth type="password" placeholder="Password (min 6 chars)" {...register('password', { required: true, minLength: 6 })} margin="normal" />
+          <TextField fullWidth placeholder="Phone" {...register('phone')} margin="normal" />
+          <Button type="submit" fullWidth variant="contained" color="primary" className="w-full p-3 bg-[#e94560] text-white border-none rounded-md text-base cursor-pointer hover:bg-[#d63d54] transition-colors mt-4">Register</Button>
+        </form>
+      </Paper>
+      <Typography sx={{ mt: 2 }}>Already have an account? <Link to="/login" style={{ color: '#e94560' }}>Login</Link></Typography>
+    </Box>
   );
 }
