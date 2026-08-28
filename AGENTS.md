@@ -39,6 +39,7 @@ All routes are mounted in `server.ts`:
 - `/api/menu` → `routes/menu.ts`
 - `/api/orders` → `routes/orders.ts`
 - `/api/reservations` → `routes/reservations.ts`
+- `/api/categories` → `routes/category.ts`
 
 ## Seeded credentials
 
@@ -48,8 +49,19 @@ All routes are mounted in `server.ts`:
 | Staff | staff@restaurant.com | staff123 |
 | Customer | john@example.com | customer123 |
 
-## What is NOT here
+- `frontend/src/components/pages/` — split page components (MenuItemCard, MenuItemForm, MenuHeader, OrderForm, OrderList, ReservationForm, ReservationList, UserSection, CategorySection, LoginForm, RegisterForm)
+- Reusable UI: `FilterBar`, `StatusBadge`, `SectionCard`, `LoadingSpinner`, `ActionRow`
+- MUI (`@mui/material`) used across Navbar, forms, pages, cards — styled via Tailwind `className`
+- `frontend/src/App.tsx` mounts global `LoadingSpinner` using `useIsFetching` + `useIsMutating`
+
+- Categories managed from admin `/settings` page (`CategorySection`) via `/api/categories`
+- Dynamic categories: MenuItem `category` references DB categories (no hardcoded enum)
+- Menu item edit: click card opens edit form with DB default data (`name`, `description`, `price`, `category`, `image`)
+- Order edit: pending orders editable (`PUT /api/orders/:id`); completed/cancelled deletable (`DELETE /api/orders/:id`)
+- Reservation edit/delete: confirmed editable (`PUT /api/reservations/:id`); completed/cancelled deletable (`DELETE /api/reservations/:id`)
+
+- Filtering: Menu (category dropdown), Orders (status + table inputs), Reservations (status + table inputs)
+- `.prettierrc` and `.editorconfig` at root; `prettier` installed (`npm install prettier`); `npm run format`
 
 - No test framework or test files exist
 - No CI/CD workflows
-- No lint/format config
