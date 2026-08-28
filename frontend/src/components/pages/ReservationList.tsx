@@ -19,6 +19,8 @@ export default function ReservationList({ onEditReservation }: Props) {
   const cancelReservation = useCancelReservation();
   const deleteReservation = useDeleteReservation();
   const [actionError, setActionError] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const [tableFilter, setTableFilter] = React.useState('');
 
   const handleCancel = async (id: string) => {
     try {
@@ -39,14 +41,31 @@ export default function ReservationList({ onEditReservation }: Props) {
 
   const error = fetchError instanceof Error ? fetchError.message : actionError;
 
+  const filteredReservations = reservations.filter((res: Reservation) => {
+    const matchesStatus = statusFilter ? res.status === statusFilter : true;
+    const matchesTable = tableFilter ? (res.tableNumber && String(res.tableNumber) === tableFilter) : true;
+    return matchesStatus && matchesTable;
+  });
+
   return (
     <>
+      <div className="flex gap-3 mb-4 items-center">
+        <label className="text-sm font-medium">Status:</label>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-input-sm w-auto">
+          <option value="">All</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="completed">Completed</option>
+        </select>
+        <label className="text-sm font-medium ml-2">Table:</label>
+        <input type="number" placeholder="Table #" value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} className="form-input-sm w-24" />
+      </div>
       {isLoading && <LoadingSpinner />}
       {error && !isLoading && <p className="error-text">{error}</p>}
-      {reservations.length === 0 ? (
+      {filteredReservations.length === 0 ? (
         <p className="text-gray-400 mt-5">No reservations yet.</p>
       ) : (
-        reservations.map((res: Reservation) => (
+        filteredReservations.map((res: Reservation) => (
           <div key={res._id} className="card">
             <div className="flex justify-between">
               <div>

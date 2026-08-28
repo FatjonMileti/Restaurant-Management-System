@@ -10,6 +10,7 @@ function Menu() {
   const { data: categoriesData = [] } = useCategories();
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState('');
 
   const categories = categoriesData.map((c: Category) => c.name);
 
@@ -18,9 +19,20 @@ function Menu() {
     setShowForm(true);
   };
 
+  const filteredItems = items.filter((item: MenuItem) =>
+    categoryFilter ? item.category === categoryFilter : true
+  );
+
   return (
     <div>
       <MenuHeader showForm={showForm} toggleForm={() => { setShowForm(!showForm); setEditingItem(null); }} />
+      <div className="flex gap-2 mb-4 items-center">
+        <label className="text-sm font-medium">Category:</label>
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="form-input-sm w-auto">
+          <option value="">All</option>
+          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
       {showForm && (
         <MenuItemForm
           categories={categories}
@@ -32,7 +44,7 @@ function Menu() {
       {isLoading && <LoadingSpinner />}
       {error && !isLoading && <p className="error-text">{error instanceof Error ? error.message : 'Failed to load menu'}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-5">
-        {items.map((item: MenuItem) => (
+        {filteredItems.map((item: MenuItem) => (
           <MenuItemCard key={item._id} item={item} onEdit={handleEdit} />
         ))}
       </div>

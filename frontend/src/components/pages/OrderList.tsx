@@ -20,6 +20,8 @@ export default function OrderList({ onEditOrder }: Props) {
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
   const [actionError, setActionError] = React.useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [tableFilter, setTableFilter] = useState('');
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
@@ -40,11 +42,29 @@ export default function OrderList({ onEditOrder }: Props) {
 
   const error = ordersError instanceof Error ? ordersError.message : actionError;
 
+  const filteredOrders = orders.filter((order: Order) => {
+    const matchesStatus = statusFilter ? order.status === statusFilter : true;
+    const matchesTable = tableFilter ? (order.tableNumber && String(order.tableNumber) === tableFilter) : true;
+    return matchesStatus && matchesTable;
+  });
+
   return (
     <>
+      <div className="flex gap-3 mb-4 items-center">
+        <label className="text-sm font-medium">Status:</label>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-input-sm w-auto">
+          <option value="">All</option>
+          <option value="pending">Pending</option>
+          <option value="preparing">Preparing</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <label className="text-sm font-medium ml-2">Table:</label>
+        <input type="number" placeholder="Table #" value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} className="form-input-sm w-24" />
+      </div>
       {isLoading && <LoadingSpinner />}
       {error && !isLoading && <p className="error-text mt-3">{error}</p>}
-      {orders.map((order: Order) => (
+      {filteredOrders.map((order: Order) => (
         <div key={order._id} className="card">
           <div className="flex justify-between">
             <div>
