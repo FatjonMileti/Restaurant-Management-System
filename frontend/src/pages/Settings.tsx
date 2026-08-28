@@ -1,14 +1,14 @@
-import React from 'react';
-import { Box, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import { useAuth } from '../store/authStore';
 import UserSection from '../components/pages/UserSection';
 import CategorySection from '../components/pages/CategorySection';
 
 export default function Settings() {
   return (
-    <Box>
-      <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 3 }}>Settings</Typography>
+    <div>
+      <h2 className="page-title mb-5">Settings</h2>
       <UserSection />
       <CategorySection />
-    </Box>
+    </div>
   );
 }
