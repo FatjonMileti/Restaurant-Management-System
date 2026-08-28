@@ -9,6 +9,7 @@ export default function Settings() {
       <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 3 }}>Settings</Typography>
       <UserSection />
       <CategorySection />
+      {/*restorant details section */}
     </Box>
   );
 }
