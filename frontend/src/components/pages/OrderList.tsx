@@ -62,8 +62,8 @@ export default function OrderList({ onEditOrder }: Props) {
         onInputChange={setTableFilter}
         inputType="number"
       />
-      {isLoading && <LoadingSpinner />}
-      {error && !isLoading && <p className="error-text mt-3">{error}</p>}
+      
+      {error && <p className="error-text mt-3">{error}</p>}
       {filteredOrders.map((order: Order) => (
         <div key={order._id} className="card">
           <div className="flex justify-between">

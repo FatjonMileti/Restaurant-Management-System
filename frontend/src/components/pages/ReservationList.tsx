@@ -61,7 +61,7 @@ export default function ReservationList({ onEditReservation }: Props) {
         onInputChange={setTableFilter}
         inputType="number"
       />
-      {isLoading && <LoadingSpinner />}
+      
       {error && !isLoading && <p className="error-text">{error}</p>}
       {filteredReservations.length === 0 ? (
         <p className="text-gray-400 mt-5">No reservations yet.</p>
