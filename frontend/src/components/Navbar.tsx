@@ -20,11 +20,8 @@ function Navbar() {
           Restaurant MS
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {/* {location.pathname !== "/menu" && ( */}
-          {location.pathname !== "/menu" && (
             <Button component={Link} to="/menu" sx={{ color: '#fff', textDecoration: location.pathname === '/menu' ? 'underline' : 'none', textUnderlineOffset: '4px' }}>Menu</Button>
-          )}
-          {/* )} */}
+          
           {user ? (
             <>
               <Button component={Link} to="/dashboard" sx={{ color: '#fff', textDecoration: location.pathname === '/dashboard' ? 'underline' : 'none', textUnderlineOffset: '4px' }}>Dashboard</Button>
