@@ -67,8 +67,9 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
       }
       cart.clear();
       reset();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : editingOrder ? 'Failed to edit order' : 'Failed to place order');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || (editingOrder ? 'Failed to edit order' : 'Failed to place order');
+      setActionError(msg);
     }
   };
 

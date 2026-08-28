@@ -53,6 +53,14 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    if (tableNumber) {
+      const busyTable = await Order.findOne({ tableNumber, status: { $in: ['pending', 'preparing'] } });
+      if (busyTable) {
+        res.status(409).json({ message: 'Table is busy (order pending or preparing)' });
+        return;
+      }
+    }
+
     const totalAmount = items.reduce((sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity, 0);
 
     const order = await Order.create({
