@@ -4,6 +4,7 @@ import { useAuth } from '../../store/authStore';
 import LoadingSpinner from '../LoadingSpinner';
 import StatusBadge from '../StatusBadge';
 import FilterBar from '../FilterBar';
+import ConfirmDialog from '../ConfirmDialog';
 
 interface Props {
   onEditOrder: (order: Order) => void;
@@ -15,6 +16,7 @@ export default function OrderList({ onEditOrder }: Props) {
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
   const [actionError, setActionError] = React.useState('');
+  const [deleteConfirm, setDeleteConfirm] = React.useState<{ open: boolean; id?: string }>({ open: false });
   const [statusFilter, setStatusFilter] = useState('');
   const [tableFilter, setTableFilter] = useState('');
 
@@ -26,13 +28,15 @@ export default function OrderList({ onEditOrder }: Props) {
     }
   };
 
-  const handleDeleteOrder = async (id: string) => {
-    if (!window.confirm('Delete this order?')) return;
-    try {
-      await deleteOrder.mutateAsync(id);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to delete order');
+  const handleDeleteOrder = async () => {
+    if (deleteConfirm.id) {
+      try {
+        await deleteOrder.mutateAsync(deleteConfirm.id);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : 'Failed to delete order');
+      }
     }
+    setDeleteConfirm({ open: false });
   };
 
   const error = ordersError instanceof Error ? ordersError.message : actionError;
@@ -58,6 +62,13 @@ export default function OrderList({ onEditOrder }: Props) {
       />
       
       {error && <p className="error-text mt-3">{error}</p>}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title="Delete Order"
+        message="Are you sure you want to delete this order?"
+        onConfirm={handleDeleteOrder}
+        onCancel={() => setDeleteConfirm({ open: false })}
+      />
       {filteredOrders.map((order: Order) => (
         <div key={order._id} className="card">
           <div className="flex justify-between">
@@ -91,7 +102,7 @@ export default function OrderList({ onEditOrder }: Props) {
                     </>
                   )}
                   {(order.status === 'completed' || order.status === 'cancelled') && (
-                    <button onClick={() => handleDeleteOrder(order._id)} className="btn-danger-sm">Delete</button>
+                    <button onClick={() => setDeleteConfirm({ open: true, id: order._id })} className="btn-danger-sm">Delete</button>
                   )}
                 </div>
               )}

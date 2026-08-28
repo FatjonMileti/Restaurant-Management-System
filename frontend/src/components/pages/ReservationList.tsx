@@ -4,6 +4,7 @@ import { useAuth } from '../../store/authStore';
 import LoadingSpinner from '../LoadingSpinner';
 import FilterBar from '../FilterBar';
 import StatusBadge from '../StatusBadge';
+import ConfirmDialog from '../ConfirmDialog';
 
 interface Props {
   onEditReservation?: (res: Reservation) => void;
@@ -14,6 +15,7 @@ export default function ReservationList({ onEditReservation }: Props) {
   const { data: reservations = [], error: fetchError, isLoading } = useReservations();
   const cancelReservation = useCancelReservation();
   const deleteReservation = useDeleteReservation();
+  const [deleteConfirm, setDeleteConfirm] = React.useState<{ open: boolean; id?: string }>({ open: false });
   const [actionError, setActionError] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [tableFilter, setTableFilter] = React.useState('');
@@ -26,13 +28,11 @@ export default function ReservationList({ onEditReservation }: Props) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this reservation?')) return;
-    try {
-      await deleteReservation.mutateAsync(id);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to delete reservation');
+  const handleDelete = async () => {
+    if (deleteConfirm.id) {
+      try { await deleteReservation.mutateAsync(deleteConfirm.id); } catch (err) { setActionError(err instanceof Error ? err.message : 'Failed to delete reservation'); }
     }
+    setDeleteConfirm({ open: false });
   };
 
   const error = fetchError instanceof Error ? fetchError.message : actionError;
@@ -58,6 +58,7 @@ export default function ReservationList({ onEditReservation }: Props) {
       />
       
       {error && !isLoading && <p className="error-text">{error}</p>}
+      <ConfirmDialog open={deleteConfirm.open} title="Delete Reservation" message="Are you sure you want to delete this reservation?" onConfirm={handleDelete} onCancel={() => setDeleteConfirm({ open: false })} />
       {filteredReservations.length === 0 ? (
         <p className="text-gray-400 mt-5">No reservations yet.</p>
       ) : (
@@ -82,7 +83,7 @@ export default function ReservationList({ onEditReservation }: Props) {
                       </>
                     )}
                     {(res.status === 'cancelled' || res.status === 'completed') && (
-                      <button onClick={() => handleDelete(res._id)} className="btn-danger-sm">Delete</button>
+                      <button onClick={() => setDeleteConfirm({ open: true, id: res._id })} className="btn-danger-sm">Delete</button>
                     )}
                   </div>
                 )}

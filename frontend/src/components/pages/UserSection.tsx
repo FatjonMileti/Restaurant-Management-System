@@ -5,6 +5,7 @@ import { Box, Typography, Button, Paper, TextField, Select, MenuItem, Table, Tab
 import { useAuth } from '../../store/authStore';
 import { useCreateUser, useDeleteUser, useUpdateUserRole, useUsers } from '../../api/queries';
 import SectionCard from '../SectionCard';
+import ConfirmDialog from '../ConfirmDialog';
 
 const ROLES = ['customer', 'staff', 'admin'] as const;
 const roleColors: Record<string, string> = { admin: 'bg-red-500', staff: 'bg-blue-500', customer: 'bg-green-600' };
@@ -19,6 +20,7 @@ export default function UserSection() {
   const createUser = useCreateUser();
   const deleteUser = useDeleteUser();
   const updateUserRole = useUpdateUserRole();
+  const [deleteConfirm, setDeleteConfirm] = React.useState<{ open: boolean; id?: string }>({ open: false });
   const [showForm, setShowForm] = useState(false);
   const [editingRole, setEditingRole] = useState<string | null>(null);
   const { register, handleSubmit, reset } = useForm<UserForm>({ defaultValues: { name: '', email: '', password: '', phone: '', role: 'customer' } });
@@ -26,7 +28,12 @@ export default function UserSection() {
   const onSubmit = async (data: UserForm) => {
     try { await createUser.mutateAsync(data); reset(); setShowForm(false); } catch (err) { alert((err as AxiosError<{message:string}>).response?.data?.message || 'Create failed'); }
   };
-  const handleDeleteUser = async (id: string) => { if (!window.confirm('Delete this user?')) return; try { await deleteUser.mutateAsync(id); } catch (err) { alert((err as AxiosError<{message:string}>).response?.data?.message || 'Delete failed'); } };
+  const handleDeleteUser = async () => {
+    if (deleteConfirm.id) {
+      try { await deleteUser.mutateAsync(deleteConfirm.id); } catch (err) { alert((err as AxiosError<{message:string}>).response?.data?.message || 'Delete failed'); }
+    }
+    setDeleteConfirm({ open: false });
+  };
   const handleRoleChange = async (id: string, role: string) => { try { await updateUserRole.mutateAsync({ id, role }); setEditingRole(null); } catch (err) { alert((err as AxiosError<{message:string}>).response?.data?.message || 'Role update failed'); } };
 
   return (
@@ -47,6 +54,7 @@ export default function UserSection() {
           <button type="submit" className="btn-primary">Create User</button>
         </form>
       )}
+      <ConfirmDialog open={deleteConfirm.open} title="Delete User" message="Are you sure you want to delete this user?" onConfirm={handleDeleteUser} onCancel={() => setDeleteConfirm({ open: false })} />
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead><tr className="bg-[#1a1a2e] text-white">
@@ -66,7 +74,7 @@ export default function UserSection() {
                   )}
                 </td>
                 <td className="table-td">{u.phone || '-'}</td>
-                <td className="table-td">{u._id !== currentUser?._id && <button onClick={() => handleDeleteUser(u._id)} className="btn-danger">Delete</button>}</td>
+                <td className="table-td">{u._id !== currentUser?._id && <button onClick={() => setDeleteConfirm({ open: true, id: u._id })} className="btn-danger">Delete</button>}</td>
               </tr>
             ))}
           </tbody>
