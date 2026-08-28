@@ -21,21 +21,23 @@ function Navbar() {
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {/* {location.pathname !== "/menu" && ( */}
-            <Button component={Link} to="/menu" sx={{ color: '#fff' }}>Menu</Button>
+          {location.pathname !== "/menu" && (
+            <Button component={Link} to="/menu" sx={{ color: '#fff', textDecoration: location.pathname === '/menu' ? 'underline' : 'none', textUnderlineOffset: '4px' }}>Menu</Button>
+          )}
           {/* )} */}
           {user ? (
             <>
-              <Button component={Link} to="/dashboard" sx={{ color: '#fff' }}>Dashboard</Button>
-              <Button component={Link} to="/orders" sx={{ color: '#fff' }}>Orders</Button>
-              <Button component={Link} to="/reservations" sx={{ color: '#fff' }}>Reservations</Button>
-              {user.role === 'admin' && <Button component={Link} to="/settings" sx={{ color: '#fff' }}>Settings</Button>}
+              <Button component={Link} to="/dashboard" sx={{ color: '#fff', textDecoration: location.pathname === '/dashboard' ? 'underline' : 'none', textUnderlineOffset: '4px' }}>Dashboard</Button>
+              <Button component={Link} to="/orders" sx={{ color: '#fff', textDecoration: location.pathname === '/orders' ? 'underline' : 'none', textUnderlineOffset: '4px' }}>Orders</Button>
+              <Button component={Link} to="/reservations" sx={{ color: '#fff', textDecoration: location.pathname === '/reservations' ? 'underline' : 'none', textUnderlineOffset: '4px' }}>Reservations</Button>
+              {user.role === 'admin' && <Button component={Link} to="/settings" sx={{ color: '#fff', textDecoration: location.pathname === '/settings' ? 'underline' : 'none', textUnderlineOffset: '4px' }}>Settings</Button>}
               <Typography sx={{ color: '#fff', mx: 1 }}>{user.name}</Typography>
               <Button onClick={handleLogout} variant="contained" sx={{ bgcolor: '#e94560', '&:hover': { bgcolor: '#d63d54' } }}>Logout</Button>
             </>
           ) : (
             <>
-              <Button component={Link} to="/login" sx={{ color: '#fff' }}>Login</Button>
-              <Button component={Link} to="/register" sx={{ color: '#fff' }}>Register</Button>
+              <Button component={Link} to="/login" sx={{ color: '#fff', textDecoration: location.pathname === '/login' ? 'underline' : 'none', textUnderlineOffset: '4px' }}>Login</Button>
+              <Button component={Link} to="/register" sx={{ color: '#fff', textDecoration: location.pathname === '/register' ? 'underline' : 'none', textUnderlineOffset: '4px' }}>Register</Button>
             </>
           )}
         </Box>
