@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box, Typography, Paper } from '@mui/material';
 import { useAuth } from '../store/authStore';
 import { useMenu, useOrders, useReservations } from '../api/queries';
 
@@ -8,18 +9,12 @@ interface CardProps {
   color: string;
 }
 
-const cardBg: Record<string, string> = {
-  '#e94560': 'bg-[#e94560]',
-  '#0f3460': 'bg-[#0f3460]',
-  '#16a085': 'bg-[#16a085]',
-};
-
 function Card({ title, value, color }: CardProps) {
   return (
-    <div className={`flex-1 p-8 rounded-xl text-white text-center ${cardBg[color] || 'bg-gray-800'}`}>
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="text-4xl font-bold mt-2">{value}</p>
-    </div>
+    <Paper sx={{ flex: 1, p: 4, borderRadius: 2, textAlign: 'center', bgcolor: color, color: '#fff' }}>
+      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{title}</Typography>
+      <Typography variant="h2" sx={{ fontWeight: 'bold', mt: 2 }}>{value}</Typography>
+    </Paper>
   );
 }
 
@@ -30,14 +25,14 @@ export default function Dashboard() {
   const { data: menuItems = [] } = useMenu();
 
   return (
-    <div>
-      <h2 className="page-title">Dashboard</h2>
-      <p className="mt-2">Welcome, <strong>{user?.name}</strong>!</p>
-      <div className="flex gap-5 mt-8 flex-col md:flex-row">
+    <Box>
+      <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2 }}>Dashboard</Typography>
+      <Typography variant="body1">Welcome, <strong>{user?.name}</strong>!</Typography>
+      <Box sx={{ display: 'flex', gap: 2, mt: 4, flexDirection: { xs: 'column', md: 'row' } }}>
         <Card title="Total Orders" value={orders.length} color="#e94560" />
         <Card title="Reservations" value={reservations.length} color="#0f3460" />
         <Card title="Menu Items" value={menuItems.length} color="#16a085" />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

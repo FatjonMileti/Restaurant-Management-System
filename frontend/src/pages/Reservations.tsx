@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Box, Typography, Button } from '@mui/material';
 import { useAuth } from '../store/authStore';
 import ReservationFormComponent from '../components/pages/ReservationForm';
 import ReservationList from '../components/pages/ReservationList';
@@ -10,13 +11,13 @@ export default function Reservations() {
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 
   return (
-    <div>
-      <div className="page-header">
-        <h2 className="page-title">Reservations</h2>
-        <button onClick={() => { setShowForm(!showForm); setEditingReservation(null); }} className="btn-secondary">
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Reservations</Typography>
+        <Button variant="contained" color="secondary" onClick={() => { setShowForm(!showForm); setEditingReservation(null); }}>
           {showForm ? 'Cancel' : '+ New Reservation'}
-        </button>
-      </div>
+        </Button>
+      </Box>
       <ReservationFormComponent
         showForm={showForm || !!editingReservation}
         setShowForm={(v) => { if (!v) { setEditingReservation(null); } setShowForm(v); }}
@@ -24,6 +25,6 @@ export default function Reservations() {
         onEditDone={() => { setEditingReservation(null); setShowForm(false); }}
       />
       <ReservationList onEditReservation={(res) => { setEditingReservation(res); setShowForm(true); }} />
-    </div>
+    </Box>
   );
 }

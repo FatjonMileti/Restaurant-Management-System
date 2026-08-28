@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
+import { Box, Typography, TextField, Button, Paper } from '@mui/material';
 import { AxiosError } from 'axios';
 
 interface LoginFormData {
@@ -26,15 +27,17 @@ export default function LoginFormComponent() {
   };
 
   return (
-    <div className="auth-wrapper">
-      <h2 className="page-title mb-4">Login</h2>
-      {error && <p className="error-text mb-3">{error}</p>}
-      <form onSubmit={handleSubmit(onSubmit)} className="auth-card">
-        <input type="email" placeholder="Email" {...register('email', { required: true })} className="form-input" />
-        <input type="password" placeholder="Password" {...register('password', { required: true })} className="form-input" />
-        <button type="submit" className="btn-primary-block">Login</button>
-      </form>
-      <p className="mt-4">Don't have an account? <Link to="/register" className="text-[#e94560] hover:underline">Register</Link></p>
-    </div>
+    <Box sx={{ maxWidth: 400, mx: 'auto', mt: 8 }}>
+      <Paper sx={{ p: 4, borderRadius: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>Login</Typography>
+        {error && <Typography sx={{ color: 'error.main', mb: 2 }}>{error}</Typography>}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <TextField fullWidth type="email" placeholder="Email" {...register('email', { required: true })} margin="normal" />
+          <TextField fullWidth type="password" placeholder="Password" {...register('password', { required: true })} margin="normal" />
+          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 2 }}>Login</Button>
+        </form>
+      </Paper>
+      <Typography sx={{ mt: 2 }}>Don't have an account? <Link to="/register" style={{ color: '#e94560' }}>Register</Link></Typography>
+    </Box>
   );
 }
