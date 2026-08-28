@@ -66,6 +66,9 @@
   .btn-blue-sm {
     @apply px-3 py-1.5 bg-blue-500 text-white border-none rounded cursor-pointer hover:bg-blue-600 transition-colors text-xs;
   }
+  .btn-edit {
+    @apply px-3 py-1.5 bg-blue-600 text-white border-none rounded cursor-pointer hover:bg-blue-700 transition-colors text-xs;
+  }
 
   /* Table */
   .table-th {
@@ -78,5 +81,17 @@
   /* Utilities */
   .error-text {
     @apply text-red-600;
+  }
+  .filter-bar {
+    @apply bg-gray-50 border border-gray-200 p-3 rounded-lg shadow-sm flex flex-wrap gap-3 mb-4 items-center;
+  }
+  .filter-bar-blue {
+    @apply bg-blue-50 border border-blue-200 p-3 rounded-lg shadow-sm flex flex-wrap gap-3 mb-4 items-center;
+  }
+  .loading-spinner {
+    @apply flex justify-center items-center py-10;
+  }
+  .btn-clear {
+    @apply px-4 py-2.5 bg-[#3498db] text-white border-none rounded-md cursor-pointer hover:bg-[#2980b9] transition-colors text-xs;
   }
 }
