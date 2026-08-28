@@ -30,7 +30,7 @@ export default function UserSection() {
   const handleRoleChange = async (id: string, role: string) => { try { await updateUserRole.mutateAsync({ id, role }); setEditingRole(null); } catch (err) { alert((err as AxiosError<{message:string}>).response?.data?.message || 'Role update failed'); } };
 
   return (
-    <SectionCard title="Users">
+    <SectionCard>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-semibold">Users</h3>
         <button onClick={() => setShowForm(!showForm)} className="btn-secondary">{showForm ? 'Cancel' : '+ Add User'}</button>
