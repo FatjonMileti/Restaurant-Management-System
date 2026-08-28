@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMenu, MenuItem, useCategories, Category } from '../api/queries';
 import LoadingSpinner from '../components/LoadingSpinner';
+import FilterBar from '../components/FilterBar';
 import MenuHeader from '../components/pages/MenuHeader';
 import MenuItemForm from '../components/pages/MenuItemForm';
 import MenuItemCard from '../components/pages/MenuItemCard';
@@ -26,16 +27,13 @@ function Menu() {
   return (
     <div>
       <MenuHeader showForm={showForm} toggleForm={() => { setShowForm(!showForm); setEditingItem(null); }} />
-      <div className="flex gap-3 mb-4 items-center bg-gray-50 p-3 rounded-lg shadow-sm">
-        <span className="text-sm font-semibold text-gray-700">Filter by category:</span>
-        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="form-input-sm w-40">
-          <option value="">All categories</option>
-          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        {categoryFilter && (
-          <button onClick={() => setCategoryFilter('')} className="btn-secondary text-xs">Clear</button>
-        )}
-      </div>
+      <FilterBar
+        label="Filter by category:"
+        theme="gray"
+        options={[{ value: '', label: 'All categories' }, ...categories.map((c) => ({ value: c, label: c }))]}
+        value={categoryFilter}
+        onChange={setCategoryFilter}
+      />
       {showForm && (
         <MenuItemForm
           categories={categories}

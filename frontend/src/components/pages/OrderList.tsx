@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useOrders, useUpdateOrderStatus, useDeleteOrder, Order } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
 import LoadingSpinner from '../LoadingSpinner';
+import FilterBar from '../FilterBar';
 
 const statusColorMap: Record<string, string> = {
   pending: 'bg-amber-500',
@@ -50,22 +51,17 @@ export default function OrderList({ onEditOrder }: Props) {
 
   return (
     <>
-      <div className="bg-gray-50 p-3 rounded-lg shadow-sm flex gap-3 mb-4 items-center">
-        <span className="text-sm font-semibold text-gray-700">Filter orders:</span>
-        <label className="text-sm font-medium">Status:</label>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-input-sm w-36">
-          <option value="">All</option>
-          <option value="pending">Pending</option>
-          <option value="preparing">Preparing</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <label className="text-sm font-medium ml-2">Table:</label>
-        <input type="number" placeholder="Table #" value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} className="form-input-sm w-28" />
-        {(statusFilter || tableFilter) && (
-          <button onClick={() => { setStatusFilter(''); setTableFilter(''); }} className="btn-secondary text-xs">Clear</button>
-        )}
-      </div>
+      <FilterBar
+        label="Filter orders:"
+        theme="gray"
+        options={[{ value: '', label: 'All' }, { value: 'pending', label: 'Pending' }, { value: 'preparing', label: 'Preparing' }, { value: 'completed', label: 'Completed' }, { value: 'cancelled', label: 'Cancelled' }]}
+        value={statusFilter}
+        onChange={setStatusFilter}
+        inputPlaceholder="Table #"
+        inputValue={tableFilter}
+        onInputChange={setTableFilter}
+        inputType="number"
+      />
       {isLoading && <LoadingSpinner />}
       {error && !isLoading && <p className="error-text mt-3">{error}</p>}
       {filteredOrders.map((order: Order) => (
