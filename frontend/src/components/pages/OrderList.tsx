@@ -50,9 +50,10 @@ export default function OrderList({ onEditOrder }: Props) {
 
   return (
     <>
-      <div className="flex gap-3 mb-4 items-center">
+      <div className="bg-gray-50 p-3 rounded-lg shadow-sm flex gap-3 mb-4 items-center">
+        <span className="text-sm font-semibold text-gray-700">Filter orders:</span>
         <label className="text-sm font-medium">Status:</label>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-input-sm w-auto">
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-input-sm w-36">
           <option value="">All</option>
           <option value="pending">Pending</option>
           <option value="preparing">Preparing</option>
@@ -60,7 +61,10 @@ export default function OrderList({ onEditOrder }: Props) {
           <option value="cancelled">Cancelled</option>
         </select>
         <label className="text-sm font-medium ml-2">Table:</label>
-        <input type="number" placeholder="Table #" value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} className="form-input-sm w-24" />
+        <input type="number" placeholder="Table #" value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} className="form-input-sm w-28" />
+        {(statusFilter || tableFilter) && (
+          <button onClick={() => { setStatusFilter(''); setTableFilter(''); }} className="btn-secondary text-xs">Clear</button>
+        )}
       </div>
       {isLoading && <LoadingSpinner />}
       {error && !isLoading && <p className="error-text mt-3">{error}</p>}

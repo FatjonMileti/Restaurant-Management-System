@@ -49,16 +49,20 @@ export default function ReservationList({ onEditReservation }: Props) {
 
   return (
     <>
-      <div className="flex gap-3 mb-4 items-center">
+      <div className="bg-blue-50 p-3 rounded-lg shadow-sm flex gap-3 mb-4 items-center border border-blue-200">
+        <span className="text-sm font-semibold text-blue-800">Filter reservations:</span>
         <label className="text-sm font-medium">Status:</label>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-input-sm w-auto">
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-input-sm w-36">
           <option value="">All</option>
           <option value="confirmed">Confirmed</option>
           <option value="cancelled">Cancelled</option>
           <option value="completed">Completed</option>
         </select>
         <label className="text-sm font-medium ml-2">Table:</label>
-        <input type="number" placeholder="Table #" value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} className="form-input-sm w-24" />
+        <input type="number" placeholder="Table #" value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} className="form-input-sm w-28" />
+        {(statusFilter || tableFilter) && (
+          <button onClick={() => { setStatusFilter(''); setTableFilter(''); }} className="btn-secondary text-xs">Clear</button>
+        )}
       </div>
       {isLoading && <LoadingSpinner />}
       {error && !isLoading && <p className="error-text">{error}</p>}

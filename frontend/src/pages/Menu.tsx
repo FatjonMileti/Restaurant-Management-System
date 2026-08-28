@@ -26,12 +26,15 @@ function Menu() {
   return (
     <div>
       <MenuHeader showForm={showForm} toggleForm={() => { setShowForm(!showForm); setEditingItem(null); }} />
-      <div className="flex gap-2 mb-4 items-center">
-        <label className="text-sm font-medium">Category:</label>
-        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="form-input-sm w-auto">
-          <option value="">All</option>
+      <div className="flex gap-3 mb-4 items-center bg-gray-50 p-3 rounded-lg shadow-sm">
+        <span className="text-sm font-semibold text-gray-700">Filter by category:</span>
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="form-input-sm w-40">
+          <option value="">All categories</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
+        {categoryFilter && (
+          <button onClick={() => setCategoryFilter('')} className="btn-secondary text-xs">Clear</button>
+        )}
       </div>
       {showForm && (
         <MenuItemForm
