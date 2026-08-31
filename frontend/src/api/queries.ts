@@ -1,5 +1,27 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import API from './axios';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { client } from '../graphql/client';
+import {
+  GET_CATEGORIES, CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY,
+  GET_MENU_ITEMS, GET_MENU_ITEM, CREATE_MENU_ITEM, UPDATE_MENU_ITEM, DELETE_MENU_ITEM,
+  GET_ORDERS, GET_ORDER, CREATE_ORDER, UPDATE_ORDER, DELETE_ORDER, UPDATE_ORDER_STATUS,
+  GET_RESERVATIONS, GET_RESERVATION, CREATE_RESERVATION, UPDATE_RESERVATION, DELETE_RESERVATION, CANCEL_RESERVATION,
+  GET_USERS, CREATE_USER, UPDATE_USER_ROLE, DELETE_USER,
+  LOGIN, REGISTER, ME,
+} from '../graphql/queries';
+
+const mapId = <T extends { id?: string; [k: string]: any }>(obj: T | null): T | null => {
+  if (!obj) return null;
+  const { id, ...rest } = obj as any;
+  return { ...rest, _id: id, id: undefined } as T;
+};
+
+const mapArray = <T extends { id?: string; [k: string]: any }>(arr: T[] | undefined | null): T[] => {
+  if (!arr) return [];
+  return arr.map((item) => {
+    const { id, ...rest } = item as any;
+    return { ...rest, _id: id, id: undefined } as T;
+  });
+};
 
 export interface Category {
   _id: string;
@@ -85,170 +107,224 @@ export interface NewUserPayload {
   role: string;
 }
 
-const getJSON = async <T>(url: string): Promise<T> => {
-  const { data } = await API.get<T>(url);
-  return data;
+export const useCategories = () => {
+  const { data, loading, error } = useQuery<{ categories: any[] }>(GET_CATEGORIES, { client });
+  return { data: mapArray<Category>(data?.categories), isLoading: loading, error };
 };
 
-// ---- Categories ----
-
-export const useCategories = () =>
-  useQuery({ queryKey: ['categories'], queryFn: () => getJSON<Category[]>('/categories') });
-
 export const useCreateCategory = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: { name: string }) => API.post('/categories', payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ createCategory: any }, { name: string }>(CREATE_CATEGORY, { client, refetchQueries: [{ query: GET_CATEGORIES }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (payload: { name: string }) => {
+      const { data } = await mutate({ variables: payload });
+      return mapId(data?.createCategory);
+    },
+  };
 };
 
 export const useUpdateCategory = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, name }: { id: string; name: string }) => API.put(`/categories/${id}`, { name }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ updateCategory: any }, { id: string; name: string }>(UPDATE_CATEGORY, { client, refetchQueries: [{ query: GET_CATEGORIES }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (payload: { id: string; name: string }) => {
+      const { data } = await mutate({ variables: { id: payload.id, name: payload.name } });
+      return mapId(data?.updateCategory);
+    },
+  };
 };
 
 export const useDeleteCategory = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => API.delete(`/categories/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ deleteCategory: string }, { id: string }>(DELETE_CATEGORY, { client, refetchQueries: [{ query: GET_CATEGORIES }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (id: string) => {
+      const { data } = await mutate({ variables: { id } });
+      return data?.deleteCategory;
+    },
+  };
 };
 
-// ---- Menu ----
-
-export const useMenu = () =>
-  useQuery({ queryKey: ['menu'], queryFn: () => getJSON<MenuItem[]>('/menu') });
+export const useMenu = () => {
+  const { data, loading, error } = useQuery<{ menuItems: any[] }>(GET_MENU_ITEMS, { client });
+  return { data: mapArray<MenuItem>(data?.menuItems), isLoading: loading, error };
+};
 
 export const useCreateMenuItem = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: Omit<MenuItem, '_id' | 'available'>) => API.post('/menu', payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['menu'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ createMenuItem: any }, any>(CREATE_MENU_ITEM, { client, refetchQueries: [{ query: GET_MENU_ITEMS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (payload: Omit<MenuItem, '_id' | 'available'>) => {
+      const { data } = await mutate({ variables: payload });
+      return mapId<MenuItem>(data?.createMenuItem);
+    },
+  };
 };
 
 export const useUpdateMenuItem = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: { id: string; data: Partial<MenuItem> }) => API.put(`/menu/${payload.id}`, payload.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['menu'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ updateMenuItem: any }, any>(UPDATE_MENU_ITEM, { client, refetchQueries: [{ query: GET_MENU_ITEMS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (payload: { id: string; data: Partial<MenuItem> }) => {
+      const { data } = await mutate({ variables: { id: payload.id, ...payload.data } });
+      return mapId<MenuItem>(data?.updateMenuItem);
+    },
+  };
 };
 
 export const useDeleteMenuItem = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => API.delete(`/menu/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['menu'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ deleteMenuItem: string }, { id: string }>(DELETE_MENU_ITEM, { client, refetchQueries: [{ query: GET_MENU_ITEMS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (id: string) => {
+      const { data } = await mutate({ variables: { id } });
+      return data?.deleteMenuItem;
+    },
+  };
 };
 
-// ---- Orders ----
-
-export const useOrders = () =>
-  useQuery({ queryKey: ['orders'], queryFn: () => getJSON<Order[]>('/orders') });
+export const useOrders = () => {
+  const { data, loading, error } = useQuery<{ orders: any[] }>(GET_ORDERS, { client });
+  return { data: mapArray<Order>(data?.orders), isLoading: loading, error };
+};
 
 export const useCreateOrder = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: NewOrderPayload) => API.post('/orders', payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ createOrder: any }, any>(CREATE_ORDER, { client, refetchQueries: [{ query: GET_ORDERS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (payload: NewOrderPayload) => {
+      const variables = {
+        items: payload.items.map((i: any) => ({
+          menuItem: i.menuItem,
+          name: i.name || i.menuItem,
+          quantity: i.quantity,
+          price: i.price || 0,
+        })),
+        tableNumber: payload.tableNumber,
+        paymentMethod: 'cash',
+      };
+      const { data } = await mutate({ variables });
+      return mapId<Order>(data?.createOrder);
+    },
+  };
 };
 
 export const useUpdateOrder = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: { id: string; data: Partial<Order> }) => API.put(`/orders/${payload.id}`, payload.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ updateOrder: any }, any>(UPDATE_ORDER, { client, refetchQueries: [{ query: GET_ORDERS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (payload: { id: string; data: Partial<Order> }) => {
+      const { data } = await mutate({ variables: { id: payload.id, ...payload.data } });
+      return mapId<Order>(data?.updateOrder);
+    },
+  };
 };
 
 export const useDeleteOrder = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => API.delete(`/orders/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ deleteOrder: string }, { id: string }>(DELETE_ORDER, { client, refetchQueries: [{ query: GET_ORDERS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (id: string) => {
+      const { data } = await mutate({ variables: { id } });
+      return data?.deleteOrder;
+    },
+  };
 };
 
 export const useUpdateOrderStatus = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) =>
-      API.put(`/orders/${id}/status`, { status }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ updateOrderStatus: any }, { id: string; status: string }>(UPDATE_ORDER_STATUS, { client, refetchQueries: [{ query: GET_ORDERS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async ({ id, status }: { id: string; status: string }) => {
+      const { data } = await mutate({ variables: { id, status } });
+      return mapId<Order>(data?.updateOrderStatus);
+    },
+  };
 };
 
-// ---- Reservations ----
-
-export const useReservations = () =>
-  useQuery({ queryKey: ['reservations'], queryFn: () => getJSON<Reservation[]>('/reservations') });
+export const useReservations = () => {
+  const { data, loading, error } = useQuery<{ reservations: any[] }>(GET_RESERVATIONS, { client });
+  return { data: mapArray<Reservation>(data?.reservations), isLoading: loading, error };
+};
 
 export const useCreateReservation = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: NewReservationPayload) => API.post('/reservations', payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
-  });
-};
-
-export const useDeleteReservation = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => API.delete(`/reservations/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ createReservation: any }, any>(CREATE_RESERVATION, { client, refetchQueries: [{ query: GET_RESERVATIONS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (payload: NewReservationPayload) => {
+      const { data } = await mutate({ variables: payload });
+      return mapId<Reservation>(data?.createReservation);
+    },
+  };
 };
 
 export const useUpdateReservation = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: { id: string; data: Partial<Reservation> }) => API.put(`/reservations/${payload.id}`, payload.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ updateReservation: any }, any>(UPDATE_RESERVATION, { client, refetchQueries: [{ query: GET_RESERVATIONS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (payload: { id: string; data: Partial<Reservation> }) => {
+      const { data } = await mutate({ variables: { id: payload.id, ...payload.data } });
+      return mapId<Reservation>(data?.updateReservation);
+    },
+  };
+};
+
+export const useDeleteReservation = () => {
+  const [mutate, { loading }] = useMutation<{ deleteReservation: string }, { id: string }>(DELETE_RESERVATION, { client, refetchQueries: [{ query: GET_RESERVATIONS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (id: string) => {
+      const { data } = await mutate({ variables: { id } });
+      return data?.deleteReservation;
+    },
+  };
 };
 
 export const useCancelReservation = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => API.put(`/reservations/${id}/cancel`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ cancelReservation: any }, { id: string }>(CANCEL_RESERVATION, { client, refetchQueries: [{ query: GET_RESERVATIONS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (id: string) => {
+      const { data } = await mutate({ variables: { id } });
+      return mapId<Reservation>(data?.cancelReservation);
+    },
+  };
 };
 
-// ---- Admin users ----
-
-export const useUsers = () =>
-  useQuery({ queryKey: ['users'], queryFn: () => getJSON<AdminUser[]>('/auth/users') });
+export const useUsers = () => {
+  const { data, loading, error } = useQuery<{ authUsers: any[] }>(GET_USERS, { client });
+  return { data: mapArray<AdminUser>(data?.authUsers), isLoading: loading, error };
+};
 
 export const useCreateUser = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: NewUserPayload) => API.post('/auth/users', payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ createUserByAdmin: any }, any>(CREATE_USER, { client, refetchQueries: [{ query: GET_USERS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (payload: NewUserPayload) => {
+      const { data } = await mutate({ variables: payload });
+      return mapId<AdminUser>(data?.createUserByAdmin);
+    },
+  };
 };
 
 export const useDeleteUser = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => API.delete(`/auth/users/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ deleteUser: string }, { id: string }>(DELETE_USER, { client, refetchQueries: [{ query: GET_USERS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async (id: string) => {
+      const { data } = await mutate({ variables: { id } });
+      return data?.deleteUser;
+    },
+  };
 };
 
 export const useUpdateUserRole = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, role }: { id: string; role: string }) =>
-      API.patch(`/auth/users/${id}/role`, { role }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
-  });
+  const [mutate, { loading }] = useMutation<{ updateUserRole: any }, { id: string; role: string }>(UPDATE_USER_ROLE, { client, refetchQueries: [{ query: GET_USERS }] });
+  return {
+    isPending: loading,
+    mutateAsync: async ({ id, role }: { id: string; role: string }) => {
+      const { data } = await mutate({ variables: { id, role } });
+      return mapId<AdminUser>(data?.updateUserRole);
+    },
+  };
 };

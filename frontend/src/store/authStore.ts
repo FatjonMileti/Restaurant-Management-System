@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import API from '../api/axios';
+import { client } from '../graphql/client';
+import { LOGIN, REGISTER } from '../graphql/queries';
 
 export interface AuthUser {
   _id: string;
@@ -39,17 +40,33 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: readStoredUser(),
 
   login: async (email, password) => {
-    const { data } = await API.post<AuthUser>('/auth/login', { email, password });
-    persistUser(data);
-    set({ user: data });
-    return data;
+    const { data } = await client.mutate({ mutation: LOGIN, variables: { email, password } });
+    const payload = (data as any)?.login;
+    const user = {
+      _id: payload.user.id,
+      name: payload.user.name,
+      email: payload.user.email,
+      role: payload.user.role,
+      token: payload.token,
+    };
+    persistUser(user);
+    set({ user });
+    return user;
   },
 
   register: async (name, email, password, phone) => {
-    const { data } = await API.post<AuthUser>('/auth/register', { name, email, password, phone });
-    persistUser(data);
-    set({ user: data });
-    return data;
+    const { data } = await client.mutate({ mutation: REGISTER, variables: { name, email, password, phone } });
+    const payload = (data as any)?.register;
+    const user = {
+      _id: payload.user.id,
+      name: payload.user.name,
+      email: payload.user.email,
+      role: payload.user.role,
+      token: payload.token,
+    };
+    persistUser(user);
+    set({ user });
+    return user;
   },
 
   logout: () => {
