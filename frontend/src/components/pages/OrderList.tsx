@@ -59,6 +59,7 @@ export default function OrderList({ onEditOrder }: Props) {
         inputValue={tableFilter}
         onInputChange={setTableFilter}
         inputType="number"
+        useTableSelect
       />
       
       {error && <p className="error-text mt-3">{error}</p>}

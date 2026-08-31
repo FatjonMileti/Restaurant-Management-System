@@ -35,3 +35,7 @@ export const DELETE_USER = gql`mutation DeleteUser($id: ID!) { deleteUser(id: $i
 export const LOGIN = gql`mutation Login($email: String!, $password: String!) { login(email: $email, password: $password) { token user { id name email role } } }`;
 export const REGISTER = gql`mutation Register($name: String!, $email: String!, $password: String!, $phone: String) { register(name: $name, email: $email, password: $password, phone: $phone) { token user { id name email role } } }`;
 export const ME = gql`query Me { authMe { id name email role } }`;
+
+export const GET_RESTAURANT_SETTINGS = gql`query GetRestaurantSettings { restaurantSettings { id name logo address phone email tableCount } }`;
+export const UPDATE_RESTAURANT_SETTINGS = gql`mutation UpdateRestaurantSettings($name: String, $logo: String, $address: String, $phone: String, $email: String, $tableCount: Int) { updateRestaurantSettings(name: $name, logo: $logo, address: $address, phone: $phone, email: $email, tableCount: $tableCount) { id name logo address phone email tableCount } }`;
+export const GET_TABLES = gql`query GetTables { tables { number isBusy busyType occupiedBy } }`;

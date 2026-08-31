@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Menu from './pages/Menu';
 import Orders from './pages/Orders';
 import Reservations from './pages/Reservations';
+import Tables from './pages/Tables';
 import Settings from './pages/Settings';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
             <Route path="/menu" element={<Menu />} />
             <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
             <Route path="/reservations" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
+            <Route path="/tables" element={<ProtectedRoute><Tables /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute adminOnly><Settings /></ProtectedRoute>} />
           </Routes>
         </div>

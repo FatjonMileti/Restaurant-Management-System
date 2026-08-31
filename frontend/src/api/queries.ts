@@ -7,6 +7,7 @@ import {
   GET_ORDERS, GET_ORDER, CREATE_ORDER, UPDATE_ORDER, DELETE_ORDER, UPDATE_ORDER_STATUS,
   GET_RESERVATIONS, GET_RESERVATION, CREATE_RESERVATION, UPDATE_RESERVATION, DELETE_RESERVATION, CANCEL_RESERVATION,
   GET_USERS, CREATE_USER, UPDATE_USER_ROLE, DELETE_USER,
+  GET_RESTAURANT_SETTINGS, UPDATE_RESTAURANT_SETTINGS, GET_TABLES,
 } from '../graphql/queries';
 
 const endpoint = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql';
@@ -195,7 +196,10 @@ export const useCreateOrder = () => {
       const data = await request(endpoint, CREATE_ORDER, variables);
       return mapId<Order>((data as any)?.createOrder);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+    },
   });
 };
 
@@ -203,7 +207,10 @@ export const useUpdateOrder = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: { id: string; data: Partial<Order> }) => request(endpoint, UPDATE_ORDER, { id: payload.id, ...payload.data }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+    },
   });
 };
 
@@ -211,7 +218,10 @@ export const useDeleteOrder = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_ORDER, { id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+    },
   });
 };
 
@@ -219,7 +229,10 @@ export const useUpdateOrderStatus = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => request(endpoint, UPDATE_ORDER_STATUS, { id, status }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+    },
   });
 };
 
@@ -233,7 +246,10 @@ export const useCreateReservation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: NewReservationPayload) => request(endpoint, CREATE_RESERVATION, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reservations'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+    },
   });
 };
 
@@ -241,7 +257,10 @@ export const useUpdateReservation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: { id: string; data: Partial<Reservation> }) => request(endpoint, UPDATE_RESERVATION, { id: payload.id, ...payload.data }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reservations'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+    },
   });
 };
 
@@ -249,7 +268,10 @@ export const useDeleteReservation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_RESERVATION, { id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reservations'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+    },
   });
 };
 
@@ -257,7 +279,10 @@ export const useCancelReservation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, CANCEL_RESERVATION, { id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reservations'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+    },
   });
 };
 
@@ -290,3 +315,60 @@ export const useUpdateUserRole = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
 };
+
+export interface RestaurantSettings {
+  _id: string;
+  name: string;
+  logo: string;
+  address: string;
+  phone: string;
+  email: string;
+  tableCount: number;
+}
+
+export interface TableStatus {
+  number: number;
+  isBusy: boolean;
+  busyType?: string | null;
+  occupiedBy?: string | null;
+}
+
+export const useRestaurantSettings = () =>
+  useQuery({
+    queryKey: ['restaurantSettings'],
+    queryFn: async () => {
+      const data = await request(endpoint, GET_RESTAURANT_SETTINGS);
+      const raw = (data as any)?.restaurantSettings;
+      if (!raw) return null;
+      return mapId<RestaurantSettings>(raw);
+    },
+  });
+
+export const useUpdateRestaurantSettings = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Partial<RestaurantSettings> & { tableCount?: number }) => {
+      const vars: any = {};
+      if (payload.name !== undefined) vars.name = payload.name;
+      if (payload.logo !== undefined) vars.logo = payload.logo;
+      if (payload.address !== undefined) vars.address = payload.address;
+      if (payload.phone !== undefined) vars.phone = payload.phone;
+      if (payload.email !== undefined) vars.email = payload.email;
+      if (payload.tableCount !== undefined) vars.tableCount = Number(payload.tableCount);
+      return request(endpoint, UPDATE_RESTAURANT_SETTINGS, vars);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['restaurantSettings'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+    },
+  });
+};
+
+export const useTables = () =>
+  useQuery({
+    queryKey: ['tables'],
+    queryFn: async () => {
+      const data = await request(endpoint, GET_TABLES);
+      return ((data as any)?.tables || []) as TableStatus[];
+    },
+  });

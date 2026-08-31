@@ -4,6 +4,7 @@ import { useAuth } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { ClientError } from 'graphql-request';
 import { useCreateOrder, useMenu, useUpdateOrder, Order } from '../../api/queries';
+import TableSelect from '../TableSelect';
 
 const getGraphQLErrorMessage = (err: unknown, fallback = 'Request failed'): string => {
   if (err instanceof ClientError) {
@@ -38,9 +39,10 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
   const menuItems = menu.filter((i) => i.available);
 
   const [actionError, setActionError] = useState('');
-  const { register, handleSubmit, reset } = useForm<OrderFormData>({
+  const { register, handleSubmit, reset, watch, setValue } = useForm<OrderFormData>({
     defaultValues: { tableNumber: editingOrder?.tableNumber ? String(editingOrder.tableNumber) : '' },
   });
+  const tableValue = watch('tableNumber');
 
   const prevEditingOrder = React.useRef(editingOrder);
   useEffect(() => {
@@ -112,8 +114,8 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
             </div>
           ))}
           <p className="mt-3"><strong>Total: ${cart.items.reduce((s, c) => s + c.price * c.quantity, 0).toFixed(2)}</strong></p>
-          <div className="flex gap-2.5 mt-3 items-center">
-            <input type="number" placeholder="Table number" {...register('tableNumber')} className="p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#e94560] w-36" />
+          <div className="flex gap-2.5 mt-3 items-center flex-wrap">
+            <TableSelect value={tableValue} onChange={(v) => setValue('tableNumber', v)} placeholder="Table number" className="p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#e94560] w-36" showBusyLabel />
             <button type="submit" disabled={(editingOrder ? updateOrder.isPending : createOrder.isPending)} className="btn-primary">{editingOrder ? 'Save Changes' : 'Place Order'}</button>
             <button type="button" onClick={() => { if (editingOrder && onEditDone) { onEditDone(); } else { setShowCreate(false); } cart.clear(); }} className="btn-secondary">Cancel</button>
           </div>

@@ -9,4 +9,9 @@
 
 ## To Do
 
-
+- [x] Menu page - remove add item button when user is logged out, only admin can add and edit items
+- [x] Settings page - add restorant details section where admin can add and edit restorant name, logo, address, phone, email and how many tables restorant has.
+- [x] Navbar - add restorant details to navbar.
+- [x] Reservations page - aadmin and staff should be able to change reservation status.
+- [x] Add new page where admin and staff can see free and busy tables.
+- [x] admin and staff should be able to select table instead of writing table number, forms and filter bar.

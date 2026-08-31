@@ -1,5 +1,5 @@
 import React from 'react';
-import { useReservations, useCancelReservation, useDeleteReservation, Reservation } from '../../api/queries';
+import { useReservations, useCancelReservation, useDeleteReservation, useUpdateReservation, Reservation } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
 import LoadingSpinner from '../LoadingSpinner';
 import FilterBar from '../FilterBar';
@@ -15,10 +15,21 @@ export default function ReservationList({ onEditReservation }: Props) {
   const { data: reservations = [], error: fetchError, isLoading } = useReservations();
   const cancelReservation = useCancelReservation();
   const deleteReservation = useDeleteReservation();
+  const updateReservation = useUpdateReservation();
   const [deleteConfirm, setDeleteConfirm] = React.useState<{ open: boolean; id?: string }>({ open: false });
   const [actionError, setActionError] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [tableFilter, setTableFilter] = React.useState('');
+
+  const isStaff = user?.role === 'admin' || user?.role === 'staff';
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      await updateReservation.mutateAsync({ id, data: { status: newStatus } as any });
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to update reservation status');
+    }
+  };
 
   const handleCancel = async (id: string) => {
     try {
@@ -55,6 +66,7 @@ export default function ReservationList({ onEditReservation }: Props) {
         inputValue={tableFilter}
         onInputChange={setTableFilter}
         inputType="number"
+        useTableSelect
       />
       
       {error && !isLoading && <p className="error-text">{error}</p>}
@@ -74,6 +86,19 @@ export default function ReservationList({ onEditReservation }: Props) {
               </div>
               <div className="text-right">
                 <StatusBadge status={res.status} className="text-sm" />
+                {isStaff && (
+                  <div className="mt-2">
+                    <select
+                      value={res.status}
+                      onChange={(e) => handleStatusChange(res._id, e.target.value)}
+                      className="form-input-sm !mb-0 w-32 text-xs py-1"
+                    >
+                      <option value="confirmed">Confirmed</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                )}
                 {(user?.role !== 'customer' || (user?.role === 'customer' && res.user?._id === user?._id)) && (
                   <div className="mt-2.5">
                     {res.status === 'confirmed' && (

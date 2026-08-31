@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../store/authStore';
 import { useCreateReservation, useUpdateReservation, Reservation } from '../../api/queries';
+import TableSelect from '../TableSelect';
 
 interface ReservationFormData {
   date: string;
@@ -22,7 +23,7 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
   const createReservation = useCreateReservation();
   const updateReservation = useUpdateReservation();
   const [actionError, setActionError] = useState('');
-  const { register, handleSubmit, reset } = useForm<ReservationFormData>({
+  const { register, handleSubmit, reset, watch, setValue } = useForm<ReservationFormData>({
     defaultValues: editingReservation ? {
       date: editingReservation.date ? new Date(editingReservation.date).toISOString().split('T')[0] : '',
       time: editingReservation.time || '',
@@ -31,6 +32,7 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
       specialRequests: editingReservation.specialRequests || '',
     } : { date: '', time: '', guests: 2, tableNumber: undefined, specialRequests: '' },
   });
+  const selectedTable = watch('tableNumber');
 
   useEffect(() => {
     if (editingReservation) {
@@ -68,7 +70,10 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
       <input type="date" {...register('date', { required: true })} className="form-input-sm" />
       <input type="time" {...register('time', { required: true })} className="form-input-sm" />
       <input type="number" min={1} {...register('guests', { required: true, valueAsNumber: true })} className="form-input-sm" />
-      <input type="number" min={1} placeholder="Table number" {...register('tableNumber', { valueAsNumber: true })} className="form-input-sm" />
+      <div className="mb-2.5">
+        <label className="text-sm font-medium mb-1 block">Table</label>
+        <TableSelect value={selectedTable ? String(selectedTable) : ''} onChange={(v) => setValue('tableNumber', v ? Number(v) : undefined as any)} placeholder="Select table" className="form-input-sm !mb-0" showBusyLabel />
+      </div>
       <textarea placeholder="Special requests" {...register('specialRequests')} className="form-input-sm" />
       {actionError && <p className="error-text">{actionError}</p>}
       <div className="flex gap-2 mt-2">

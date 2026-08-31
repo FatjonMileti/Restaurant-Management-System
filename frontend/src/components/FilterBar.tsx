@@ -1,4 +1,5 @@
 import React from 'react';
+import TableSelect from './TableSelect';
 
 interface FilterOption {
   value: string;
@@ -15,18 +16,23 @@ interface FilterBarProps {
   onInputChange?: (value: string) => void;
   inputType?: 'text' | 'number';
   theme?: 'blue' | 'gray';
+  useTableSelect?: boolean;
 }
 
-export default function FilterBar({ label, options, value, onChange, inputPlaceholder, inputValue, onInputChange, inputType = 'text', theme = 'gray' }: FilterBarProps) {
+export default function FilterBar({ label, options, value, onChange, inputPlaceholder, inputValue, onInputChange, inputType = 'text', theme = 'gray', useTableSelect = false }: FilterBarProps) {
   const containerClass = theme === 'blue' ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 border border-gray-200';
   return (
     <div className={`${containerClass} p-3 rounded-lg shadow-sm flex flex-wrap gap-3 mb-4 items-center`}>
       <span className="text-sm font-semibold text-gray-700">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="form-input-sm w-36">
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="form-input-sm w-36 !mb-0">
         {options.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
       </select>
       {inputPlaceholder !== undefined && (
-        <input type={inputType} placeholder={inputPlaceholder} value={inputValue || ''} onChange={(e) => onInputChange?.(e.target.value)} className="form-input-sm w-28" />
+        useTableSelect ? (
+          <TableSelect value={inputValue || ''} onChange={(v) => onInputChange?.(v)} placeholder={inputPlaceholder} className="form-input-sm w-32 !mb-0" />
+        ) : (
+          <input type={inputType} placeholder={inputPlaceholder} value={inputValue || ''} onChange={(e) => onInputChange?.(e.target.value)} className="form-input-sm w-28 !mb-0" />
+        )
       )}
       {(value || inputValue) && (
         <button onClick={() => { onChange(''); onInputChange?.(''); }} className="btn-secondary text-xs">Clear</button>

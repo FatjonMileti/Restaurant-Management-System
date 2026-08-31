@@ -5,6 +5,7 @@ import MenuItem from './models/MenuItem.js';
 import Category from './models/Category.js';
 import Order from './models/Order.js';
 import Reservation from './models/Reservation.js';
+import RestaurantSettings from './models/RestaurantSettings.js';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ const seed = async (): Promise<void> => {
       Category.deleteMany({}),
       Order.deleteMany({}),
       Reservation.deleteMany({}),
+      RestaurantSettings.deleteMany({}),
     ]);
     console.log('Cleared existing data');
 
@@ -180,6 +182,16 @@ const seed = async (): Promise<void> => {
       },
     ]);
     console.log(`Created ${reservations.length} reservations`);
+
+    const settings = await RestaurantSettings.create({
+      name: 'Gusto Italiano',
+      logo: '',
+      address: '123 Main Street, New York, NY 10001',
+      phone: '+1 (555) 123-4567',
+      email: 'info@gustoitaliano.com',
+      tableCount: 12,
+    });
+    console.log(`Created restaurant settings: ${settings.name} with ${settings.tableCount} tables`);
 
     console.log('\n✅ Seed data inserted successfully!');
     console.log('\nLogin credentials:');

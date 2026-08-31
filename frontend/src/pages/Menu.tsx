@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { useMenu, MenuItem, useCategories, Category } from '../api/queries';
+import { useAuth } from '../store/authStore';
 import MenuItemForm from '../components/pages/MenuItemForm';
 import MenuItemCard from '../components/pages/MenuItemCard';
 
@@ -8,13 +9,16 @@ import MenuItemCard from '../components/pages/MenuItemCard';
 function Menu() {
   const { data: items = [], error, isLoading } = useMenu();
   const { data: categoriesData = [] } = useCategories();
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
 
   const categories = categoriesData.map((c: Category) => c.name);
+  const isAdmin = user?.role === 'admin';
 
   const handleEdit = (item: MenuItem) => {
+    if (!isAdmin) return;
     setEditingItem(item);
     setShowForm(true);
   };
@@ -27,9 +31,11 @@ function Menu() {
     <Box>
       <Box className="flex justify-between items-center mb-2">
         <Typography variant="h4" className="text-2xl font-bold">Menu</Typography>
-        <Button variant="contained" color="secondary" onClick={() => { setShowForm(!showForm); setEditingItem(null); }}>
-          {showForm ? 'Cancel' : '+ Add Item'}
-        </Button>
+        {isAdmin && (
+          <Button variant="contained" color="secondary" onClick={() => { setShowForm(!showForm); setEditingItem(null); }}>
+            {showForm ? 'Cancel' : '+ Add Item'}
+          </Button>
+        )}
       </Box>
       <Box sx={{ display: 'flex', gap: 2, mb: 2, bgcolor: 'grey.100', p: 2, borderRadius: 1, alignItems: 'center' }}>
         <Typography variant="body2" sx={{ fontWeight: 600 }}>Filter:</Typography>
