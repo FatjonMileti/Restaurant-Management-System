@@ -35,7 +35,7 @@ const persistUser = (user: AuthUser | null) => {
   }
 };
 
-const endpoint = 'http://localhost:5000/graphql';
+const endpoint = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql';
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: readStoredUser(),

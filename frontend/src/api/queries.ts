@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { request, gql } from 'graphql-request';
+import { request as gqlRequest, gql } from 'graphql-request';
+import { useAuthStore } from '../store/authStore';
 import {
   GET_CATEGORIES, CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY,
   GET_MENU_ITEMS, GET_MENU_ITEM, CREATE_MENU_ITEM, UPDATE_MENU_ITEM, DELETE_MENU_ITEM,
@@ -8,7 +9,14 @@ import {
   GET_USERS, CREATE_USER, UPDATE_USER_ROLE, DELETE_USER,
 } from '../graphql/queries';
 
-const endpoint = 'http://localhost:5000/graphql';
+const endpoint = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql';
+
+const request = <T = any>(url: string, document: any, variables?: any) => {
+  const token = useAuthStore.getState().user?.token;
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return gqlRequest<T>(url, document, variables, headers);
+};
 
 const mapId = <T extends { id?: string; [k: string]: any }>(obj: T | null): T | null => {
   if (!obj) return null;
@@ -63,7 +71,7 @@ export interface Order {
 }
 
 export interface NewOrderPayload {
-  items: { menuItem: string; quantity: number }[];
+  items: { menuItem: string; name: string; price: number; quantity: number }[];
   tableNumber?: number;
 }
 
@@ -89,6 +97,7 @@ export interface NewReservationPayload {
   date: string;
   time: string;
   guests: number;
+  tableNumber?: number;
   specialRequests?: string;
 }
 

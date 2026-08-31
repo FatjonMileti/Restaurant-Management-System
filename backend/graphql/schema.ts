@@ -1,4 +1,5 @@
 import { buildSchema } from 'graphql';
+import moment from 'moment';
 import User from '../models/User.js';
 import MenuItem from '../models/MenuItem.js';
 import Order from '../models/Order.js';
@@ -170,7 +171,6 @@ const root = {
     if (status) filter.status = status;
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
     const orders = await Order.find(filter).populate('user', 'name email role _id').populate('items.menuItem').sort('-createdAt');
-    console.log('DEBUG orders user:', orders[0] ? { userExists: !!(orders[0] as any).user, userId: (orders[0] as any).user ? (orders[0] as any).user._id : null, userName: (orders[0] as any).user ? (orders[0] as any).user.name : null } : 'no orders');
     return (orders as any[]).map((o: any) => {
       const userObj: any = o.user ? { id: o.user._id ? o.user._id.toString() : (o.user.id || null), name: o.user.name, email: o.user.email, role: o.user.role || 'customer' } : null;
       const itemsArr = (o.items || []).map((item: any) => {
@@ -198,11 +198,40 @@ const root = {
     const filter: any = {};
     if (status) filter.status = status;
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
-    return Reservation.find(filter).populate('user', 'name email role _id').sort('-date');
+    const docs = await Reservation.find(filter).populate('user', 'name email role _id').sort('-date');
+    return docs.map((doc: any) => {
+      const d = doc.toObject ? doc.toObject() : doc;
+      const userObj = d.user ? {
+        id: d.user._id ? d.user._id.toString() : (d.user.id || null),
+        name: d.user.name || '',
+        email: d.user.email || '',
+        role: d.user.role || 'customer',
+      } : null;
+      return {
+        ...d,
+        id: d._id ? d._id.toString() : (d.id || null),
+        user: userObj,
+        date: d.date ? moment(d.date).format('YYYY-MM-DD') : d.date,
+      };
+    });
   },
 
   reservation: async ({ id }: any) => {
-    return Reservation.findById(id).populate('user', 'name email role _id');
+    const doc: any = await Reservation.findById(id).populate('user', 'name email role _id');
+    if (!doc) return null;
+    const d = doc.toObject ? doc.toObject() : doc;
+    const userObj = d.user ? {
+      id: d.user._id ? d.user._id.toString() : (d.user.id || null),
+      name: d.user.name || '',
+      email: d.user.email || '',
+      role: d.user.role || 'customer',
+    } : null;
+    return {
+      ...d,
+      id: d._id ? d._id.toString() : (d.id || null),
+      user: userObj,
+      date: d.date ? moment(d.date).format('YYYY-MM-DD') : d.date,
+    };
   },
 
   categories: async () => Category.find().sort('name'),

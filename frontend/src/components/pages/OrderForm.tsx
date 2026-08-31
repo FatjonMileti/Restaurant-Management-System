@@ -33,12 +33,15 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
     if (editingOrder && editingOrder !== prevEditingOrder.current) {
       prevEditingOrder.current = editingOrder;
       reset({ tableNumber: editingOrder.tableNumber ? String(editingOrder.tableNumber) : '' });
-      cart.replaceItems(editingOrder.items.map(i => ({
-        menuItem: i.menuItem || '',
-        name: i.name,
-        price: i.price,
-        quantity: i.quantity,
-      })));
+      cart.replaceItems(editingOrder.items.map(i => {
+        const menuItemId = typeof i.menuItem === 'string' ? i.menuItem : (i.menuItem as any)?.id || '';
+        return {
+          menuItem: menuItemId,
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+        };
+      }));
     } else if (!editingOrder && prevEditingOrder.current) {
       prevEditingOrder.current = editingOrder;
       cart.clear();

@@ -11,14 +11,6 @@ API.interceptors.request.use((req) => {
   return req;
 });
 
-API.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    if (!error.response) {
-      return Promise.reject(new Error('Unable to reach the server. Please try again later.'));
-    }
-    return Promise.reject(error);
-  }
-);
+
 
 export default API;
