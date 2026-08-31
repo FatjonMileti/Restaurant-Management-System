@@ -2,7 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
+import { ClientError } from 'graphql-request';
 import { useCreateOrder, useMenu, useUpdateOrder, Order } from '../../api/queries';
+
+const getGraphQLErrorMessage = (err: unknown, fallback = 'Request failed'): string => {
+  if (err instanceof ClientError) {
+    return err.response.errors?.[0]?.message || err.message || fallback;
+  }
+  if (err instanceof TypeError && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+    return 'Network error: backend is unavailable';
+  }
+  if (err instanceof Error) {
+    return err.message || fallback;
+  }
+  return fallback;
+};
 
 interface OrderFormData {
   tableNumber: string;
@@ -70,8 +84,8 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
       }
       cart.clear();
       reset();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || (editingOrder ? 'Failed to edit order' : 'Failed to place order');
+    } catch (err) {
+      const msg = getGraphQLErrorMessage(err, editingOrder ? 'Failed to edit order' : 'Failed to place order');
       setActionError(msg);
     }
   };

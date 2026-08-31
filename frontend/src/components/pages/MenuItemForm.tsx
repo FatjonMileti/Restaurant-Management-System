@@ -53,7 +53,8 @@ export default function MenuItemForm({ categories, item, onSuccess, onCancel }: 
       reset();
       onSuccess();
     } catch (err) {
-      alert(err instanceof Error ? err.message : isEdit ? 'Failed to update item' : 'Failed to create item');
+      const msg = (err instanceof TypeError && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) ? 'Network error: backend is unavailable' : err instanceof Error ? err.message : (isEdit ? 'Failed to update item' : 'Failed to create item'));
+      alert(msg);
     }
   };
 

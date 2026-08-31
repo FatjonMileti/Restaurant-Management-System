@@ -3,7 +3,20 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
 import { Box, Typography, TextField, Button, Paper } from '@mui/material';
-import { AxiosError } from 'axios';
+import { ClientError } from 'graphql-request';
+
+const getGraphQLErrorMessage = (err: unknown): string => {
+  if (err instanceof ClientError) {
+    return err.response.errors?.[0]?.message || err.message || 'Login failed';
+  }
+  if (err instanceof TypeError && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+    return 'Network error: backend is unavailable';
+  }
+  if (err instanceof Error) {
+    return err.message || 'Login failed';
+  }
+  return 'Login failed';
+};
 
 interface LoginFormData {
   email: string;
@@ -21,8 +34,7 @@ export default function LoginFormComponent() {
       await login(data.email, data.password);
       navigate('/dashboard');
     } catch (err) {
-      const axiosErr = err as AxiosError<{ message: string }>;
-      setError(axiosErr.response?.data?.message || 'Login failed');
+      setError(getGraphQLErrorMessage(err));
     }
   };
 

@@ -52,7 +52,7 @@ function Menu() {
           <Box sx={{ animation: 'spin 1s linear infinite', height: 40, width: 40, border: '4px solid #e94560', borderTop: '4px solid transparent', borderRadius: '50%' }} />
         </Box>
       )}
-      {error && !isLoading && <Typography color="error">{error instanceof Error ? error.message : 'Failed to load menu'}</Typography>}
+      {error && !isLoading && <Typography color="error">{(error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) ? 'Network error: backend is unavailable' : error instanceof Error ? error.message : 'Failed to load menu')}</Typography>}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' }, gap: 2, mt: 2 }}>
         {filteredItems.map((item: MenuItem) => (
           <MenuItemCard key={item._id} item={item} onEdit={handleEdit} />

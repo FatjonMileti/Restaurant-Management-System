@@ -5,7 +5,8 @@
 - [x] Implement frontend GraphQL queries (`graphql/queries.ts`)
 - [x] Update auth store to use `graphql-request` (`store/authStore.ts`)
 - [x] Restore `App.tsx` loading overlay (`useIsFetching`/`useIsMutating`)
+- [x] frontend: add specific error handling for generic errors
 
 ## To Do
-- [ ] frontend remove generic error handling from all queries and add specific error handling (e.g., "Cannot return null for non-nullable field User.id.")
+
 

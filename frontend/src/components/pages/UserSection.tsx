@@ -1,10 +1,23 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { AxiosError } from 'axios';
+import { ClientError } from 'graphql-request';
 import { Box, Typography, Button, Paper, TextField, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useAuth } from '../../store/authStore';
 import { useCreateUser, useDeleteUser, useUpdateUserRole, useUsers } from '../../api/queries';
 import SectionCard from '../SectionCard';
+
+const getGraphQLErrorMessage = (err: unknown): string => {
+  if (err instanceof ClientError) {
+    return err.response.errors?.[0]?.message || err.message || 'Operation failed';
+  }
+  if (err instanceof TypeError && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+    return 'Network error: backend is unavailable';
+  }
+  if (err instanceof Error) {
+    return err.message || 'Operation failed';
+  }
+  return 'Operation failed';
+};
 import ConfirmDialog from '../ConfirmDialog';
 
 const ROLES = ['customer', 'staff', 'admin'] as const;
@@ -26,15 +39,15 @@ export default function UserSection() {
   const { register, handleSubmit, reset } = useForm<UserForm>({ defaultValues: { name: '', email: '', password: '', phone: '', role: 'customer' } });
 
   const onSubmit = async (data: UserForm) => {
-    try { await createUser.mutateAsync(data); reset(); setShowForm(false); } catch (err) { alert((err as AxiosError<{message:string}>).response?.data?.message || 'Create failed'); }
+    try { await createUser.mutateAsync(data); reset(); setShowForm(false); } catch (err) { alert(getGraphQLErrorMessage(err) || 'Create failed'); }
   };
   const handleDeleteUser = async () => {
     if (deleteConfirm.id) {
-      try { await deleteUser.mutateAsync(deleteConfirm.id); } catch (err) { alert((err as AxiosError<{message:string}>).response?.data?.message || 'Delete failed'); }
+      try { await deleteUser.mutateAsync(deleteConfirm.id); } catch (err) { alert(getGraphQLErrorMessage(err) || 'Delete failed'); }
     }
     setDeleteConfirm({ open: false });
   };
-  const handleRoleChange = async (id: string, role: string) => { try { await updateUserRole.mutateAsync({ id, role }); setEditingRole(null); } catch (err) { alert((err as AxiosError<{message:string}>).response?.data?.message || 'Role update failed'); } };
+  const handleRoleChange = async (id: string, role: string) => { try { await updateUserRole.mutateAsync({ id, role }); setEditingRole(null); } catch (err) { alert(getGraphQLErrorMessage(err) || 'Role update failed'); } };
 
   return (
     <SectionCard>

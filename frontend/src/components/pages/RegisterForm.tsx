@@ -3,7 +3,20 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
 import { Box, Typography, TextField, Button, Paper } from '@mui/material';
-import { AxiosError } from 'axios';
+import { ClientError } from 'graphql-request';
+
+const getGraphQLErrorMessage = (err: unknown): string => {
+  if (err instanceof ClientError) {
+    return err.response.errors?.[0]?.message || err.message || 'Registration failed';
+  }
+  if (err instanceof TypeError && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+    return 'Network error: backend is unavailable';
+  }
+  if (err instanceof Error) {
+    return err.message || 'Registration failed';
+  }
+  return 'Registration failed';
+};
 
 interface RegisterFormData {
   name: string;
@@ -23,8 +36,7 @@ export default function RegisterFormComponent() {
       await registerUser(data.name, data.email, data.password);
       navigate('/login');
     } catch (err) {
-      const axiosErr = err as AxiosError<{ message: string }>;
-      setError(axiosErr.response?.data?.message || 'Registration failed');
+      setError(getGraphQLErrorMessage(err));
     }
   };
 
