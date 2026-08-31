@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { client } from '../graphql/client';
-import { LOGIN, REGISTER } from '../graphql/queries';
+import { request, gql } from 'graphql-request';
 
 export interface AuthUser {
   _id: string;
@@ -36,18 +35,27 @@ const persistUser = (user: AuthUser | null) => {
   }
 };
 
+const endpoint = 'http://localhost:5000/graphql';
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: readStoredUser(),
 
   login: async (email, password) => {
-    const { data } = await client.mutate({ mutation: LOGIN, variables: { email, password } });
-    const payload = (data as any)?.login;
+    const mutation = gql`
+      mutation Login($email: String!, $password: String!) {
+        login(email: $email, password: $password) {
+          token
+          user { id name email role }
+        }
+      }
+    `;
+    const payload = await request(endpoint, mutation, { email, password });
     const user = {
-      _id: payload.user.id,
-      name: payload.user.name,
-      email: payload.user.email,
-      role: payload.user.role,
-      token: payload.token,
+      _id: (payload as any).login.user.id,
+      name: (payload as any).login.user.name,
+      email: (payload as any).login.user.email,
+      role: (payload as any).login.user.role,
+      token: (payload as any).login.token,
     };
     persistUser(user);
     set({ user });
@@ -55,14 +63,21 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   register: async (name, email, password, phone) => {
-    const { data } = await client.mutate({ mutation: REGISTER, variables: { name, email, password, phone } });
-    const payload = (data as any)?.register;
+    const mutation = gql`
+      mutation Register($name: String!, $email: String!, $password: String!, $phone: String) {
+        register(name: $name, email: $email, password: $password, phone: $phone) {
+          token
+          user { id name email role }
+        }
+      }
+    `;
+    const payload = await request(endpoint, mutation, { name, email, password, phone });
     const user = {
-      _id: payload.user.id,
-      name: payload.user.name,
-      email: payload.user.email,
-      role: payload.user.role,
-      token: payload.token,
+      _id: (payload as any).register.user.id,
+      name: (payload as any).register.user.name,
+      email: (payload as any).register.user.email,
+      role: (payload as any).register.user.role,
+      token: (payload as any).register.token,
     };
     persistUser(user);
     set({ user });
