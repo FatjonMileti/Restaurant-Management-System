@@ -138,6 +138,20 @@ const schema = buildSchema(`
   }
 `);
 
+const formatUser = (userDoc: any) => {
+  if (!userDoc) return null;
+  const d = userDoc.toObject ? userDoc.toObject() : userDoc;
+  return {
+    id: d._id ? d._id.toString() : (d.id || ''),
+    name: d.name || '',
+    email: d.email || '',
+    role: d.role || 'customer',
+    phone: d.phone || null,
+    createdAt: d.createdAt ? moment(d.createdAt).format('YYYY-MM-DD HH:mm:ss') : d.createdAt,
+    updatedAt: d.updatedAt ? moment(d.updatedAt).format('YYYY-MM-DD HH:mm:ss') : d.updatedAt,
+  };
+};
+
 function generateToken(id: string): string {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, { expiresIn: '30d' });
 }
@@ -147,14 +161,19 @@ const root = {
 
   authMe: async (_args: any, context?: any) => {
     if (!context?.userId) return null;
-    return User.findById(context.userId).select('-password');
+    const user = await User.findById(context.userId).select('-password');
+    return formatUser(user);
   },
 
-  authUsers: async () => User.find({}).select('-password'),
+  authUsers: async () => {
+    const users = await User.find({}).select('-password');
+    return users.map(formatUser);
+  },
 
   authProfile: async (_args: any, context?: any) => {
     if (!context?.userId) return null;
-    return User.findById(context.userId).select('-password');
+    const user = await User.findById(context.userId).select('-password');
+    return formatUser(user);
   },
 
   menuItems: async ({ category, available }: any) => {
@@ -172,7 +191,7 @@ const root = {
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
     const orders = await Order.find(filter).populate('user', 'name email role _id').populate('items.menuItem').sort('-createdAt');
     return (orders as any[]).map((o: any) => {
-      const userObj: any = o.user ? { id: o.user._id ? o.user._id.toString() : (o.user.id || null), name: o.user.name, email: o.user.email, role: o.user.role || 'customer' } : null;
+      const userObj = formatUser(o.user);
       const itemsArr = (o.items || []).map((item: any) => {
         const menuItemObj: any = item.menuItem ? { id: item.menuItem._id ? item.menuItem._id.toString() : (item.menuItem.id || null), name: item.menuItem.name, description: item.menuItem.description, price: item.menuItem.price, category: item.menuItem.category, image: item.menuItem.image, available: item.menuItem.available, createdAt: item.menuItem.createdAt, updatedAt: item.menuItem.updatedAt } : null;
         return { name: item.name, quantity: item.quantity, price: item.price, menuItem: menuItemObj };
@@ -185,7 +204,7 @@ const root = {
   order: async ({ id }: any) => {
     const doc: any = await Order.findById(id).populate('user', 'name email role _id').populate('items.menuItem');
     if (!doc) return null;
-    const userObj: any = doc.user ? { id: doc.user._id ? doc.user._id.toString() : (doc.user.id || null), name: doc.user.name, email: doc.user.email, role: doc.user.role || 'customer' } : null;
+    const userObj = formatUser(doc.user);
     const itemsArr = (doc.items || []).map((item: any) => {
       const menuItemObj: any = item.menuItem ? { id: item.menuItem._id ? item.menuItem._id.toString() : (item.menuItem.id || null), name: item.menuItem.name, description: item.menuItem.description, price: item.menuItem.price, category: item.menuItem.category, image: item.menuItem.image, available: item.menuItem.available, createdAt: item.menuItem.createdAt, updatedAt: item.menuItem.updatedAt } : null;
       return { name: item.name, quantity: item.quantity, price: item.price, menuItem: menuItemObj };
@@ -201,12 +220,7 @@ const root = {
     const docs = await Reservation.find(filter).populate('user', 'name email role _id').sort('-date');
     return docs.map((doc: any) => {
       const d = doc.toObject ? doc.toObject() : doc;
-      const userObj = d.user ? {
-        id: d.user._id ? d.user._id.toString() : (d.user.id || null),
-        name: d.user.name || '',
-        email: d.user.email || '',
-        role: d.user.role || 'customer',
-      } : null;
+      const userObj = formatUser(d.user);
       return {
         ...d,
         id: d._id ? d._id.toString() : (d.id || null),
@@ -220,12 +234,7 @@ const root = {
     const doc: any = await Reservation.findById(id).populate('user', 'name email role _id');
     if (!doc) return null;
     const d = doc.toObject ? doc.toObject() : doc;
-    const userObj = d.user ? {
-      id: d.user._id ? d.user._id.toString() : (d.user.id || null),
-      name: d.user.name || '',
-      email: d.user.email || '',
-      role: d.user.role || 'customer',
-    } : null;
+    const userObj = formatUser(d.user);
     return {
       ...d,
       id: d._id ? d._id.toString() : (d.id || null),
@@ -242,14 +251,14 @@ const root = {
     if (existing) throw new Error('User already exists');
     const user = await User.create({ name, email, password, phone, role: 'customer' });
     const token = generateToken(user._id.toString());
-    return { token, user: { ...user.toObject(), id: user._id.toString(), password: undefined } };
+    return { token, user: formatUser(user) };
   },
 
   login: async ({ email, password }: any) => {
     const user = await User.findOne({ email });
     if (!user || !(await user.matchPassword(password))) throw new Error('Invalid email or password');
     const token = generateToken(user._id.toString());
-    return { token, user: { ...user.toObject(), id: user._id.toString(), password: undefined } };
+    return { token, user: formatUser(user) };
   },
 
   createMenuItem: async ({ name, description, price, category, image }: any) => {
@@ -338,7 +347,7 @@ const root = {
     if (existing) throw new Error('User already exists');
     const validRoles = ['customer', 'staff', 'admin'];
     const userRole = validRoles.includes(role) ? role : 'customer';
-    return User.create({ name, email, password, phone, role: userRole });
+    return formatUser(await User.create({ name, email, password, phone, role: userRole }));
   },
 
   updateUserRole: async ({ id, role }: any) => {
@@ -348,7 +357,7 @@ const root = {
     if (!validRoles.includes(role)) throw new Error('Invalid role');
     user.role = role;
     await user.save();
-    return user;
+    return formatUser(user);
   },
 
   deleteUser: async ({ id }: any) => {
