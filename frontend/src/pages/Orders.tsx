@@ -13,7 +13,7 @@ export default function Orders() {
   return (
     <Box>
       <Box className="flex justify-between items-center mb-2">
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Orders</Typography>
+        <Typography variant="h4" className="page-heading">Orders</Typography>
         {user?.role !== 'customer' && (
           <Button variant="contained" color="secondary" onClick={() => { setShowCreate(!showCreate); setEditingOrder(null); }}>
             {showCreate ? 'Cancel' : '+ New Order'}

@@ -20,9 +20,9 @@ interface FilterBarProps {
 }
 
 export default function FilterBar({ label, options, value, onChange, inputPlaceholder, inputValue, onInputChange, inputType = 'text', theme = 'gray', useTableSelect = false }: FilterBarProps) {
-  const containerClass = theme === 'blue' ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 border border-gray-200';
+  const containerClass = theme === 'blue' ? 'filter-bar-blue' : 'filter-bar-gray';
   return (
-    <div className={`${containerClass} p-3 rounded-lg shadow-sm flex flex-wrap gap-3 mb-4 items-center`}>
+    <div className={`filter-bar ${containerClass}`}>
       <span className="text-sm font-semibold text-gray-700">{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)} className="form-input-sm w-36 !mb-0">
         {options.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}

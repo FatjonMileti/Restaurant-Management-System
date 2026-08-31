@@ -12,7 +12,7 @@ interface ConfirmDialogProps {
 export default function ConfirmDialog({ open, title = 'Confirm', message, onConfirm, onCancel }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontWeight: 'bold' }}>{title}</DialogTitle>
+      <DialogTitle className="font-bold">{title}</DialogTitle>
       <DialogContent>
         <p className="text-sm text-gray-700">{message}</p>
       </DialogContent>

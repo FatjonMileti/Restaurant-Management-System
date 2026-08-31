@@ -59,23 +59,23 @@ export default function RestaurantSection() {
   return (
     <SectionCard title="Restaurant Details">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
-        <label className="text-sm font-medium">Restaurant Name *</label>
+        <label className="form-label">Restaurant Name *</label>
         <input placeholder="Restaurant name" {...register('name', { required: true })} className="form-input-sm" />
 
-        <label className="text-sm font-medium">Logo URL</label>
+        <label className="form-label">Logo URL</label>
         <input placeholder="https://... or /images/logo.png" {...register('logo')} className="form-input-sm" />
         {settings?.logo && <img src={settings.logo} alt="logo preview" className="h-12 w-12 object-cover rounded mt-1" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />}
 
-        <label className="text-sm font-medium">Address</label>
+        <label className="form-label">Address</label>
         <input placeholder="123 Main St, City" {...register('address')} className="form-input-sm" />
 
-        <label className="text-sm font-medium">Phone</label>
+        <label className="form-label">Phone</label>
         <input placeholder="+1 (555) 123-4567" {...register('phone')} className="form-input-sm" />
 
-        <label className="text-sm font-medium">Email</label>
+        <label className="form-label">Email</label>
         <input type="email" placeholder="info@restaurant.com" {...register('email')} className="form-input-sm" />
 
-        <label className="text-sm font-medium">Number of Tables *</label>
+        <label className="form-label">Number of Tables *</label>
         <input type="number" min={1} {...register('tableCount', { required: true, valueAsNumber: true, min: 1 })} className="form-input-sm" />
 
         {error && <p className="error-text text-sm">{error}</p>}

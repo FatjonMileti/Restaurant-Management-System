@@ -71,7 +71,7 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
       <input type="time" {...register('time', { required: true })} className="form-input-sm" />
       <input type="number" min={1} {...register('guests', { required: true, valueAsNumber: true })} className="form-input-sm" />
       <div className="mb-2.5">
-        <label className="text-sm font-medium mb-1 block">Table</label>
+        <label className="form-label">Table</label>
         <TableSelect value={selectedTable ? String(selectedTable) : ''} onChange={(v) => setValue('tableNumber', v ? Number(v) : undefined as any)} placeholder="Select table" className="form-input-sm !mb-0" showBusyLabel />
       </div>
       <textarea placeholder="Special requests" {...register('specialRequests')} className="form-input-sm" />

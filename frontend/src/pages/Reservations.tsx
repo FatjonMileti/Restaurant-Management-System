@@ -13,7 +13,7 @@ export default function Reservations() {
   return (
     <Box>
       <Box className="flex justify-between items-center mb-2">
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Reservations</Typography>
+        <Typography variant="h4" className="page-heading">Reservations</Typography>
         <Button variant="contained" color="secondary" onClick={() => { setShowForm(!showForm); setEditingReservation(null); }}>
           {showForm ? 'Cancel' : '+ New Reservation'}
         </Button>

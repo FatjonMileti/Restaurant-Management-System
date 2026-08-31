@@ -10,8 +10,8 @@ export default function MenuHeader({ showForm, toggleForm }: Props) {
   const { user } = useAuth();
 
   return (
-    <div className="page-header">
-      <h2 className="page-title">Menu</h2>
+    <div className="flex justify-between items-center pb-4">
+      <h2 className="text-2xl font-bold">Menu</h2>
       {user?.role === 'admin' && (
         <button onClick={toggleForm} className="btn-secondary">
           {showForm ? 'Cancel' : '+ Add Item'}

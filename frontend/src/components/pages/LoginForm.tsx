@@ -42,14 +42,14 @@ export default function LoginFormComponent() {
     <Box className="max-w-md mx-auto mt-20">
       <Paper className="p-5 rounded-xl">
         <Typography variant="h4" className="text-2xl font-bold mb-4">Login</Typography>
-        {error && <Typography sx={{ color: 'error.main', mb: 2 }}>{error}</Typography>}
+        {error && <Typography className="text-red-600 mb-2">{error}</Typography>}
         <form onSubmit={handleSubmit(onSubmit)}>
           <TextField fullWidth type="email" placeholder="Email" {...register('email', { required: true })} margin="normal" />
           <TextField fullWidth type="password" placeholder="Password" {...register('password', { required: true })} margin="normal" />
-          <Button type="submit" fullWidth variant="contained" color="primary" className="w-full p-3 bg-[#e94560] text-white border-none rounded-md text-base cursor-pointer hover:bg-[#d63d54] transition-colors mt-4">Login</Button>
+          <Button type="submit" fullWidth variant="contained" className="w-full p-3 !bg-[#e94560] hover:!bg-[#d63d54] !text-white normal-case mt-4">Login</Button>
         </form>
       </Paper>
-      <Typography sx={{ mt: 2 }}>Don't have an account? <Link to="/register" style={{ color: '#e94560' }}>Register</Link></Typography>
+      <Typography className="mt-2">Don't have an account? <Link to="/register" className="text-[#e94560]">Register</Link></Typography>
     </Box>
   );
 }

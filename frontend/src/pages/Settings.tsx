@@ -7,12 +7,12 @@ import RestaurantSection from '../components/pages/RestaurantSection';
 export default function Settings() {
   return (
     <Box>
-      <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 3 }}>Settings</Typography>
+      <Typography variant="h3" className="page-heading mb-3">Settings</Typography>
       <RestaurantSection />
-      <Box sx={{ mt: 3 }}>
+      <Box className="mt-3">
         <UserSection />
       </Box>
-      <Box sx={{ mt: 3 }}>
+      <Box className="mt-3">
         <CategorySection />
       </Box>
     </Box>

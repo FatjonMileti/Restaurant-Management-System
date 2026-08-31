@@ -13,8 +13,8 @@ export default function Tables() {
   if (user?.role !== 'admin' && user?.role !== 'staff') {
     return (
       <Box className="p-5">
-        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>Tables</Typography>
-        <p className="text-red-600">Access denied. Only staff and admin can view tables.</p>
+        <Typography variant="h4" className="page-heading mb-2">Tables</Typography>
+        <p className="error-text">Access denied. Only staff and admin can view tables.</p>
       </Box>
     );
   }
@@ -28,26 +28,26 @@ export default function Tables() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>Tables Overview</Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+      <Typography variant="h4" className="page-heading mb-1">Tables Overview</Typography>
+      <Typography variant="body2" className="text-gray-500 mb-2">
         {settings?.name ? `${settings.name} — ` : ''}{settings?.tableCount || tables.length} tables total • Free: {freeCount} • Busy: {busyCount}
       </Typography>
 
       {tablesLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <Box sx={{ animation: 'spin 1s linear infinite', height: 40, width: 40, border: '4px solid #e94560', borderTop: '4px solid transparent', borderRadius: '50%' }} />
+        <Box className="loading-wrapper !py-4">
+          <Box className="spinner" />
         </Box>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mt: 2 }}>
+        <Box className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
           {tables.map((t) => {
             const order = t.isBusy ? busyOrderForTable(t.number) : null;
             const res = !order && t.isBusy ? busyResForTable(t.number) : null;
             return (
               <Box
                 key={t.number}
-                className={`p-5 rounded-xl border-2 text-center transition-all ${t.isBusy ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}
+                className={`table-card ${t.isBusy ? 'table-card-busy' : 'table-card-free'}`}
               >
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Table {t.number}</Typography>
+                <Typography variant="h6" className="font-bold">Table {t.number}</Typography>
                 <Box
                   className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold text-white ${t.isBusy ? 'bg-red-500' : 'bg-green-600'}`}
                 >

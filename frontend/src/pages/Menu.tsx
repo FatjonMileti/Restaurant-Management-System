@@ -30,15 +30,15 @@ function Menu() {
   return (
     <Box>
       <Box className="flex justify-between items-center mb-2">
-        <Typography variant="h4" className="text-2xl font-bold">Menu</Typography>
+        <Typography variant="h4" className="page-heading">Menu</Typography>
         {isAdmin && (
           <Button variant="contained" color="secondary" onClick={() => { setShowForm(!showForm); setEditingItem(null); }}>
             {showForm ? 'Cancel' : '+ Add Item'}
           </Button>
         )}
       </Box>
-      <Box sx={{ display: 'flex', gap: 2, mb: 2, bgcolor: 'grey.100', p: 2, borderRadius: 1, alignItems: 'center' }}>
-        <Typography variant="body2" sx={{ fontWeight: 600 }}>Filter:</Typography>
+      <Box className="flex gap-2 mb-2 bg-gray-100 p-2 rounded items-center">
+        <Typography variant="body2" className="font-semibold">Filter:</Typography>
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="form-input-sm w-40">
           <option value="">All</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -54,12 +54,12 @@ function Menu() {
         />
       )}
       {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <Box sx={{ animation: 'spin 1s linear infinite', height: 40, width: 40, border: '4px solid #e94560', borderTop: '4px solid transparent', borderRadius: '50%' }} />
+        <Box className="loading-wrapper !py-4">
+          <Box className="spinner" />
         </Box>
       )}
-      {error && !isLoading && <Typography color="error">{(error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) ? 'Network error: backend is unavailable' : error instanceof Error ? error.message : 'Failed to load menu')}</Typography>}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' }, gap: 2, mt: 2 }}>
+      {error && !isLoading && <Typography className="text-red-600">{(error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) ? 'Network error: backend is unavailable' : error instanceof Error ? error.message : 'Failed to load menu')}</Typography>}
+      <Box className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-2">
         {filteredItems.map((item: MenuItem) => (
           <MenuItemCard key={item._id} item={item} onEdit={handleEdit} />
         ))}

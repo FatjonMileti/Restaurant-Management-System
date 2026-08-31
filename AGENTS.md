@@ -54,6 +54,12 @@ All routes are mounted in `server.ts`:
 - MUI (`@mui/material`) used across Navbar, forms, pages, cards — styled via Tailwind `className`
 - `frontend/src/App.tsx` mounts global `LoadingSpinner` using `useIsFetching` + `useIsMutating`
 
+## Styling
+
+- **Use Tailwind CSS for styling MUI components** — prefer `className` with Tailwind utilities over `sx` or custom CSS (e.g. `<Button className="bg-[#e94560] hover:bg-[#d63d54]">` instead of `sx={{ bgcolor: ... }}`). Only use `sx` for MUI-specific layout props that Tailwind cannot handle.
+- Tailwind config is at root (`tailwind.config.js`, `postcss.config.js`); utility classes are defined in `frontend/src/index.css` (`@layer components`).
+- Keep styling consistent with existing patterns: `SectionCard`, `FilterBar`, `StatusBadge`, `form-panel`, `card` classes.
+
 - Categories managed from admin `/settings` page (`CategorySection`) via `/api/categories`
 - Dynamic categories: MenuItem `category` references DB categories (no hardcoded enum)
 - Menu item edit: click card opens edit form with DB default data (`name`, `description`, `price`, `category`, `image`)
