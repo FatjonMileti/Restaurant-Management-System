@@ -7,5 +7,5 @@
 - [x] Restore `App.tsx` loading overlay (`useIsFetching`/`useIsMutating`)
 
 ## To Do
-- [ ] frontend remove generic error handling from all queries and add specific error handling
+- [ ] frontend remove generic error handling from all queries and add specific error handling (e.g., "Cannot return null for non-nullable field User.id.")
 
