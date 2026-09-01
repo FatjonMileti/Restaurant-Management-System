@@ -8,6 +8,12 @@ import Category from '../models/Category.js';
 import RestaurantSettings from '../models/RestaurantSettings.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { emitEvent } from '../socket.js';
+import {
+  registerSchema, loginSchema, menuItemSchema, createOrderSchema,
+  updateOrderSchema, reservationSchema, categorySchema,
+  restaurantSettingsSchema, createUserSchema, updateUserRoleSchema, validate,
+} from './validation.js';
 
 const schema = buildSchema(`
   type User {
@@ -349,6 +355,8 @@ const root = {
   },
 
   register: async ({ name, email, password, phone }: any) => {
+    const v = validate(registerSchema, { name, email, password, phone });
+    if (!v.success) throw new Error(v.errors.join(', '));
     const existing = await User.findOne({ email });
     if (existing) throw new Error('User already exists');
     const user = await User.create({ name, email, password, phone, role: 'customer' });
@@ -357,6 +365,8 @@ const root = {
   },
 
   login: async ({ email, password }: any) => {
+    const v = validate(loginSchema, { email, password });
+    if (!v.success) throw new Error(v.errors.join(', '));
     const user = await User.findOne({ email });
     if (!user || !(await user.matchPassword(password))) throw new Error('Invalid email or password');
     const token = generateToken(user._id.toString());
@@ -365,69 +375,104 @@ const root = {
 
   createMenuItem: async ({ name, description, price, category, image }: any, context?: any) => {
     await requireAdmin(context);
-    return MenuItem.create({ name, description, price, category, image });
+    const v = validate(menuItemSchema, { name, description, price, category, image });
+    if (!v.success) throw new Error(v.errors.join(', '));
+    const item = await MenuItem.create(v.data);
+    emitEvent('menu:changed');
+    return item;
   },
 
   updateMenuItem: async ({ id, ...rest }: any, context?: any) => {
     await requireAdmin(context);
-    return MenuItem.findByIdAndUpdate(id, rest, { new: true, runValidators: true });
+    const v = validate(menuItemSchema.partial(), rest);
+    if (!v.success) throw new Error(v.errors.join(', '));
+    const item = await MenuItem.findByIdAndUpdate(id, v.data, { new: true, runValidators: true });
+    emitEvent('menu:changed');
+    return item;
   },
 
   deleteMenuItem: async ({ id }: any, context?: any) => {
     await requireAdmin(context);
     const item = await MenuItem.findByIdAndDelete(id);
     if (!item) throw new Error('Menu item not found');
+    emitEvent('menu:changed');
     return 'Menu item removed';
   },
 
   createOrder: async ({ items, tableNumber, paymentMethod }: any, context?: any) => {
     if (!context?.userId) throw new Error('Not authenticated');
-    if (!items || items.length === 0) throw new Error('Order must have at least one item');
-    const menuItemIds = items.map((i: any) => i.menuItem);
+    const v = validate(createOrderSchema, { items, tableNumber, paymentMethod });
+    if (!v.success) throw new Error(v.errors.join(', '));
+    const menuItemIds = v.data.items.map((i) => i.menuItem);
     const existingItems = await MenuItem.find({ _id: { $in: menuItemIds } });
     if (existingItems.length !== menuItemIds.length) throw new Error('One or more menu items not found');
-    if (tableNumber) {
-      const busyTable = await Order.findOne({ tableNumber, status: { $in: ['pending', 'preparing'] } });
+    if (v.data.tableNumber) {
+      const busyTable = await Order.findOne({ tableNumber: v.data.tableNumber, status: { $in: ['pending', 'preparing'] } });
       if (busyTable) throw new Error('Table is busy');
     }
-    const totalAmount = items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
-    return Order.create({ user: context.userId, items, totalAmount, tableNumber, paymentMethod });
+    const totalAmount = v.data.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const order = await Order.create({ user: context.userId, items: v.data.items, totalAmount, tableNumber: v.data.tableNumber, paymentMethod: v.data.paymentMethod });
+    emitEvent('orders:changed');
+    emitEvent('tables:changed');
+    return order;
   },
 
   updateOrder: async ({ id, ...rest }: any) => {
-    const updates: any = { ...rest };
-    if (rest.items) {
-      updates.totalAmount = rest.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+    const v = validate(updateOrderSchema, rest);
+    if (!v.success) throw new Error(v.errors.join(', '));
+    const updates: any = { ...v.data };
+    if (v.data.items) {
+      updates.totalAmount = v.data.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     }
-    if (rest.tableNumber) {
-      const busyTable = await Order.findOne({ tableNumber: rest.tableNumber, status: { $in: ['pending', 'preparing'] }, _id: { $ne: id } });
+    if (v.data.tableNumber) {
+      const busyTable = await Order.findOne({ tableNumber: v.data.tableNumber, status: { $in: ['pending', 'preparing'] }, _id: { $ne: id } });
       if (busyTable) throw new Error('Table is busy');
     }
-    return Order.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+    const order = await Order.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+    emitEvent('orders:changed');
+    emitEvent('tables:changed');
+    return order;
   },
 
   deleteOrder: async ({ id }: any) => {
     const order = await Order.findByIdAndDelete(id);
     if (!order) throw new Error('Order not found');
+    emitEvent('orders:changed');
+    emitEvent('tables:changed');
     return 'Order removed';
   },
 
   updateOrderStatus: async ({ id, status }: any) => {
-    return Order.findByIdAndUpdate(id, { status }, { new: true });
+    const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
+    emitEvent('orders:changed');
+    emitEvent('tables:changed');
+    return order;
   },
 
   createReservation: async ({ date, time, guests, tableNumber, specialRequests }: any, context?: any) => {
     if (!context?.userId) throw new Error('Not authenticated');
-    return Reservation.create({ user: context.userId, date, time, guests, tableNumber, specialRequests });
+    const v = validate(reservationSchema, { date, time, guests, tableNumber, specialRequests });
+    if (!v.success) throw new Error(v.errors.join(', '));
+    const reservation = await Reservation.create({ user: context.userId, ...v.data });
+    emitEvent('reservations:changed');
+    emitEvent('tables:changed');
+    return reservation;
   },
 
   updateReservation: async ({ id, ...rest }: any) => {
-    return Reservation.findByIdAndUpdate(id, rest, { new: true, runValidators: true });
+    const v = validate(reservationSchema.partial(), rest);
+    if (!v.success) throw new Error(v.errors.join(', '));
+    const reservation = await Reservation.findByIdAndUpdate(id, v.data, { new: true, runValidators: true });
+    emitEvent('reservations:changed');
+    emitEvent('tables:changed');
+    return reservation;
   },
 
   deleteReservation: async ({ id }: any) => {
     const res = await Reservation.findByIdAndDelete(id);
     if (!res) throw new Error('Reservation not found');
+    emitEvent('reservations:changed');
+    emitEvent('tables:changed');
     return 'Reservation removed';
   },
 
@@ -436,32 +481,52 @@ const root = {
     if (!res) throw new Error('Reservation not found');
     res.status = 'cancelled';
     await res.save();
+    emitEvent('reservations:changed');
+    emitEvent('tables:changed');
     return res;
   },
 
-  createCategory: async ({ name }: any) => Category.create({ name }),
-  updateCategory: async ({ id, name }: any) => Category.findByIdAndUpdate(id, { name }, { new: true, runValidators: true }),
+  createCategory: async ({ name }: any) => {
+    const v = validate(categorySchema, { name });
+    if (!v.success) throw new Error(v.errors.join(', '));
+    const cat = await Category.create(v.data);
+    emitEvent('categories:changed');
+    return cat;
+  },
+  updateCategory: async ({ id, name }: any) => {
+    const v = validate(categorySchema, { name });
+    if (!v.success) throw new Error(v.errors.join(', '));
+    const cat = await Category.findByIdAndUpdate(id, v.data, { new: true, runValidators: true });
+    emitEvent('categories:changed');
+    return cat;
+  },
   deleteCategory: async ({ id }: any) => {
     const cat = await Category.findByIdAndDelete(id);
     if (!cat) throw new Error('Category not found');
+    emitEvent('categories:changed');
     return 'Category removed';
   },
 
   createUserByAdmin: async ({ name, email, password, phone, role }: any) => {
-    const existing = await User.findOne({ email });
+    const v = validate(createUserSchema, { name, email, password, phone, role });
+    if (!v.success) throw new Error(v.errors.join(', '));
+    const existing = await User.findOne({ email: v.data.email });
     if (existing) throw new Error('User already exists');
     const validRoles = ['customer', 'staff', 'admin'];
-    const userRole = validRoles.includes(role) ? role : 'customer';
-    return formatUser(await User.create({ name, email, password, phone, role: userRole }));
+    const userRole = validRoles.includes(v.data.role || '') ? v.data.role : 'customer';
+    const user = await User.create({ name: v.data.name, email: v.data.email, password: v.data.password, phone: v.data.phone, role: userRole });
+    emitEvent('users:changed');
+    return formatUser(user);
   },
 
   updateUserRole: async ({ id, role }: any) => {
+    const v = validate(updateUserRoleSchema, { role });
+    if (!v.success) throw new Error(v.errors.join(', '));
     const user = await User.findById(id);
     if (!user) throw new Error('User not found');
-    const validRoles = ['customer', 'staff', 'admin'];
-    if (!validRoles.includes(role)) throw new Error('Invalid role');
-    user.role = role;
+    user.role = v.data.role;
     await user.save();
+    emitEvent('users:changed');
     return formatUser(user);
   },
 
@@ -470,22 +535,27 @@ const root = {
     if (!user) throw new Error('User not found');
     if (user.role === 'admin') throw new Error('Cannot delete admin user');
     await user.deleteOne();
+    emitEvent('users:changed');
     return 'User removed';
   },
 
   updateRestaurantSettings: async ({ name, logo, address, phone, email, tableCount }: any, context?: any) => {
     await requireAdmin(context);
+    const v = validate(restaurantSettingsSchema, { name, logo, address, phone, email, tableCount });
+    if (!v.success) throw new Error(v.errors.join(', '));
     let settings = await getOrCreateRestaurantSettings();
-    if (name !== undefined) settings.name = name;
-    if (logo !== undefined) settings.logo = logo;
-    if (address !== undefined) settings.address = address;
-    if (phone !== undefined) settings.phone = phone;
-    if (email !== undefined) settings.email = email;
-    if (tableCount !== undefined) {
-      if (tableCount < 1) throw new Error('tableCount must be at least 1');
-      settings.tableCount = tableCount;
+    if (v.data.name !== undefined) settings.name = v.data.name;
+    if (v.data.logo !== undefined) settings.logo = v.data.logo;
+    if (v.data.address !== undefined) settings.address = v.data.address;
+    if (v.data.phone !== undefined) settings.phone = v.data.phone;
+    if (v.data.email !== undefined) settings.email = v.data.email;
+    if (v.data.tableCount !== undefined) {
+      if (v.data.tableCount < 1) throw new Error('tableCount must be at least 1');
+      settings.tableCount = v.data.tableCount;
     }
     await settings.save();
+    emitEvent('settings:changed');
+    emitEvent('tables:changed');
     return formatRestaurantSettings(settings);
   },
 };

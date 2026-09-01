@@ -1,14 +1,8 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateMenuItem, useUpdateMenuItem, MenuItem } from '../../api/queries';
-
-interface MenuItemFormData {
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  image: string;
-}
+import { menuItemSchema, MenuItemFormData } from '../../validation/schemas';
 
 interface Props {
   categories: string[];
@@ -21,7 +15,8 @@ export default function MenuItemForm({ categories, item, onSuccess, onCancel }: 
   const isEdit = !!item;
   const createItem = useCreateMenuItem();
   const updateItem = useUpdateMenuItem();
-  const { register, handleSubmit, reset } = useForm<MenuItemFormData>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<MenuItemFormData>({
+    resolver: zodResolver(menuItemSchema),
     defaultValues: item ? {
       name: item.name,
       description: item.description || '',
@@ -60,13 +55,17 @@ export default function MenuItemForm({ categories, item, onSuccess, onCancel }: 
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="form-panel">
-      <input placeholder="Name" {...register('name', { required: true })} className="form-input-sm" />
+      <input placeholder="Name" {...register('name')} className="form-input-sm" />
+      {errors.name && <p className="error-text text-sm">{errors.name.message}</p>}
       <input placeholder="Description" {...register('description')} className="form-input-sm" />
-      <input type="number" step="0.01" placeholder="Price" {...register('price', { required: true, valueAsNumber: true })} className="form-input-sm" />
+      <input type="number" step="0.01" placeholder="Price" {...register('price', { valueAsNumber: true })} className="form-input-sm" />
+      {errors.price && <p className="error-text text-sm">{errors.price.message}</p>}
       <select {...register('category')} className="form-input-sm">
         {categories.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
+      {errors.category && <p className="error-text text-sm">{errors.category.message}</p>}
       <input placeholder="Image URL" {...register('image')} className="form-input-sm" />
+      {errors.image && <p className="error-text text-sm">{errors.image.message}</p>}
       <div className="flex gap-2 mt-2">
         <button type="submit" disabled={isEdit ? updateItem.isPending : createItem.isPending} className="btn-primary">{isEdit ? 'Update' : 'Create'}</button>
         <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>

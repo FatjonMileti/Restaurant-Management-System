@@ -1,16 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../store/authStore';
 import { useCreateReservation, useUpdateReservation, Reservation } from '../../api/queries';
 import TableSelect from '../TableSelect';
-
-interface ReservationFormData {
-  date: string;
-  time: string;
-  guests: number;
-  tableNumber?: number;
-  specialRequests: string;
-}
+import { reservationSchema, ReservationFormData } from '../../validation/schemas';
 
 interface Props {
   showForm: boolean;
@@ -23,7 +17,8 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
   const createReservation = useCreateReservation();
   const updateReservation = useUpdateReservation();
   const [actionError, setActionError] = useState('');
-  const { register, handleSubmit, reset, watch, setValue } = useForm<ReservationFormData>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ReservationFormData>({
+    resolver: zodResolver(reservationSchema),
     defaultValues: editingReservation ? {
       date: editingReservation.date ? new Date(editingReservation.date).toISOString().split('T')[0] : '',
       time: editingReservation.time || '',
@@ -67,9 +62,12 @@ export default function ReservationFormComponent({ showForm, setShowForm, editin
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="form-panel">
       <h3 className="text-lg font-semibold mb-3">{editingReservation ? 'Edit Reservation' : 'New Reservation'}</h3>
-      <input type="date" {...register('date', { required: true })} className="form-input-sm" />
-      <input type="time" {...register('time', { required: true })} className="form-input-sm" />
-      <input type="number" min={1} {...register('guests', { required: true, valueAsNumber: true })} className="form-input-sm" />
+      <input type="date" {...register('date')} className="form-input-sm" />
+      {errors.date && <p className="error-text text-sm">{errors.date.message}</p>}
+      <input type="time" {...register('time')} className="form-input-sm" />
+      {errors.time && <p className="error-text text-sm">{errors.time.message}</p>}
+      <input type="number" min={1} {...register('guests', { valueAsNumber: true })} className="form-input-sm" />
+      {errors.guests && <p className="error-text text-sm">{errors.guests.message}</p>}
       <div className="mb-2.5">
         <label className="form-label">Table</label>
         <TableSelect value={selectedTable ? String(selectedTable) : ''} onChange={(v) => setValue('tableNumber', v ? Number(v) : undefined as any)} placeholder="Select table" className="form-input-sm !mb-0" showBusyLabel />

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
 import { Box, Typography, TextField, Button, Paper } from '@mui/material';
 import { ClientError } from 'graphql-request';
+import { loginSchema, LoginFormData } from '../../validation/schemas';
 
 const getGraphQLErrorMessage = (err: unknown): string => {
   if (err instanceof ClientError) {
@@ -18,13 +20,10 @@ const getGraphQLErrorMessage = (err: unknown): string => {
   return 'Login failed';
 };
 
-interface LoginFormData {
-  email: string;
-  password: string;
-}
-
 export default function LoginFormComponent() {
-  const { register, handleSubmit } = useForm<LoginFormData>();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -44,8 +43,8 @@ export default function LoginFormComponent() {
         <Typography variant="h4" className="text-2xl font-bold mb-4">Login</Typography>
         {error && <Typography className="text-red-600 mb-2">{error}</Typography>}
         <form onSubmit={handleSubmit(onSubmit)}>
-          <TextField fullWidth type="email" placeholder="Email" {...register('email', { required: true })} margin="normal" />
-          <TextField fullWidth type="password" placeholder="Password" {...register('password', { required: true })} margin="normal" />
+          <TextField fullWidth type="email" placeholder="Email" {...register('email')} error={!!errors.email} helperText={errors.email?.message} margin="normal" />
+          <TextField fullWidth type="password" placeholder="Password" {...register('password')} error={!!errors.password} helperText={errors.password?.message} margin="normal" />
           <Button type="submit" fullWidth variant="contained" className="w-full p-3 !bg-[#e94560] hover:!bg-[#d63d54] !text-white normal-case mt-4">Login</Button>
         </form>
       </Paper>

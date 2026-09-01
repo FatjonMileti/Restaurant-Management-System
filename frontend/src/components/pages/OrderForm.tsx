@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { ClientError } from 'graphql-request';
 import { useCreateOrder, useMenu, useUpdateOrder, Order } from '../../api/queries';
 import TableSelect from '../TableSelect';
+import { orderFormSchema, OrderFormData } from '../../validation/schemas';
 
 const getGraphQLErrorMessage = (err: unknown, fallback = 'Request failed'): string => {
   if (err instanceof ClientError) {
@@ -18,10 +20,6 @@ const getGraphQLErrorMessage = (err: unknown, fallback = 'Request failed'): stri
   }
   return fallback;
 };
-
-interface OrderFormData {
-  tableNumber: string;
-}
 
 interface Props {
   showCreate: boolean;
@@ -40,6 +38,7 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
 
   const [actionError, setActionError] = useState('');
   const { register, handleSubmit, reset, watch, setValue } = useForm<OrderFormData>({
+    resolver: zodResolver(orderFormSchema),
     defaultValues: { tableNumber: editingOrder?.tableNumber ? String(editingOrder.tableNumber) : '' },
   });
   const tableValue = watch('tableNumber');

@@ -6,6 +6,7 @@
     "@apollo/client": "^4.2.12",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@hookform/resolvers": "^5.9.1",
     "@mui/icons-material": "^9.4.0",
     "@mui/material": "^9.4.0",
     "@tanstack/react-query": "^5.102.2",
@@ -17,6 +18,8 @@
     "react-hook-form": "^7.86.0",
     "react-router-dom": "^6.21.0",
     "react-scripts": "5.0.1",
+    "socket.io-client": "^4.8.3",
+    "zod": "^4.5.4",
     "zustand": "^5.0.15"
   },
   "scripts": {

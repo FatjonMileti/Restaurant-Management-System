@@ -13,6 +13,7 @@ import orderRoutes from './routes/orders.js';
 import reservationRoutes from './routes/reservations.js';
 import categoryRoutes from './routes/category.js';
 import jwt from 'jsonwebtoken';
+import { initSocket } from './socket.js';
 
 dotenv.config();
 connectDB();
@@ -57,4 +58,5 @@ app.get('/', (_req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const httpServer = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+initSocket(httpServer);

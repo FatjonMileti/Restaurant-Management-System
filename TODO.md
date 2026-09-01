@@ -9,5 +9,8 @@
 - [x] Navbar - add restorant details to navbar.
 - [x] admin and staff should be able to select table instead of writing table number, forms and filter bar.
 - [x] settings page - add tabs to switch between restorant details, users and categories
+- [x] frontend and backend - add websocket for real-time updates
+- [x] frontend and backend - add zod validation
+- [x] frontend: add lazyLoading
 
 ## To Do
