@@ -21,7 +21,7 @@ function Navbar() {
         <Box
           component={Link}
           to="/menu"
-          className="flex items-center gap-1.5 !text-white no-underline"
+          className="flex items-center gap-3 !text-white no-underline"
         >
           {settings?.logo ? (
             <Box
