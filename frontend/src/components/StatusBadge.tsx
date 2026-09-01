@@ -15,7 +15,9 @@ interface StatusBadgeProps {
 
 export default function StatusBadge({ status, className = '' }: StatusBadgeProps) {
   return (
-    <span className={`${statusColors[status] || 'bg-gray-500'} text-white px-3 py-1 rounded-full inline-block text-sm capitalize ${className}`}>
+    <span
+      className={`${statusColors[status] || 'bg-gray-500'} text-white px-3 py-1 rounded-full inline-block text-sm capitalize ${className}`}
+    >
       {status}
     </span>
   );

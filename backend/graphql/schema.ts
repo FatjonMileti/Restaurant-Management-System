@@ -10,9 +10,17 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { emitEvent } from '../socket.js';
 import {
-  registerSchema, loginSchema, menuItemSchema, createOrderSchema,
-  updateOrderSchema, reservationSchema, categorySchema,
-  restaurantSettingsSchema, createUserSchema, updateUserRoleSchema, validate,
+  registerSchema,
+  loginSchema,
+  menuItemSchema,
+  createOrderSchema,
+  updateOrderSchema,
+  reservationSchema,
+  categorySchema,
+  restaurantSettingsSchema,
+  createUserSchema,
+  updateUserRoleSchema,
+  validate,
 } from './validation.js';
 
 const schema = buildSchema(`
@@ -173,7 +181,7 @@ const formatUser = (userDoc: any) => {
   if (!userDoc) return null;
   const d = userDoc.toObject ? userDoc.toObject() : userDoc;
   return {
-    id: d._id ? d._id.toString() : (d.id || ''),
+    id: d._id ? d._id.toString() : d.id || '',
     name: d.name || '',
     email: d.email || '',
     role: d.role || 'customer',
@@ -191,7 +199,7 @@ const formatRestaurantSettings = (doc: any) => {
   if (!doc) return null;
   const d = doc.toObject ? doc.toObject() : doc;
   return {
-    id: d._id ? d._id.toString() : (d.id || ''),
+    id: d._id ? d._id.toString() : d.id || '',
     name: d.name,
     logo: d.logo || '',
     address: d.address || '',
@@ -264,41 +272,97 @@ const root = {
     const filter: any = {};
     if (status) filter.status = status;
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
-    const orders = await Order.find(filter).populate('user', 'name email role _id').populate('items.menuItem').sort('-createdAt');
+    const orders = await Order.find(filter)
+      .populate('user', 'name email role _id')
+      .populate('items.menuItem')
+      .sort('-createdAt');
     return (orders as any[]).map((o: any) => {
       const userObj = formatUser(o.user);
       const itemsArr = (o.items || []).map((item: any) => {
-        const menuItemObj: any = item.menuItem ? { id: item.menuItem._id ? item.menuItem._id.toString() : (item.menuItem.id || null), name: item.menuItem.name, description: item.menuItem.description, price: item.menuItem.price, category: item.menuItem.category, image: item.menuItem.image, available: item.menuItem.available, createdAt: item.menuItem.createdAt, updatedAt: item.menuItem.updatedAt } : null;
-        return { name: item.name, quantity: item.quantity, price: item.price, menuItem: menuItemObj };
+        const menuItemObj: any = item.menuItem
+          ? {
+              id: item.menuItem._id ? item.menuItem._id.toString() : item.menuItem.id || null,
+              name: item.menuItem.name,
+              description: item.menuItem.description,
+              price: item.menuItem.price,
+              category: item.menuItem.category,
+              image: item.menuItem.image,
+              available: item.menuItem.available,
+              createdAt: item.menuItem.createdAt,
+              updatedAt: item.menuItem.updatedAt,
+            }
+          : null;
+        return {
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          menuItem: menuItemObj,
+        };
       });
       const orderAny: any = o;
-      return { id: orderAny._id ? orderAny._id.toString() : (orderAny.id || null), user: userObj, items: itemsArr, totalAmount: orderAny.totalAmount, status: orderAny.status, tableNumber: orderAny.tableNumber, paymentMethod: orderAny.paymentMethod, createdAt: orderAny.createdAt, updatedAt: orderAny.updatedAt };
+      return {
+        id: orderAny._id ? orderAny._id.toString() : orderAny.id || null,
+        user: userObj,
+        items: itemsArr,
+        totalAmount: orderAny.totalAmount,
+        status: orderAny.status,
+        tableNumber: orderAny.tableNumber,
+        paymentMethod: orderAny.paymentMethod,
+        createdAt: orderAny.createdAt,
+        updatedAt: orderAny.updatedAt,
+      };
     });
   },
 
   order: async ({ id }: any) => {
-    const doc: any = await Order.findById(id).populate('user', 'name email role _id').populate('items.menuItem');
+    const doc: any = await Order.findById(id)
+      .populate('user', 'name email role _id')
+      .populate('items.menuItem');
     if (!doc) return null;
     const userObj = formatUser(doc.user);
     const itemsArr = (doc.items || []).map((item: any) => {
-      const menuItemObj: any = item.menuItem ? { id: item.menuItem._id ? item.menuItem._id.toString() : (item.menuItem.id || null), name: item.menuItem.name, description: item.menuItem.description, price: item.menuItem.price, category: item.menuItem.category, image: item.menuItem.image, available: item.menuItem.available, createdAt: item.menuItem.createdAt, updatedAt: item.menuItem.updatedAt } : null;
+      const menuItemObj: any = item.menuItem
+        ? {
+            id: item.menuItem._id ? item.menuItem._id.toString() : item.menuItem.id || null,
+            name: item.menuItem.name,
+            description: item.menuItem.description,
+            price: item.menuItem.price,
+            category: item.menuItem.category,
+            image: item.menuItem.image,
+            available: item.menuItem.available,
+            createdAt: item.menuItem.createdAt,
+            updatedAt: item.menuItem.updatedAt,
+          }
+        : null;
       return { name: item.name, quantity: item.quantity, price: item.price, menuItem: menuItemObj };
     });
     const docAny: any = doc;
-    return { id: docAny._id.toString(), user: userObj, items: itemsArr, totalAmount: docAny.totalAmount, status: docAny.status, tableNumber: docAny.tableNumber, paymentMethod: docAny.paymentMethod, createdAt: docAny.createdAt, updatedAt: docAny.updatedAt };
+    return {
+      id: docAny._id.toString(),
+      user: userObj,
+      items: itemsArr,
+      totalAmount: docAny.totalAmount,
+      status: docAny.status,
+      tableNumber: docAny.tableNumber,
+      paymentMethod: docAny.paymentMethod,
+      createdAt: docAny.createdAt,
+      updatedAt: docAny.updatedAt,
+    };
   },
 
   reservations: async ({ status, tableNumber }: any) => {
     const filter: any = {};
     if (status) filter.status = status;
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
-    const docs = await Reservation.find(filter).populate('user', 'name email role _id').sort('-date');
+    const docs = await Reservation.find(filter)
+      .populate('user', 'name email role _id')
+      .sort('-date');
     return docs.map((doc: any) => {
       const d = doc.toObject ? doc.toObject() : doc;
       const userObj = formatUser(d.user);
       return {
         ...d,
-        id: d._id ? d._id.toString() : (d.id || null),
+        id: d._id ? d._id.toString() : d.id || null,
         user: userObj,
         date: d.date ? moment(d.date).format('YYYY-MM-DD') : d.date,
       };
@@ -312,7 +376,7 @@ const root = {
     const userObj = formatUser(d.user);
     return {
       ...d,
-      id: d._id ? d._id.toString() : (d.id || null),
+      id: d._id ? d._id.toString() : d.id || null,
       user: userObj,
       date: d.date ? moment(d.date).format('YYYY-MM-DD') : d.date,
     };
@@ -329,24 +393,41 @@ const root = {
   tables: async () => {
     const settings = await getOrCreateRestaurantSettings();
     const count = settings.tableCount || 10;
-    const busyOrders = await Order.find({ status: { $in: ['pending', 'preparing'] }, tableNumber: { $exists: true, $ne: null } });
-    const confirmedReservations = await Reservation.find({ status: 'confirmed', tableNumber: { $exists: true, $ne: null } });
+    const busyOrders = await Order.find({
+      status: { $in: ['pending', 'preparing'] },
+      tableNumber: { $exists: true, $ne: null },
+    });
+    const confirmedReservations = await Reservation.find({
+      status: 'confirmed',
+      tableNumber: { $exists: true, $ne: null },
+    });
     const orderMap = new Map<number, any>();
     busyOrders.forEach((o: any) => {
       if (o.tableNumber) orderMap.set(o.tableNumber, { type: 'order', doc: o });
     });
     const reservationMap = new Map<number, any>();
     confirmedReservations.forEach((r: any) => {
-      if (r.tableNumber && !orderMap.has(r.tableNumber)) reservationMap.set(r.tableNumber, { type: 'reservation', doc: r });
+      if (r.tableNumber && !orderMap.has(r.tableNumber))
+        reservationMap.set(r.tableNumber, { type: 'reservation', doc: r });
     });
     const result: any[] = [];
     for (let i = 1; i <= count; i++) {
       if (orderMap.has(i)) {
         const occupied = orderMap.get(i);
-        result.push({ number: i, isBusy: true, busyType: 'order', occupiedBy: occupied.doc._id.toString() });
+        result.push({
+          number: i,
+          isBusy: true,
+          busyType: 'order',
+          occupiedBy: occupied.doc._id.toString(),
+        });
       } else if (reservationMap.has(i)) {
         const occupied = reservationMap.get(i);
-        result.push({ number: i, isBusy: true, busyType: 'reservation', occupiedBy: occupied.doc._id.toString() });
+        result.push({
+          number: i,
+          isBusy: true,
+          busyType: 'reservation',
+          occupiedBy: occupied.doc._id.toString(),
+        });
       } else {
         result.push({ number: i, isBusy: false, busyType: null, occupiedBy: null });
       }
@@ -368,7 +449,8 @@ const root = {
     const v = validate(loginSchema, { email, password });
     if (!v.success) throw new Error(v.errors.join(', '));
     const user = await User.findOne({ email });
-    if (!user || !(await user.matchPassword(password))) throw new Error('Invalid email or password');
+    if (!user || !(await user.matchPassword(password)))
+      throw new Error('Invalid email or password');
     const token = generateToken(user._id.toString());
     return { token, user: formatUser(user) };
   },
@@ -405,13 +487,23 @@ const root = {
     if (!v.success) throw new Error(v.errors.join(', '));
     const menuItemIds = v.data.items.map((i) => i.menuItem);
     const existingItems = await MenuItem.find({ _id: { $in: menuItemIds } });
-    if (existingItems.length !== menuItemIds.length) throw new Error('One or more menu items not found');
+    if (existingItems.length !== menuItemIds.length)
+      throw new Error('One or more menu items not found');
     if (v.data.tableNumber) {
-      const busyTable = await Order.findOne({ tableNumber: v.data.tableNumber, status: { $in: ['pending', 'preparing'] } });
+      const busyTable = await Order.findOne({
+        tableNumber: v.data.tableNumber,
+        status: { $in: ['pending', 'preparing'] },
+      });
       if (busyTable) throw new Error('Table is busy');
     }
     const totalAmount = v.data.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const order = await Order.create({ user: context.userId, items: v.data.items, totalAmount, tableNumber: v.data.tableNumber, paymentMethod: v.data.paymentMethod });
+    const order = await Order.create({
+      user: context.userId,
+      items: v.data.items,
+      totalAmount,
+      tableNumber: v.data.tableNumber,
+      paymentMethod: v.data.paymentMethod,
+    });
     emitEvent('orders:changed');
     emitEvent('tables:changed');
     return order;
@@ -425,7 +517,11 @@ const root = {
       updates.totalAmount = v.data.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     }
     if (v.data.tableNumber) {
-      const busyTable = await Order.findOne({ tableNumber: v.data.tableNumber, status: { $in: ['pending', 'preparing'] }, _id: { $ne: id } });
+      const busyTable = await Order.findOne({
+        tableNumber: v.data.tableNumber,
+        status: { $in: ['pending', 'preparing'] },
+        _id: { $ne: id },
+      });
       if (busyTable) throw new Error('Table is busy');
     }
     const order = await Order.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
@@ -449,7 +545,10 @@ const root = {
     return order;
   },
 
-  createReservation: async ({ date, time, guests, tableNumber, specialRequests }: any, context?: any) => {
+  createReservation: async (
+    { date, time, guests, tableNumber, specialRequests }: any,
+    context?: any,
+  ) => {
     if (!context?.userId) throw new Error('Not authenticated');
     const v = validate(reservationSchema, { date, time, guests, tableNumber, specialRequests });
     if (!v.success) throw new Error(v.errors.join(', '));
@@ -462,7 +561,10 @@ const root = {
   updateReservation: async ({ id, ...rest }: any) => {
     const v = validate(reservationSchema.partial(), rest);
     if (!v.success) throw new Error(v.errors.join(', '));
-    const reservation = await Reservation.findByIdAndUpdate(id, v.data, { new: true, runValidators: true });
+    const reservation = await Reservation.findByIdAndUpdate(id, v.data, {
+      new: true,
+      runValidators: true,
+    });
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
     return reservation;
@@ -514,7 +616,13 @@ const root = {
     if (existing) throw new Error('User already exists');
     const validRoles = ['customer', 'staff', 'admin'];
     const userRole = validRoles.includes(v.data.role || '') ? v.data.role : 'customer';
-    const user = await User.create({ name: v.data.name, email: v.data.email, password: v.data.password, phone: v.data.phone, role: userRole });
+    const user = await User.create({
+      name: v.data.name,
+      email: v.data.email,
+      password: v.data.password,
+      phone: v.data.phone,
+      role: userRole,
+    });
     emitEvent('users:changed');
     return formatUser(user);
   },
@@ -539,7 +647,10 @@ const root = {
     return 'User removed';
   },
 
-  updateRestaurantSettings: async ({ name, logo, address, phone, email, tableCount }: any, context?: any) => {
+  updateRestaurantSettings: async (
+    { name, logo, address, phone, email, tableCount }: any,
+    context?: any,
+  ) => {
     await requireAdmin(context);
     const v = validate(restaurantSettingsSchema, { name, logo, address, phone, email, tableCount });
     if (!v.success) throw new Error(v.errors.join(', '));

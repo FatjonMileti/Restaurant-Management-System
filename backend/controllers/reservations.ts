@@ -7,7 +7,9 @@ export const getReservations = async (req: Request, res: Response): Promise<void
     if (req.user && req.user.role === 'customer') filter.user = req.user._id;
     if (req.query.status) filter.status = req.query.status;
 
-    const reservations = await Reservation.find(filter).populate('user', 'name email').sort('-date');
+    const reservations = await Reservation.find(filter)
+      .populate('user', 'name email')
+      .sort('-date');
     res.json(reservations);
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Server error' });
@@ -22,7 +24,11 @@ export const getReservation = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    if (req.user && req.user.role === 'customer' && reservation.user._id.toString() !== req.user._id.toString()) {
+    if (
+      req.user &&
+      req.user.role === 'customer' &&
+      reservation.user._id.toString() !== req.user._id.toString()
+    ) {
       res.status(403).json({ message: 'Not authorized' });
       return;
     }
@@ -54,7 +60,10 @@ export const createReservation = async (req: Request, res: Response): Promise<vo
 
 export const updateReservation = async (req: Request, res: Response): Promise<void> => {
   try {
-    const reservation = await Reservation.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const reservation = await Reservation.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
     if (!reservation) {
       res.status(404).json({ message: 'Reservation not found' });
       return;
@@ -86,7 +95,11 @@ export const cancelReservation = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    if (req.user && req.user.role === 'customer' && reservation.user.toString() !== req.user._id.toString()) {
+    if (
+      req.user &&
+      req.user.role === 'customer' &&
+      reservation.user.toString() !== req.user._id.toString()
+    ) {
       res.status(403).json({ message: 'Not authorized to cancel this reservation' });
       return;
     }

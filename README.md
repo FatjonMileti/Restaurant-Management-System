@@ -71,46 +71,46 @@ cd frontend && npm run build    # Creates optimized build/
 
 ## Seed Credentials
 
-| Role     | Email                  | Password     |
-|----------|------------------------|--------------|
-| Admin    | admin@restaurant.com   | admin123     |
-| Staff    | staff@restaurant.com   | staff123     |
-| Customer | john@example.com       | customer123  |
-| Customer | jane@example.com       | customer123  |
-| Customer | bob@example.com        | customer123  |
+| Role     | Email                | Password    |
+| -------- | -------------------- | ----------- |
+| Admin    | admin@restaurant.com | admin123    |
+| Staff    | staff@restaurant.com | staff123    |
+| Customer | john@example.com     | customer123 |
+| Customer | jane@example.com     | customer123 |
+| Customer | bob@example.com      | customer123 |
 
 ## API Endpoints
 
-| Endpoint                     | Method | Auth   | Description            |
-|------------------------------|--------|--------|------------------------|
-| `/api/auth/register`         | POST   | —      | Register new user      |
-| `/api/auth/login`            | POST   | —      | Login                  |
-| `/api/auth/profile`          | GET    | User   | Get profile            |
-| `/api/auth/users`            | GET    | Admin  | List all users         |
-| `/api/auth/users`            | POST   | Admin  | Create user            |
-| `/api/auth/users/:id`        | DELETE | Admin  | Delete user            |
-| `/api/auth/users/:id/role`   | PATCH  | Admin  | Update user role       |
-| `/api/menu`                  | GET    | —      | List menu items        |
-| `/api/menu/:id`              | GET    | —      | Get menu item          |
-| `/api/menu`                  | POST   | Admin  | Create menu item       |
-| `/api/menu/:id`              | PUT    | Admin  | Update menu item       |
-| `/api/menu/:id`              | DELETE | Admin  | Delete menu item       |
-| `/api/orders`                | GET    | User   | List orders            |
-| `/api/orders/:id`            | GET    | User   | Get order              |
-| `/api/orders`                | POST   | User   | Create order           |
-| `/api/orders/:id/status`     | PUT    | Staff  | Update order status    |
-| `/api/orders/:id`            | PUT    | Staff  | Update order details   |
-| `/api/orders/:id`            | DELETE | Staff  | Delete order           |
-| `/api/categories`            | GET    | —      | List categories         |
-| `/api/categories`            | POST   | Admin  | Create category         |
-| `/api/categories/:id`        | PUT    | Admin  | Update category         |
-| `/api/categories/:id`        | DELETE | Admin  | Delete category         |
-| `/api/reservations`          | GET    | User   | List reservations      |
-| `/api/reservations/:id`      | GET    | User   | Get reservation        |
-| `/api/reservations`          | POST   | User   | Create reservation     |
-| `/api/reservations/:id`      | PUT    | Admin  | Update reservation     |
-| `/api/reservations/:id/cancel` | PUT  | User   | Cancel reservation     |
-| `/api/reservations/:id`      | DELETE | Admin  | Delete reservation     |
+| Endpoint                       | Method | Auth  | Description          |
+| ------------------------------ | ------ | ----- | -------------------- |
+| `/api/auth/register`           | POST   | —     | Register new user    |
+| `/api/auth/login`              | POST   | —     | Login                |
+| `/api/auth/profile`            | GET    | User  | Get profile          |
+| `/api/auth/users`              | GET    | Admin | List all users       |
+| `/api/auth/users`              | POST   | Admin | Create user          |
+| `/api/auth/users/:id`          | DELETE | Admin | Delete user          |
+| `/api/auth/users/:id/role`     | PATCH  | Admin | Update user role     |
+| `/api/menu`                    | GET    | —     | List menu items      |
+| `/api/menu/:id`                | GET    | —     | Get menu item        |
+| `/api/menu`                    | POST   | Admin | Create menu item     |
+| `/api/menu/:id`                | PUT    | Admin | Update menu item     |
+| `/api/menu/:id`                | DELETE | Admin | Delete menu item     |
+| `/api/orders`                  | GET    | User  | List orders          |
+| `/api/orders/:id`              | GET    | User  | Get order            |
+| `/api/orders`                  | POST   | User  | Create order         |
+| `/api/orders/:id/status`       | PUT    | Staff | Update order status  |
+| `/api/orders/:id`              | PUT    | Staff | Update order details |
+| `/api/orders/:id`              | DELETE | Staff | Delete order         |
+| `/api/categories`              | GET    | —     | List categories      |
+| `/api/categories`              | POST   | Admin | Create category      |
+| `/api/categories/:id`          | PUT    | Admin | Update category      |
+| `/api/categories/:id`          | DELETE | Admin | Delete category      |
+| `/api/reservations`            | GET    | User  | List reservations    |
+| `/api/reservations/:id`        | GET    | User  | Get reservation      |
+| `/api/reservations`            | POST   | User  | Create reservation   |
+| `/api/reservations/:id`        | PUT    | Admin | Update reservation   |
+| `/api/reservations/:id/cancel` | PUT    | User  | Cancel reservation   |
+| `/api/reservations/:id`        | DELETE | Admin | Delete reservation   |
 
 ## Notes
 

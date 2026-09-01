@@ -8,14 +8,15 @@ Two independent packages under one root: `backend/` and `frontend/`. Always `cd`
 
 **Important TS quirk:** `tsconfig.json` uses `moduleResolution: "node16"`. All relative imports in `.ts` files **must use `.js` extension** (e.g. `from './config/db.js'`). This is required for `tsc` to compile correctly.
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | `nodemon --exec tsx server.ts` — uses **tsx** (not ts-node) because tsx handles `.js` extensions for `.ts` files correctly |
-| `npm run build` | `tsc` — compiles to `dist/` |
-| `npm start` | `node dist/server.js` — runs compiled output |
-| `npm run seed` | `tsx seeds.ts` — populates DB with sample data |
+| Command         | What it does                                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`   | `nodemon --exec tsx server.ts` — uses **tsx** (not ts-node) because tsx handles `.js` extensions for `.ts` files correctly |
+| `npm run build` | `tsc` — compiles to `dist/`                                                                                                |
+| `npm start`     | `node dist/server.js` — runs compiled output                                                                               |
+| `npm run seed`  | `tsx seeds.ts` — populates DB with sample data                                                                             |
 
 **Auth middleware** (`middleware/auth.ts`):
+
 - `protect` — requires valid JWT `Bearer` token, attaches `req.user`
 - `admin` — requires `req.user.role === 'admin'`
 - `staff` — requires role `admin` or `staff`
@@ -27,14 +28,15 @@ Two independent packages under one root: `backend/` and `frontend/`. Always `cd`
 
 CRA 5 with TypeScript — no custom webpack. `proxy` in `package.json` forwards API requests to `http://localhost:5000`.
 
-| Command | What it does |
-|---|---|
-| `npm start` | CRA dev server |
+| Command         | What it does                 |
+| --------------- | ---------------------------- |
+| `npm start`     | CRA dev server               |
 | `npm run build` | Production build to `build/` |
 
 ## API entrypoints
 
 All routes are mounted in `server.ts`:
+
 - `/api/auth` → `routes/auth.ts`
 - `/api/menu` → `routes/menu.ts`
 - `/api/orders` → `routes/orders.ts`
@@ -43,11 +45,11 @@ All routes are mounted in `server.ts`:
 
 ## Seeded credentials
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@restaurant.com | admin123 |
-| Staff | staff@restaurant.com | staff123 |
-| Customer | john@example.com | customer123 |
+| Role     | Email                | Password    |
+| -------- | -------------------- | ----------- |
+| Admin    | admin@restaurant.com | admin123    |
+| Staff    | staff@restaurant.com | staff123    |
+| Customer | john@example.com     | customer123 |
 
 - `frontend/src/components/pages/` — split page components (MenuItemCard, MenuItemForm, MenuHeader, OrderForm, OrderList, ReservationForm, ReservationList, UserSection, CategorySection, RestaurantSection, LoginForm, RegisterForm)
 - Reusable UI: `FilterBar`, `StatusBadge`, `SectionCard`, `LoadingSpinner`, `ActionRow`, `TableSelect`

@@ -45,7 +45,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       mutation Login($email: String!, $password: String!) {
         login(email: $email, password: $password) {
           token
-          user { id name email role }
+          user {
+            id
+            name
+            email
+            role
+          }
         }
       }
     `;
@@ -67,7 +72,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       mutation Register($name: String!, $email: String!, $password: String!, $phone: String) {
         register(name: $name, email: $email, password: $password, phone: $phone) {
           token
-          user { id name email role }
+          user {
+            id
+            name
+            email
+            role
+          }
         }
       }
     `;

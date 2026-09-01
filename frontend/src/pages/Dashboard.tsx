@@ -12,8 +12,12 @@ interface CardProps {
 function Card({ title, value, color }: CardProps) {
   return (
     <Paper className="flex-1 p-8 rounded-xl text-white text-center">
-      <Typography variant="h6" className="text-lg font-semibold">{title}</Typography>
-      <Typography variant="h2" className="text-4xl font-bold mt-2">{value}</Typography>
+      <Typography variant="h6" className="text-lg font-semibold">
+        {title}
+      </Typography>
+      <Typography variant="h2" className="text-4xl font-bold mt-2">
+        {value}
+      </Typography>
     </Paper>
   );
 }
@@ -26,8 +30,12 @@ export default function Dashboard() {
 
   return (
     <Box>
-      <Typography variant="h3" className="text-2xl font-bold mb-5">Dashboard</Typography>
-      <Typography variant="body1">Welcome, <strong>{user?.name}</strong>!</Typography>
+      <Typography variant="h3" className="text-2xl font-bold mb-5">
+        Dashboard
+      </Typography>
+      <Typography variant="body1">
+        Welcome, <strong>{user?.name}</strong>!
+      </Typography>
       <Box className="flex gap-5 mt-8 flex-col md:flex-row">
         <Card title="Total Orders" value={orders.length} color="#e94560" />
         <Card title="Reservations" value={reservations.length} color="#0f3460" />

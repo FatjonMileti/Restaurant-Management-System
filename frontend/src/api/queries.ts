@@ -2,12 +2,34 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { useAuthStore } from '../store/authStore';
 import {
-  GET_CATEGORIES, CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY,
-  GET_MENU_ITEMS, GET_MENU_ITEM, CREATE_MENU_ITEM, UPDATE_MENU_ITEM, DELETE_MENU_ITEM,
-  GET_ORDERS, GET_ORDER, CREATE_ORDER, UPDATE_ORDER, DELETE_ORDER, UPDATE_ORDER_STATUS,
-  GET_RESERVATIONS, GET_RESERVATION, CREATE_RESERVATION, UPDATE_RESERVATION, DELETE_RESERVATION, CANCEL_RESERVATION,
-  GET_USERS, CREATE_USER, UPDATE_USER_ROLE, DELETE_USER,
-  GET_RESTAURANT_SETTINGS, UPDATE_RESTAURANT_SETTINGS, GET_TABLES,
+  GET_CATEGORIES,
+  CREATE_CATEGORY,
+  UPDATE_CATEGORY,
+  DELETE_CATEGORY,
+  GET_MENU_ITEMS,
+  GET_MENU_ITEM,
+  CREATE_MENU_ITEM,
+  UPDATE_MENU_ITEM,
+  DELETE_MENU_ITEM,
+  GET_ORDERS,
+  GET_ORDER,
+  CREATE_ORDER,
+  UPDATE_ORDER,
+  DELETE_ORDER,
+  UPDATE_ORDER_STATUS,
+  GET_RESERVATIONS,
+  GET_RESERVATION,
+  CREATE_RESERVATION,
+  UPDATE_RESERVATION,
+  DELETE_RESERVATION,
+  CANCEL_RESERVATION,
+  GET_USERS,
+  CREATE_USER,
+  UPDATE_USER_ROLE,
+  DELETE_USER,
+  GET_RESTAURANT_SETTINGS,
+  UPDATE_RESTAURANT_SETTINGS,
+  GET_TABLES,
 } from '../graphql/queries';
 
 const endpoint = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql';
@@ -25,7 +47,9 @@ const mapId = <T extends { id?: string; [k: string]: any }>(obj: T | null): T | 
   return { ...rest, _id: id, id: undefined } as T;
 };
 
-const mapArray = <T extends { id?: string; [k: string]: any }>(arr: T[] | undefined | null): T[] => {
+const mapArray = <T extends { id?: string; [k: string]: any }>(
+  arr: T[] | undefined | null,
+): T[] => {
   if (!arr) return [];
   return arr.map((item) => {
     const { id, ...rest } = item as any;
@@ -119,10 +143,13 @@ export interface NewUserPayload {
 }
 
 export const useCategories = () =>
-  useQuery({ queryKey: ['categories'], queryFn: async () => {
-    const data = await request(endpoint, GET_CATEGORIES);
-    return mapArray<Category>((data as any)?.categories);
-  }});
+  useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const data = await request(endpoint, GET_CATEGORIES);
+      return mapArray<Category>((data as any)?.categories);
+    },
+  });
 
 export const useCreateCategory = () => {
   const qc = useQueryClient();
@@ -135,7 +162,8 @@ export const useCreateCategory = () => {
 export const useUpdateCategory = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: string; name: string }) => request(endpoint, UPDATE_CATEGORY, payload),
+    mutationFn: (payload: { id: string; name: string }) =>
+      request(endpoint, UPDATE_CATEGORY, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
   });
 };
@@ -149,15 +177,19 @@ export const useDeleteCategory = () => {
 };
 
 export const useMenu = () =>
-  useQuery({ queryKey: ['menu'], queryFn: async () => {
-    const data = await request(endpoint, GET_MENU_ITEMS);
-    return mapArray<MenuItem>((data as any)?.menuItems);
-  }});
+  useQuery({
+    queryKey: ['menu'],
+    queryFn: async () => {
+      const data = await request(endpoint, GET_MENU_ITEMS);
+      return mapArray<MenuItem>((data as any)?.menuItems);
+    },
+  });
 
 export const useCreateMenuItem = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Omit<MenuItem, '_id' | 'available'>) => request(endpoint, CREATE_MENU_ITEM, payload),
+    mutationFn: (payload: Omit<MenuItem, '_id' | 'available'>) =>
+      request(endpoint, CREATE_MENU_ITEM, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['menu'] }),
   });
 };
@@ -165,7 +197,8 @@ export const useCreateMenuItem = () => {
 export const useUpdateMenuItem = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: string; data: Partial<MenuItem> }) => request(endpoint, UPDATE_MENU_ITEM, { id: payload.id, ...payload.data }),
+    mutationFn: (payload: { id: string; data: Partial<MenuItem> }) =>
+      request(endpoint, UPDATE_MENU_ITEM, { id: payload.id, ...payload.data }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['menu'] }),
   });
 };
@@ -179,17 +212,25 @@ export const useDeleteMenuItem = () => {
 };
 
 export const useOrders = () =>
-  useQuery({ queryKey: ['orders'], queryFn: async () => {
-    const data = await request(endpoint, GET_ORDERS);
-    return mapArray<Order>((data as any)?.orders);
-  }});
+  useQuery({
+    queryKey: ['orders'],
+    queryFn: async () => {
+      const data = await request(endpoint, GET_ORDERS);
+      return mapArray<Order>((data as any)?.orders);
+    },
+  });
 
 export const useCreateOrder = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: NewOrderPayload) => {
       const variables = {
-        items: payload.items.map((i: any) => ({ menuItem: i.menuItem, name: i.name || i.menuItem, quantity: i.quantity, price: i.price || 0 })),
+        items: payload.items.map((i: any) => ({
+          menuItem: i.menuItem,
+          name: i.name || i.menuItem,
+          quantity: i.quantity,
+          price: i.price || 0,
+        })),
         tableNumber: payload.tableNumber,
         paymentMethod: 'cash',
       };
@@ -206,7 +247,8 @@ export const useCreateOrder = () => {
 export const useUpdateOrder = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: string; data: Partial<Order> }) => request(endpoint, UPDATE_ORDER, { id: payload.id, ...payload.data }),
+    mutationFn: (payload: { id: string; data: Partial<Order> }) =>
+      request(endpoint, UPDATE_ORDER, { id: payload.id, ...payload.data }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
@@ -228,7 +270,8 @@ export const useDeleteOrder = () => {
 export const useUpdateOrderStatus = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => request(endpoint, UPDATE_ORDER_STATUS, { id, status }),
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      request(endpoint, UPDATE_ORDER_STATUS, { id, status }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
@@ -237,10 +280,13 @@ export const useUpdateOrderStatus = () => {
 };
 
 export const useReservations = () =>
-  useQuery({ queryKey: ['reservations'], queryFn: async () => {
-    const data = await request(endpoint, GET_RESERVATIONS);
-    return mapArray<Reservation>((data as any)?.reservations);
-  }});
+  useQuery({
+    queryKey: ['reservations'],
+    queryFn: async () => {
+      const data = await request(endpoint, GET_RESERVATIONS);
+      return mapArray<Reservation>((data as any)?.reservations);
+    },
+  });
 
 export const useCreateReservation = () => {
   const qc = useQueryClient();
@@ -256,7 +302,8 @@ export const useCreateReservation = () => {
 export const useUpdateReservation = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { id: string; data: Partial<Reservation> }) => request(endpoint, UPDATE_RESERVATION, { id: payload.id, ...payload.data }),
+    mutationFn: (payload: { id: string; data: Partial<Reservation> }) =>
+      request(endpoint, UPDATE_RESERVATION, { id: payload.id, ...payload.data }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reservations'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
@@ -287,10 +334,13 @@ export const useCancelReservation = () => {
 };
 
 export const useUsers = () =>
-  useQuery({ queryKey: ['users'], queryFn: async () => {
-    const data = await request(endpoint, GET_USERS);
-    return mapArray<AdminUser>((data as any)?.authUsers);
-  }});
+  useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const data = await request(endpoint, GET_USERS);
+      return mapArray<AdminUser>((data as any)?.authUsers);
+    },
+  });
 
 export const useCreateUser = () => {
   const qc = useQueryClient();
@@ -311,7 +361,8 @@ export const useDeleteUser = () => {
 export const useUpdateUserRole = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, role }: { id: string; role: string }) => request(endpoint, UPDATE_USER_ROLE, { id, role }),
+    mutationFn: ({ id, role }: { id: string; role: string }) =>
+      request(endpoint, UPDATE_USER_ROLE, { id, role }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
 };

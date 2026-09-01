@@ -1,6 +1,14 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { register, login, getProfile, getUsers, deleteUser, updateUserRole, createUserByAdmin } from '../controllers/auth.js';
+import {
+  register,
+  login,
+  getProfile,
+  getUsers,
+  deleteUser,
+  updateUserRole,
+  createUserByAdmin,
+} from '../controllers/auth.js';
 import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -46,11 +54,15 @@ const router = express.Router();
  *       400:
  *         description: User already exists or validation error
  */
-router.post('/register', [
-  body('name').notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-], register);
+router.post(
+  '/register',
+  [
+    body('name').notEmpty().withMessage('Name is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  ],
+  register,
+);
 
 /**
  * @swagger
@@ -85,10 +97,14 @@ router.post('/register', [
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', [
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').notEmpty().withMessage('Password is required'),
-], login);
+router.post(
+  '/login',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required'),
+  ],
+  login,
+);
 
 /**
  * @swagger

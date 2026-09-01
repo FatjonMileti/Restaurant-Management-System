@@ -23,15 +23,27 @@ export default function MenuItemCard({ item, onEdit }: Props) {
 
   const isAdmin = user?.role === 'admin';
   return (
-    <div className={`card-grid ${isAdmin ? 'cursor-pointer' : ''}`} onClick={() => isAdmin && onEdit(item)}>
+    <div
+      className={`card-grid ${isAdmin ? 'cursor-pointer' : ''}`}
+      onClick={() => isAdmin && onEdit(item)}
+    >
       <div className="w-full h-32 rounded-md overflow-hidden mb-3 bg-gray-100">
-        <img src={item.image || '/images/empty.jpg'} alt={item.name} className="w-full h-full object-cover" />
+        <img
+          src={item.image || '/images/empty.jpg'}
+          alt={item.name}
+          className="w-full h-full object-cover"
+        />
       </div>
       <h3 className="text-lg font-semibold">{item.name}</h3>
       <p className="text-gray-500">{item.description}</p>
-      <p className="mt-2"><strong>${item.price.toFixed(2)}</strong> <span className="text-gray-400">({item.category})</span></p>
+      <p className="mt-2">
+        <strong>${item.price.toFixed(2)}</strong>{' '}
+        <span className="text-gray-400">({item.category})</span>
+      </p>
       {isAdmin && (
-        <button onClick={handleDelete} className="btn-danger-sm mt-3">Delete</button>
+        <button onClick={handleDelete} className="btn-danger-sm mt-3">
+          Delete
+        </button>
       )}
     </div>
   );

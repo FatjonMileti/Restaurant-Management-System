@@ -39,7 +39,10 @@ export const createMenuItem = async (req: Request, res: Response): Promise<void>
 
 export const updateMenuItem = async (req: Request, res: Response): Promise<void> => {
   try {
-    const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
     if (!item) {
       res.status(404).json({ message: 'Menu item not found' });
       return;

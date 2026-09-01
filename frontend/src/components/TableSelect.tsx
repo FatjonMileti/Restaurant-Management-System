@@ -10,7 +10,14 @@ interface TableSelectProps {
   showBusyLabel?: boolean;
 }
 
-export default function TableSelect({ value, onChange, placeholder = 'Select table', className = 'form-input-sm w-32', allowEmpty = true, showBusyLabel = false }: TableSelectProps) {
+export default function TableSelect({
+  value,
+  onChange,
+  placeholder = 'Select table',
+  className = 'form-input-sm w-32',
+  allowEmpty = true,
+  showBusyLabel = false,
+}: TableSelectProps) {
   const { data: settings } = useRestaurantSettings();
   const { data: tables = [] } = useTables();
   const count = settings?.tableCount || 10;
@@ -27,7 +34,10 @@ export default function TableSelect({ value, onChange, placeholder = 'Select tab
       {numbers.map((n) => {
         const status = tables.find((t) => t.number === n);
         const isBusy = status?.isBusy;
-        const label = isBusy && showBusyLabel ? `Table ${n} (Busy - ${status?.busyType})` : `Table ${n}${isBusy ? ' (Busy)' : ''}`;
+        const label =
+          isBusy && showBusyLabel
+            ? `Table ${n} (Busy - ${status?.busyType})`
+            : `Table ${n}${isBusy ? ' (Busy)' : ''}`;
         return (
           <option key={n} value={String(n)}>
             {label}

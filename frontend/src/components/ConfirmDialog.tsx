@@ -9,7 +9,13 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-export default function ConfirmDialog({ open, title = 'Confirm', message, onConfirm, onCancel }: ConfirmDialogProps) {
+export default function ConfirmDialog({
+  open,
+  title = 'Confirm',
+  message,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
       <DialogTitle className="font-bold">{title}</DialogTitle>
@@ -17,8 +23,12 @@ export default function ConfirmDialog({ open, title = 'Confirm', message, onConf
         <p className="text-sm text-gray-700">{message}</p>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancel} variant="outlined">Cancel</Button>
-        <Button onClick={onConfirm} variant="contained" color="error" autoFocus>Confirm</Button>
+        <Button onClick={onCancel} variant="outlined">
+          Cancel
+        </Button>
+        <Button onClick={onConfirm} variant="contained" color="error" autoFocus>
+          Confirm
+        </Button>
       </DialogActions>
     </Dialog>
   );

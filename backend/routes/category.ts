@@ -1,5 +1,10 @@
 import express from 'express';
-import { getCategories, createCategory, updateCategory, deleteCategory } from '../controllers/category.js';
+import {
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from '../controllers/category.js';
 import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();

@@ -11,7 +11,10 @@ const getGraphQLErrorMessage = (err: unknown): string => {
   if (err instanceof ClientError) {
     return err.response.errors?.[0]?.message || err.message || 'Login failed';
   }
-  if (err instanceof TypeError && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+  if (
+    err instanceof TypeError &&
+    (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))
+  ) {
     return 'Network error: backend is unavailable';
   }
   if (err instanceof Error) {
@@ -21,7 +24,11 @@ const getGraphQLErrorMessage = (err: unknown): string => {
 };
 
 export default function LoginFormComponent() {
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
   const [error, setError] = useState('');
@@ -40,15 +47,45 @@ export default function LoginFormComponent() {
   return (
     <Box className="max-w-md mx-auto mt-20">
       <Paper className="p-5 rounded-xl">
-        <Typography variant="h4" className="text-2xl font-bold mb-4">Login</Typography>
+        <Typography variant="h4" className="text-2xl font-bold mb-4">
+          Login
+        </Typography>
         {error && <Typography className="text-red-600 mb-2">{error}</Typography>}
         <form onSubmit={handleSubmit(onSubmit)}>
-          <TextField fullWidth type="email" placeholder="Email" {...register('email')} error={!!errors.email} helperText={errors.email?.message} margin="normal" />
-          <TextField fullWidth type="password" placeholder="Password" {...register('password')} error={!!errors.password} helperText={errors.password?.message} margin="normal" />
-          <Button type="submit" fullWidth variant="contained" className="w-full p-3 !bg-[#e94560] hover:!bg-[#d63d54] !text-white normal-case mt-4">Login</Button>
+          <TextField
+            fullWidth
+            type="email"
+            placeholder="Email"
+            {...register('email')}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            type="password"
+            placeholder="Password"
+            {...register('password')}
+            error={!!errors.password}
+            helperText={errors.password?.message}
+            margin="normal"
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            className="w-full p-3 !bg-[#e94560] hover:!bg-[#d63d54] !text-white normal-case mt-4"
+          >
+            Login
+          </Button>
         </form>
       </Paper>
-      <Typography className="mt-2">Don't have an account? <Link to="/register" className="text-[#e94560]">Register</Link></Typography>
+      <Typography className="mt-2">
+        Don't have an account?{' '}
+        <Link to="/register" className="text-[#e94560]">
+          Register
+        </Link>
+      </Typography>
     </Box>
   );
 }

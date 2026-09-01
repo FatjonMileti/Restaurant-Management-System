@@ -1,5 +1,11 @@
 import express from 'express';
-import { getMenuItems, getMenuItem, createMenuItem, updateMenuItem, deleteMenuItem } from '../controllers/menu.js';
+import {
+  getMenuItems,
+  getMenuItem,
+  createMenuItem,
+  updateMenuItem,
+  deleteMenuItem,
+} from '../controllers/menu.js';
 import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();

@@ -22,7 +22,10 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
 
 export const updateCategory = async (req: Request, res: Response): Promise<void> => {
   try {
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
     if (!category) {
       res.status(404).json({ message: 'Category not found' });
       return;

@@ -18,7 +18,7 @@ const menuItemSchema = new Schema<IMenuItem>(
     image: { type: String },
     available: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<IMenuItem>('MenuItem', menuItemSchema);

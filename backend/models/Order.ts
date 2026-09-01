@@ -23,7 +23,7 @@ const orderItemSchema = new Schema<IOrderItem>(
     quantity: { type: Number, required: true, default: 1 },
     price: { type: Number, required: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const orderSchema = new Schema<IOrder>(
@@ -31,11 +31,15 @@ const orderSchema = new Schema<IOrder>(
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     items: [orderItemSchema],
     totalAmount: { type: Number, required: true },
-    status: { type: String, enum: ['pending', 'preparing', 'completed', 'cancelled'], default: 'pending' },
+    status: {
+      type: String,
+      enum: ['pending', 'preparing', 'completed', 'cancelled'],
+      default: 'pending',
+    },
     tableNumber: { type: Number },
     paymentMethod: { type: String, enum: ['cash', 'card'], default: 'cash' },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<IOrder>('Order', orderSchema);

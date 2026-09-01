@@ -16,7 +16,9 @@ export default function OrderList({ onEditOrder }: Props) {
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
   const [actionError, setActionError] = React.useState('');
-  const [deleteConfirm, setDeleteConfirm] = React.useState<{ open: boolean; id?: string }>({ open: false });
+  const [deleteConfirm, setDeleteConfirm] = React.useState<{ open: boolean; id?: string }>({
+    open: false,
+  });
   const [statusFilter, setStatusFilter] = useState('');
   const [tableFilter, setTableFilter] = useState('');
 
@@ -43,7 +45,9 @@ export default function OrderList({ onEditOrder }: Props) {
 
   const filteredOrders = orders.filter((order: Order) => {
     const matchesStatus = statusFilter ? order.status === statusFilter : true;
-    const matchesTable = tableFilter ? (order.tableNumber && String(order.tableNumber) === tableFilter) : true;
+    const matchesTable = tableFilter
+      ? order.tableNumber && String(order.tableNumber) === tableFilter
+      : true;
     return matchesStatus && matchesTable;
   });
 
@@ -52,7 +56,13 @@ export default function OrderList({ onEditOrder }: Props) {
       <FilterBar
         label="Filter orders:"
         theme="gray"
-        options={[{ value: '', label: 'All' }, { value: 'pending', label: 'Pending' }, { value: 'preparing', label: 'Preparing' }, { value: 'completed', label: 'Completed' }, { value: 'cancelled', label: 'Cancelled' }]}
+        options={[
+          { value: '', label: 'All' },
+          { value: 'pending', label: 'Pending' },
+          { value: 'preparing', label: 'Preparing' },
+          { value: 'completed', label: 'Completed' },
+          { value: 'cancelled', label: 'Cancelled' },
+        ]}
         value={statusFilter}
         onChange={setStatusFilter}
         inputPlaceholder="Table #"
@@ -61,7 +71,7 @@ export default function OrderList({ onEditOrder }: Props) {
         inputType="number"
         useTableSelect
       />
-      
+
       {error && <p className="error-text mt-3">{error}</p>}
       <ConfirmDialog
         open={deleteConfirm.open}
@@ -78,32 +88,66 @@ export default function OrderList({ onEditOrder }: Props) {
               {order.tableNumber && <span> | Table {order.tableNumber}</span>}
               <p className="text-gray-500 text-sm">{new Date(order.createdAt).toLocaleString()}</p>
               {order.user && user?.role !== 'customer' && (
-                <p className="text-gray-400 text-xs">By: {order.user.name} ({order.user.email})</p>
+                <p className="text-gray-400 text-xs">
+                  By: {order.user.name} ({order.user.email})
+                </p>
               )}
               {order.items.map((item, i) => (
-                <p key={i} className="text-sm mt-1">{item.name} x{item.quantity} - ${(item.price * item.quantity).toFixed(2)}</p>
+                <p key={i} className="text-sm mt-1">
+                  {item.name} x{item.quantity} - ${(item.price * item.quantity).toFixed(2)}
+                </p>
               ))}
-              <p className="mt-2"><strong>Total: ${order.totalAmount.toFixed(2)}</strong></p>
+              <p className="mt-2">
+                <strong>Total: ${order.totalAmount.toFixed(2)}</strong>
+              </p>
             </div>
             <div className="text-right">
               <StatusBadge status={order.status} className="mb-2.5 text-sm" />
-              {((user?.role !== 'customer') || (user?.role === 'customer' && order.user?._id === user?._id)) && (
+              {(user?.role !== 'customer' ||
+                (user?.role === 'customer' && order.user?._id === user?._id)) && (
                 <div className="flex flex-col gap-1.5 items-end">
                   {order.status === 'pending' && (
                     <>
-                      <button onClick={() => onEditOrder(order)} className="btn-blue-sm">Edit</button>
-                      <button onClick={() => handleUpdateStatus(order._id, 'preparing')} className="btn-blue-sm">Start Preparing</button>
-                      <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="btn-danger-sm">Cancel</button>
+                      <button onClick={() => onEditOrder(order)} className="btn-blue-sm">
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(order._id, 'preparing')}
+                        className="btn-blue-sm"
+                      >
+                        Start Preparing
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(order._id, 'cancelled')}
+                        className="btn-danger-sm"
+                      >
+                        Cancel
+                      </button>
                     </>
                   )}
                   {order.status === 'preparing' && (
                     <>
-                      <button onClick={() => handleUpdateStatus(order._id, 'completed')} className="btn-blue-sm">Mark Completed</button>
-                      <button onClick={() => handleUpdateStatus(order._id, 'cancelled')} className="btn-danger-sm">Cancel</button>
+                      <button
+                        onClick={() => handleUpdateStatus(order._id, 'completed')}
+                        className="btn-blue-sm"
+                      >
+                        Mark Completed
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(order._id, 'cancelled')}
+                        className="btn-danger-sm"
+                      >
+                        Cancel
+                      </button>
                     </>
                   )}
                   {(order.status === 'completed' || order.status === 'cancelled') && (
-                    <button onClick={() => setDeleteConfirm({ open: true, id: order._id })} className="btn-danger-sm">Delete</button>
+                    <button
+                      onClick={() => setDeleteConfirm({ open: true, id: order._id })}
+                      className="btn-danger-sm"
+                    >
+                      Delete
+                    </button>
                   )}
                 </div>
               )}

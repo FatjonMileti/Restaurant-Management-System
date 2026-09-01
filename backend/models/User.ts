@@ -18,7 +18,7 @@ const userSchema = new Schema<IUser>(
     role: { type: String, enum: ['customer', 'staff', 'admin'], default: 'customer' },
     phone: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.pre('save', async function (next) {

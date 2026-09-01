@@ -20,7 +20,7 @@ const reservationSchema = new Schema<IReservation>(
     status: { type: String, enum: ['confirmed', 'cancelled', 'completed'], default: 'confirmed' },
     specialRequests: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<IReservation>('Reservation', reservationSchema);

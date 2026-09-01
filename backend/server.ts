@@ -32,26 +32,33 @@ app.use(morgan('dev'));
 
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
-app.use('/graphql', graphqlHTTP((req) => {
-  const authHeader = req.headers.authorization || req.headers.Authorization;
-  let userId: string | undefined;
-  if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
-    try {
-      const token = authHeader.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
-      userId = decoded.id;
-    } catch {
-      userId = undefined;
+app.use(
+  '/graphql',
+  graphqlHTTP((req) => {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    let userId: string | undefined;
+    if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+        userId = decoded.id;
+      } catch {
+        userId = undefined;
+      }
     }
-  }
-  return {
-    schema,
-    rootValue: root,
-    context: { userId },
-    graphiql: true,
-    formatError: (err: any) => ({ message: err.message || 'Unknown error', path: err.path, locations: err.locations }),
-  };
-}));
+    return {
+      schema,
+      rootValue: root,
+      context: { userId },
+      graphiql: true,
+      formatError: (err: any) => ({
+        message: err.message || 'Unknown error',
+        path: err.path,
+        locations: err.locations,
+      }),
+    };
+  }),
+);
 
 app.get('/', (_req, res) => {
   res.send('Restaurant Management API is running...');

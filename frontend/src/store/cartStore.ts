@@ -24,12 +24,15 @@ export const useCartStore = create<CartState>((set) => ({
       if (existing) {
         return {
           items: state.items.map((c) =>
-            c.menuItem === item._id ? { ...c, quantity: c.quantity + 1 } : c
+            c.menuItem === item._id ? { ...c, quantity: c.quantity + 1 } : c,
           ),
         };
       }
       return {
-        items: [...state.items, { menuItem: item._id, name: item.name, price: item.price, quantity: 1 }],
+        items: [
+          ...state.items,
+          { menuItem: item._id, name: item.name, price: item.price, quantity: 1 },
+        ],
       };
     }),
 

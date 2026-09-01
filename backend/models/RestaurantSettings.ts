@@ -18,7 +18,7 @@ const restaurantSettingsSchema = new Schema<IRestaurantSettings>(
     email: { type: String, default: '' },
     tableCount: { type: Number, required: true, default: 10, min: 1 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<IRestaurantSettings>('RestaurantSettings', restaurantSettingsSchema);

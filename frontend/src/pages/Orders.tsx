@@ -13,9 +13,18 @@ export default function Orders() {
   return (
     <Box>
       <Box className="flex justify-between items-center mb-2">
-        <Typography variant="h4" className="page-heading">Orders</Typography>
+        <Typography variant="h4" className="page-heading">
+          Orders
+        </Typography>
         {user?.role !== 'customer' && (
-          <Button variant="contained" color="secondary" onClick={() => { setShowCreate(!showCreate); setEditingOrder(null); }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              setShowCreate(!showCreate);
+              setEditingOrder(null);
+            }}
+          >
             {showCreate ? 'Cancel' : '+ New Order'}
           </Button>
         )}
@@ -24,9 +33,15 @@ export default function Orders() {
         showCreate={showCreate}
         setShowCreate={setShowCreate}
         editingOrder={editingOrder}
-        onEditDone={() => { setEditingOrder(null); }}
+        onEditDone={() => {
+          setEditingOrder(null);
+        }}
       />
-      <OrderList onEditOrder={(order) => { setEditingOrder(order); }} />
+      <OrderList
+        onEditOrder={(order) => {
+          setEditingOrder(order);
+        }}
+      />
     </Box>
   );
 }

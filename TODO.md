@@ -1,6 +1,7 @@
 # TODO
 
 ## Done
+
 - [x] Implement backend GraphQL schema (auth, menu, orders, reservations, categories)
 - [x] Implement frontend GraphQL queries (`graphql/queries.ts`)
 - [x] Update auth store to use `graphql-request` (`store/authStore.ts`)
@@ -14,3 +15,5 @@
 - [x] frontend: add lazyLoading
 
 ## To Do
+
+- [ ] reservation form - add labels above inputs

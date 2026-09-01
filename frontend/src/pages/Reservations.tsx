@@ -13,18 +13,40 @@ export default function Reservations() {
   return (
     <Box>
       <Box className="flex justify-between items-center mb-2">
-        <Typography variant="h4" className="page-heading">Reservations</Typography>
-        <Button variant="contained" color="secondary" onClick={() => { setShowForm(!showForm); setEditingReservation(null); }}>
+        <Typography variant="h4" className="page-heading">
+          Reservations
+        </Typography>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => {
+            setShowForm(!showForm);
+            setEditingReservation(null);
+          }}
+        >
           {showForm ? 'Cancel' : '+ New Reservation'}
         </Button>
       </Box>
       <ReservationFormComponent
         showForm={showForm || !!editingReservation}
-        setShowForm={(v) => { if (!v) { setEditingReservation(null); } setShowForm(v); }}
+        setShowForm={(v) => {
+          if (!v) {
+            setEditingReservation(null);
+          }
+          setShowForm(v);
+        }}
         editingReservation={editingReservation}
-        onEditDone={() => { setEditingReservation(null); setShowForm(false); }}
+        onEditDone={() => {
+          setEditingReservation(null);
+          setShowForm(false);
+        }}
       />
-      <ReservationList onEditReservation={(res) => { setEditingReservation(res); setShowForm(true); }} />
+      <ReservationList
+        onEditReservation={(res) => {
+          setEditingReservation(res);
+          setShowForm(true);
+        }}
+      />
     </Box>
   );
 }

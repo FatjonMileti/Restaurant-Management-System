@@ -32,17 +32,58 @@ function App() {
           </div>
         )}
         <div className="p-5 max-w-6xl mx-auto">
-          <Suspense fallback={<div className="loading-wrapper py-20"><div className="spinner" /></div>}>
+          <Suspense
+            fallback={
+              <div className="loading-wrapper py-20">
+                <div className="spinner" />
+              </div>
+            }
+          >
             <Routes>
               <Route path="/" element={<Menu />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/menu" element={<Menu />} />
-              <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-              <Route path="/reservations" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
-              <Route path="/tables" element={<ProtectedRoute><Tables /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute adminOnly><Settings /></ProtectedRoute>} />
+              <Route
+                path="/orders"
+                element={
+                  <ProtectedRoute>
+                    <Orders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reservations"
+                element={
+                  <ProtectedRoute>
+                    <Reservations />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tables"
+                element={
+                  <ProtectedRoute>
+                    <Tables />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </Suspense>
         </div>

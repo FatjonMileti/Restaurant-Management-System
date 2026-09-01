@@ -11,7 +11,12 @@ export default function RestaurantSection() {
   const [success, setSuccess] = React.useState('');
   const [error, setError] = React.useState('');
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<RestaurantSettingsFormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<RestaurantSettingsFormData>({
     resolver: zodResolver(restaurantSettingsSchema),
     defaultValues: { name: '', logo: '', address: '', phone: '', email: '', tableCount: 10 },
   });
@@ -48,7 +53,12 @@ export default function RestaurantSection() {
     }
   };
 
-  if (isLoading) return <SectionCard title="Restaurant Details"><p className="text-gray-400">Loading...</p></SectionCard>;
+  if (isLoading)
+    return (
+      <SectionCard title="Restaurant Details">
+        <p className="text-gray-400">Loading...</p>
+      </SectionCard>
+    );
 
   return (
     <SectionCard title="Restaurant Details">
@@ -58,9 +68,20 @@ export default function RestaurantSection() {
         {errors.name && <p className="error-text text-sm">{errors.name.message}</p>}
 
         <label className="form-label">Logo URL</label>
-        <input placeholder="https://... or /images/logo.png" {...register('logo')} className="form-input-sm" />
+        <input
+          placeholder="https://... or /images/logo.png"
+          {...register('logo')}
+          className="form-input-sm"
+        />
         {errors.logo && <p className="error-text text-sm">{errors.logo.message}</p>}
-        {settings?.logo && <img src={settings.logo} alt="logo preview" className="h-12 w-12 object-cover rounded mt-1" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />}
+        {settings?.logo && (
+          <img
+            src={settings.logo}
+            alt="logo preview"
+            className="h-12 w-12 object-cover rounded mt-1"
+            onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
+          />
+        )}
 
         <label className="form-label">Address</label>
         <input placeholder="123 Main St, City" {...register('address')} className="form-input-sm" />
@@ -69,11 +90,21 @@ export default function RestaurantSection() {
         <input placeholder="+1 (555) 123-4567" {...register('phone')} className="form-input-sm" />
 
         <label className="form-label">Email</label>
-        <input type="email" placeholder="info@restaurant.com" {...register('email')} className="form-input-sm" />
+        <input
+          type="email"
+          placeholder="info@restaurant.com"
+          {...register('email')}
+          className="form-input-sm"
+        />
         {errors.email && <p className="error-text text-sm">{errors.email.message}</p>}
 
         <label className="form-label">Number of Tables *</label>
-        <input type="number" min={1} {...register('tableCount', { valueAsNumber: true })} className="form-input-sm" />
+        <input
+          type="number"
+          min={1}
+          {...register('tableCount', { valueAsNumber: true })}
+          className="form-input-sm"
+        />
         {errors.tableCount && <p className="error-text text-sm">{errors.tableCount.message}</p>}
 
         {error && <p className="error-text text-sm">{error}</p>}

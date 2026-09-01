@@ -8,7 +8,7 @@ const categorySchema = new Schema<ICategory>(
   {
     name: { type: String, required: true, unique: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<ICategory>('Category', categorySchema);

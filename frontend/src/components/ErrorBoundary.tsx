@@ -31,7 +31,9 @@ class ErrorBoundary extends React.Component<Props, State> {
       return (
         <div className="text-center p-10 font-sans">
           <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
-          <p className="text-gray-600 mb-4">An unexpected error occurred while rendering this page.</p>
+          <p className="text-gray-600 mb-4">
+            An unexpected error occurred while rendering this page.
+          </p>
           <button
             onClick={this.handleReset}
             className="bg-[#e94560] text-white border-none px-4 py-2 rounded-md cursor-pointer text-base hover:bg-[#d63d54] transition-colors"

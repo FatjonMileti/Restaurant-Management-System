@@ -12,7 +12,10 @@ const getGraphQLErrorMessage = (err: unknown, fallback = 'Request failed'): stri
   if (err instanceof ClientError) {
     return err.response.errors?.[0]?.message || err.message || fallback;
   }
-  if (err instanceof TypeError && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+  if (
+    err instanceof TypeError &&
+    (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))
+  ) {
     return 'Network error: backend is unavailable';
   }
   if (err instanceof Error) {
@@ -28,7 +31,12 @@ interface Props {
   onEditDone?: () => void;
 }
 
-export default function OrderFormComponent({ showCreate, setShowCreate, editingOrder, onEditDone }: Props) {
+export default function OrderFormComponent({
+  showCreate,
+  setShowCreate,
+  editingOrder,
+  onEditDone,
+}: Props) {
   const { user } = useAuth();
   const { data: menu = [] } = useMenu();
   const createOrder = useCreateOrder();
@@ -39,7 +47,9 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
   const [actionError, setActionError] = useState('');
   const { register, handleSubmit, reset, watch, setValue } = useForm<OrderFormData>({
     resolver: zodResolver(orderFormSchema),
-    defaultValues: { tableNumber: editingOrder?.tableNumber ? String(editingOrder.tableNumber) : '' },
+    defaultValues: {
+      tableNumber: editingOrder?.tableNumber ? String(editingOrder.tableNumber) : '',
+    },
   });
   const tableValue = watch('tableNumber');
 
@@ -48,15 +58,18 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
     if (editingOrder && editingOrder !== prevEditingOrder.current) {
       prevEditingOrder.current = editingOrder;
       reset({ tableNumber: editingOrder.tableNumber ? String(editingOrder.tableNumber) : '' });
-      cart.replaceItems(editingOrder.items.map(i => {
-        const menuItemId = typeof i.menuItem === 'string' ? i.menuItem : (i.menuItem as any)?.id || '';
-        return {
-          menuItem: menuItemId,
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity,
-        };
-      }));
+      cart.replaceItems(
+        editingOrder.items.map((i) => {
+          const menuItemId =
+            typeof i.menuItem === 'string' ? i.menuItem : (i.menuItem as any)?.id || '';
+          return {
+            menuItem: menuItemId,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+          };
+        }),
+      );
     } else if (!editingOrder && prevEditingOrder.current) {
       prevEditingOrder.current = editingOrder;
       cart.clear();
@@ -70,7 +83,12 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
         await updateOrder.mutateAsync({
           id: editingOrder._id,
           data: {
-            items: cart.items.map((c) => ({ menuItem: c.menuItem, name: c.name, price: c.price, quantity: c.quantity })),
+            items: cart.items.map((c) => ({
+              menuItem: c.menuItem,
+              name: c.name,
+              price: c.price,
+              quantity: c.quantity,
+            })),
             tableNumber: Number(data.tableNumber) || undefined,
             status: 'pending',
           },
@@ -78,7 +96,12 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
         onEditDone?.();
       } else {
         await createOrder.mutateAsync({
-          items: cart.items.map((c) => ({ menuItem: c.menuItem, name: c.name, price: c.price, quantity: c.quantity })),
+          items: cart.items.map((c) => ({
+            menuItem: c.menuItem,
+            name: c.name,
+            price: c.price,
+            quantity: c.quantity,
+          })),
           tableNumber: Number(data.tableNumber) || undefined,
         });
         setShowCreate(false);
@@ -86,7 +109,10 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
       cart.clear();
       reset();
     } catch (err) {
-      const msg = getGraphQLErrorMessage(err, editingOrder ? 'Failed to edit order' : 'Failed to place order');
+      const msg = getGraphQLErrorMessage(
+        err,
+        editingOrder ? 'Failed to edit order' : 'Failed to place order',
+      );
       setActionError(msg);
     }
   };
@@ -98,7 +124,12 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
       <h3 className="text-lg font-semibold mb-3">{editingOrder ? 'Edit Order' : 'Create Order'}</h3>
       <div className="flex flex-wrap gap-2.5 mb-4">
         {menuItems.map((item) => (
-          <button key={item._id} type="button" onClick={() => cart.addItem(item)} className="px-4 py-2 bg-[#0f3460] text-white border-none rounded-md cursor-pointer hover:bg-[#16213e] transition-colors text-sm">
+          <button
+            key={item._id}
+            type="button"
+            onClick={() => cart.addItem(item)}
+            className="px-4 py-2 bg-[#0f3460] text-white border-none rounded-md cursor-pointer hover:bg-[#16213e] transition-colors text-sm"
+          >
             {item.name} - ${item.price.toFixed(2)}
           </button>
         ))}
@@ -108,15 +139,48 @@ export default function OrderFormComponent({ showCreate, setShowCreate, editingO
           <h4 className="font-semibold mb-2">Cart</h4>
           {cart.items.map((c) => (
             <div key={c.menuItem} className="flex justify-between mb-1.5 items-center">
-              <span className="text-sm">{c.name} x{c.quantity} - ${(c.price * c.quantity).toFixed(2)}</span>
-              <button onClick={() => cart.removeItem(c.menuItem)} className="btn-danger-xs">Remove</button>
+              <span className="text-sm">
+                {c.name} x{c.quantity} - ${(c.price * c.quantity).toFixed(2)}
+              </span>
+              <button onClick={() => cart.removeItem(c.menuItem)} className="btn-danger-xs">
+                Remove
+              </button>
             </div>
           ))}
-          <p className="mt-3"><strong>Total: ${cart.items.reduce((s, c) => s + c.price * c.quantity, 0).toFixed(2)}</strong></p>
+          <p className="mt-3">
+            <strong>
+              Total: ${cart.items.reduce((s, c) => s + c.price * c.quantity, 0).toFixed(2)}
+            </strong>
+          </p>
           <div className="flex gap-2.5 mt-3 items-center flex-wrap">
-            <TableSelect value={tableValue} onChange={(v) => setValue('tableNumber', v)} placeholder="Table number" className="p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#e94560] w-36" showBusyLabel />
-            <button type="submit" disabled={(editingOrder ? updateOrder.isPending : createOrder.isPending)} className="btn-primary">{editingOrder ? 'Save Changes' : 'Place Order'}</button>
-            <button type="button" onClick={() => { if (editingOrder && onEditDone) { onEditDone(); } else { setShowCreate(false); } cart.clear(); }} className="btn-secondary">Cancel</button>
+            <TableSelect
+              value={tableValue}
+              onChange={(v) => setValue('tableNumber', v)}
+              placeholder="Table number"
+              className="p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#e94560] w-36"
+              showBusyLabel
+            />
+            <button
+              type="submit"
+              disabled={editingOrder ? updateOrder.isPending : createOrder.isPending}
+              className="btn-primary"
+            >
+              {editingOrder ? 'Save Changes' : 'Place Order'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (editingOrder && onEditDone) {
+                  onEditDone();
+                } else {
+                  setShowCreate(false);
+                }
+                cart.clear();
+              }}
+              className="btn-secondary"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

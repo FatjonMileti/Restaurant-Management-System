@@ -14,12 +14,20 @@ export default function Settings() {
 
   return (
     <Box>
-      <Typography variant="h3" className="page-heading mb-3">Settings</Typography>
+      <Typography variant="h3" className="page-heading mb-3">
+        Settings
+      </Typography>
 
       <Box className="settings-tab-bar">
-        <button onClick={() => setActiveTab('restaurant')} className={tabBtn('restaurant')}>Restaurant</button>
-        <button onClick={() => setActiveTab('users')} className={tabBtn('users')}>Users</button>
-        <button onClick={() => setActiveTab('categories')} className={tabBtn('categories')}>Categories</button>
+        <button onClick={() => setActiveTab('restaurant')} className={tabBtn('restaurant')}>
+          Restaurant
+        </button>
+        <button onClick={() => setActiveTab('users')} className={tabBtn('users')}>
+          Users
+        </button>
+        <button onClick={() => setActiveTab('categories')} className={tabBtn('categories')}>
+          Categories
+        </button>
       </Box>
 
       {activeTab === 'restaurant' && <RestaurantSection />}
