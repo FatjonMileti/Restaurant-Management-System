@@ -92,10 +92,13 @@ export default function ReservationFormComponent({
       <h3 className="text-lg font-semibold mb-3">
         {editingReservation ? 'Edit Reservation' : 'New Reservation'}
       </h3>
+      <label className="form-label">Date</label>
       <input type="date" {...register('date')} className="form-input-sm" />
       {errors.date && <p className="error-text text-sm">{errors.date.message}</p>}
+      <label className="form-label">Time</label>
       <input type="time" {...register('time')} className="form-input-sm" />
       {errors.time && <p className="error-text text-sm">{errors.time.message}</p>}
+      <label className="form-label">Guests</label>
       <input
         type="number"
         min={1}
@@ -113,6 +116,7 @@ export default function ReservationFormComponent({
           showBusyLabel
         />
       </div>
+      <label className="form-label">Special Requests</label>
       <textarea
         placeholder="Special requests"
         {...register('specialRequests')}
