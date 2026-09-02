@@ -52,7 +52,7 @@ function Menu() {
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="form-input-sm w-40"
+          className="form-input-sm w-40 mt-3"
         >
           <option value="">All</option>
           {categories.map((c) => (
@@ -80,11 +80,6 @@ function Menu() {
             setEditingItem(null);
           }}
         />
-      )}
-      {isLoading && (
-        <Box className="loading-wrapper !py-4">
-          <Box className="spinner" />
-        </Box>
       )}
       {error && !isLoading && (
         <Typography className="text-red-600">

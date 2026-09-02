@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useOrders, useUpdateOrderStatus, useDeleteOrder, Order } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
-import LoadingSpinner from '../LoadingSpinner';
 import StatusBadge from '../StatusBadge';
 import FilterBar from '../FilterBar';
 import ConfirmDialog from '../ConfirmDialog';
@@ -12,7 +11,7 @@ interface Props {
 
 export default function OrderList({ onEditOrder }: Props) {
   const { user } = useAuth();
-  const { data: orders = [], error: ordersError, isLoading } = useOrders();
+  const { data: orders = [], error: ordersError } = useOrders();
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
   const [actionError, setActionError] = React.useState('');

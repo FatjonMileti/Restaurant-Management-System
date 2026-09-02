@@ -6,7 +6,7 @@ import SectionCard from '../SectionCard';
 import { restaurantSettingsSchema, RestaurantSettingsFormData } from '../../validation/schemas';
 
 export default function RestaurantSection() {
-  const { data: settings, isLoading } = useRestaurantSettings();
+  const { data: settings } = useRestaurantSettings();
   const update = useUpdateRestaurantSettings();
   const [success, setSuccess] = React.useState('');
   const [error, setError] = React.useState('');
@@ -52,13 +52,6 @@ export default function RestaurantSection() {
       setError(err instanceof Error ? err.message : 'Failed to update settings');
     }
   };
-
-  if (isLoading)
-    return (
-      <SectionCard title="Restaurant Details">
-        <p className="text-gray-400">Loading...</p>
-      </SectionCard>
-    );
 
   return (
     <SectionCard title="Restaurant Details">

@@ -7,7 +7,6 @@ import {
   Reservation,
 } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
-import LoadingSpinner from '../LoadingSpinner';
 import FilterBar from '../FilterBar';
 import StatusBadge from '../StatusBadge';
 import ConfirmDialog from '../ConfirmDialog';
