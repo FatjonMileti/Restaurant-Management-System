@@ -8,7 +8,7 @@ interface Props {
   onEdit: (item: MenuItem) => void;
 }
 
-export default function MenuItemCard({ item, onEdit }: Props) {
+const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit }: Props) {
   const { user } = useAuth();
   const deleteItem = useDeleteMenuItem();
 
@@ -32,6 +32,8 @@ export default function MenuItemCard({ item, onEdit }: Props) {
           src={item.image || '/images/empty.jpg'}
           alt={item.name}
           className="w-full h-full object-cover"
+          loading="lazy"
+          onError={(e) => ((e.target as HTMLImageElement).src = '/images/empty.jpg')}
         />
       </div>
       <h3 className="text-lg font-semibold">{item.name}</h3>
@@ -47,4 +49,6 @@ export default function MenuItemCard({ item, onEdit }: Props) {
       )}
     </div>
   );
-}
+});
+
+export default MenuItemCard;

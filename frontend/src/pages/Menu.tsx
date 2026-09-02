@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { useMenu, MenuItem, useCategories, Category } from '../api/queries';
 import { useAuth } from '../store/authStore';
 import MenuItemForm from '../components/pages/MenuItemForm';
 import MenuItemCard from '../components/pages/MenuItemCard';
+import MenuCategoryFilter from '../components/pages/MenuCategoryFilter';
+import PageHeader from '../components/PageHeader';
 
 function Menu() {
   const { data: items = [], error, isLoading } = useMenu();
@@ -13,60 +15,43 @@ function Menu() {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
 
-  const categories = categoriesData.map((c: Category) => c.name);
+  const categories = useMemo(() => categoriesData.map((c: Category) => c.name), [categoriesData]);
   const isAdmin = user?.role === 'admin';
 
-  const handleEdit = (item: MenuItem) => {
-    if (!isAdmin) return;
-    setEditingItem(item);
-    setShowForm(true);
-  };
+  const handleEdit = useCallback(
+    (item: MenuItem) => {
+      if (!isAdmin) return;
+      setEditingItem(item);
+      setShowForm(true);
+    },
+    [isAdmin],
+  );
 
-  const filteredItems = items.filter((item: MenuItem) =>
-    categoryFilter ? item.category === categoryFilter : true,
+  const filteredItems = useMemo(
+    () => items.filter((item: MenuItem) => (categoryFilter ? item.category === categoryFilter : true)),
+    [items, categoryFilter],
   );
 
   return (
     <Box>
-      <Box className="flex justify-between items-center mb-2">
-        <Typography variant="h4" className="page-heading">
-          Menu
-        </Typography>
-        {isAdmin && (
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => {
-              setShowForm(!showForm);
-              setEditingItem(null);
-            }}
-          >
-            {showForm ? 'Cancel' : '+ Add Item'}
-          </Button>
-        )}
-      </Box>
-      <Box className="flex gap-2 mb-2 bg-gray-100 p-2 rounded items-center">
-        <Typography variant="body2" className="font-semibold">
-          Filter:
-        </Typography>
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="form-input-sm w-40 mt-3"
-        >
-          <option value="">All</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        {categoryFilter && (
-          <Button size="small" onClick={() => setCategoryFilter('')}>
-            Clear
-          </Button>
-        )}
-      </Box>
+      <PageHeader
+        title="Menu"
+        action={
+          isAdmin ? (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                setShowForm(!showForm);
+                setEditingItem(null);
+              }}
+            >
+              {showForm ? 'Cancel' : '+ Add Item'}
+            </Button>
+          ) : undefined
+        }
+      />
+      <MenuCategoryFilter categories={categories} value={categoryFilter} onChange={setCategoryFilter} />
       {showForm && (
         <MenuItemForm
           categories={categories}

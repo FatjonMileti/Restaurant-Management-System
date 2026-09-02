@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useAuth } from '../store/authStore';
 import ReservationFormComponent from '../components/pages/ReservationForm';
 import ReservationList from '../components/pages/ReservationList';
+import PageHeader from '../components/PageHeader';
 import { Reservation } from '../api/queries';
 
 export default function Reservations() {
@@ -12,21 +13,21 @@ export default function Reservations() {
 
   return (
     <Box>
-      <Box className="flex justify-between items-center mb-2">
-        <Typography variant="h4" className="page-heading">
-          Reservations
-        </Typography>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => {
-            setShowForm(!showForm);
-            setEditingReservation(null);
-          }}
-        >
-          {showForm ? 'Cancel' : '+ New Reservation'}
-        </Button>
-      </Box>
+      <PageHeader
+        title="Reservations"
+        action={
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditingReservation(null);
+            }}
+          >
+            {showForm ? 'Cancel' : '+ New Reservation'}
+          </Button>
+        }
+      />
       <ReservationFormComponent
         showForm={showForm || !!editingReservation}
         setShowForm={(v) => {

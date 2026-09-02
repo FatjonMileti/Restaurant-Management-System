@@ -12,15 +12,18 @@ export interface IReservation extends Document {
 
 const reservationSchema = new Schema<IReservation>(
   {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    date: { type: Date, required: true },
+    user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    date: { type: Date, required: true, index: true },
     time: { type: String, required: true },
     guests: { type: Number, required: true },
-    tableNumber: { type: Number },
-    status: { type: String, enum: ['confirmed', 'cancelled', 'completed'], default: 'confirmed' },
+    tableNumber: { type: Number, index: true },
+    status: { type: String, enum: ['confirmed', 'cancelled', 'completed'], default: 'confirmed', index: true },
     specialRequests: { type: String },
   },
   { timestamps: true },
 );
+
+reservationSchema.index({ status: 1, tableNumber: 1 });
+reservationSchema.index({ date: -1 });
 
 export default mongoose.model<IReservation>('Reservation', reservationSchema);

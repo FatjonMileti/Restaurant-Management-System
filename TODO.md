@@ -11,4 +11,8 @@
 
 ## To Do
 
-- [ ] Dashboard page - create a graphql endpoint on backend to get only necessary dashboard data and use them on dashboard page.
+- [x] Dashboard page - create a graphql endpoint on backend to get only necessary dashboard data and use them on dashboard page.
+- [x] After that optimize the hole app.
+- [x] className="flex justify-between items-center mb-2" is repeated in many places, create a component for it.
+- [x] frontend: refactor and split components into smaller, more manageable pieces.
+- [x] backend/graphql/schema.ts: refactor and split into smaller, more manageable pieces.

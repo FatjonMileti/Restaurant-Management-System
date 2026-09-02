@@ -444,3 +444,51 @@ export const GET_TABLES = gql`
     }
   }
 `;
+export const GET_DASHBOARD_STATS = gql`
+  query GetDashboardStats {
+    dashboardStats {
+      totalOrders
+      pendingOrders
+      preparingOrders
+      completedOrders
+      cancelledOrders
+      totalReservations
+      confirmedReservations
+      completedReservations
+      cancelledReservations
+      totalMenuItems
+      availableMenuItems
+      totalUsers
+      totalCategories
+      totalTables
+      busyTables
+      freeTables
+      totalRevenue
+      todayOrders
+      todayReservations
+      recentOrders {
+        id
+        totalAmount
+        status
+        tableNumber
+        createdAt
+        user {
+          name
+        }
+        items {
+          name
+          quantity
+          price
+        }
+      }
+      ordersByStatus {
+        status
+        count
+      }
+      reservationsByStatus {
+        status
+        count
+      }
+    }
+  }
+`;

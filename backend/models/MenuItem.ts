@@ -11,14 +11,16 @@ export interface IMenuItem extends Document {
 
 const menuItemSchema = new Schema<IMenuItem>(
   {
-    name: { type: String, required: true },
+    name: { type: String, required: true, index: true },
     description: { type: String },
     price: { type: Number, required: true },
-    category: { type: String, required: true },
+    category: { type: String, required: true, index: true },
     image: { type: String },
-    available: { type: Boolean, default: true },
+    available: { type: Boolean, default: true, index: true },
   },
   { timestamps: true },
 );
+
+menuItemSchema.index({ category: 1, available: 1 });
 
 export default mongoose.model<IMenuItem>('MenuItem', menuItemSchema);

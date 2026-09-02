@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Box, Typography } from '@mui/material';
-import UserSection from '../components/pages/UserSection';
-import CategorySection from '../components/pages/CategorySection';
-import RestaurantSection from '../components/pages/RestaurantSection';
+
+const UserSection = React.lazy(() => import('../components/pages/UserSection'));
+const CategorySection = React.lazy(() => import('../components/pages/CategorySection'));
+const RestaurantSection = React.lazy(() => import('../components/pages/RestaurantSection'));
 
 type TabKey = 'restaurant' | 'users' | 'categories';
 
@@ -30,9 +31,17 @@ export default function Settings() {
         </button>
       </Box>
 
-      {activeTab === 'restaurant' && <RestaurantSection />}
-      {activeTab === 'users' && <UserSection />}
-      {activeTab === 'categories' && <CategorySection />}
+      <Suspense
+        fallback={
+          <Box className="loading-wrapper">
+            <Box className="spinner" />
+          </Box>
+        }
+      >
+        {activeTab === 'restaurant' && <RestaurantSection />}
+        {activeTab === 'users' && <UserSection />}
+        {activeTab === 'categories' && <CategorySection />}
+      </Suspense>
     </Box>
   );
 }

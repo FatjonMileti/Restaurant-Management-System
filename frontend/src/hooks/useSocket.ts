@@ -9,13 +9,13 @@ export const useSocket = () => {
     const socket = getSocket();
 
     const eventMap: Record<string, string[]> = {
-      'menu:changed': ['menu'],
-      'orders:changed': ['orders', 'tables'],
-      'reservations:changed': ['reservations', 'tables'],
-      'categories:changed': ['categories'],
-      'users:changed': ['users'],
-      'settings:changed': ['restaurantSettings'],
-      'tables:changed': ['tables'],
+      'menu:changed': ['menu', 'dashboardStats'],
+      'orders:changed': ['orders', 'tables', 'dashboardStats'],
+      'reservations:changed': ['reservations', 'tables', 'dashboardStats'],
+      'categories:changed': ['categories', 'dashboardStats'],
+      'users:changed': ['users', 'dashboardStats'],
+      'settings:changed': ['restaurantSettings', 'dashboardStats'],
+      'tables:changed': ['tables', 'dashboardStats'],
     };
 
     const handlers: Array<() => void> = [];

@@ -30,6 +30,7 @@ import {
   GET_RESTAURANT_SETTINGS,
   UPDATE_RESTAURANT_SETTINGS,
   GET_TABLES,
+  GET_DASHBOARD_STATS,
 } from '../graphql/queries';
 
 const endpoint = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql';
@@ -149,13 +150,17 @@ export const useCategories = () =>
       const data = await request(endpoint, GET_CATEGORIES);
       return mapArray<Category>((data as any)?.categories);
     },
+    staleTime: 60 * 1000,
   });
 
 export const useCreateCategory = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: { name: string }) => request(endpoint, CREATE_CATEGORY, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['categories'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
   });
 };
 
@@ -164,7 +169,10 @@ export const useUpdateCategory = () => {
   return useMutation({
     mutationFn: (payload: { id: string; name: string }) =>
       request(endpoint, UPDATE_CATEGORY, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['categories'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
   });
 };
 
@@ -172,7 +180,10 @@ export const useDeleteCategory = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_CATEGORY, { id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['categories'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
   });
 };
 
@@ -183,6 +194,7 @@ export const useMenu = () =>
       const data = await request(endpoint, GET_MENU_ITEMS);
       return mapArray<MenuItem>((data as any)?.menuItems);
     },
+    staleTime: 60 * 1000,
   });
 
 export const useCreateMenuItem = () => {
@@ -190,7 +202,10 @@ export const useCreateMenuItem = () => {
   return useMutation({
     mutationFn: (payload: Omit<MenuItem, '_id' | 'available'>) =>
       request(endpoint, CREATE_MENU_ITEM, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['menu'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['menu'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
   });
 };
 
@@ -199,7 +214,10 @@ export const useUpdateMenuItem = () => {
   return useMutation({
     mutationFn: (payload: { id: string; data: Partial<MenuItem> }) =>
       request(endpoint, UPDATE_MENU_ITEM, { id: payload.id, ...payload.data }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['menu'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['menu'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
   });
 };
 
@@ -207,7 +225,10 @@ export const useDeleteMenuItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_MENU_ITEM, { id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['menu'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['menu'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
   });
 };
 
@@ -218,6 +239,7 @@ export const useOrders = () =>
       const data = await request(endpoint, GET_ORDERS);
       return mapArray<Order>((data as any)?.orders);
     },
+    staleTime: 30 * 1000,
   });
 
 export const useCreateOrder = () => {
@@ -240,6 +262,7 @@ export const useCreateOrder = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
 };
@@ -252,6 +275,7 @@ export const useUpdateOrder = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
 };
@@ -263,6 +287,7 @@ export const useDeleteOrder = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
 };
@@ -275,6 +300,7 @@ export const useUpdateOrderStatus = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
 };
@@ -286,6 +312,7 @@ export const useReservations = () =>
       const data = await request(endpoint, GET_RESERVATIONS);
       return mapArray<Reservation>((data as any)?.reservations);
     },
+    staleTime: 30 * 1000,
   });
 
 export const useCreateReservation = () => {
@@ -295,6 +322,7 @@ export const useCreateReservation = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reservations'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
 };
@@ -307,6 +335,7 @@ export const useUpdateReservation = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reservations'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
 };
@@ -318,6 +347,7 @@ export const useDeleteReservation = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reservations'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
 };
@@ -329,6 +359,7 @@ export const useCancelReservation = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reservations'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
 };
@@ -340,13 +371,17 @@ export const useUsers = () =>
       const data = await request(endpoint, GET_USERS);
       return mapArray<AdminUser>((data as any)?.authUsers);
     },
+    staleTime: 60 * 1000,
   });
 
 export const useCreateUser = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: NewUserPayload) => request(endpoint, CREATE_USER, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
   });
 };
 
@@ -354,7 +389,10 @@ export const useDeleteUser = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_USER, { id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
   });
 };
 
@@ -363,7 +401,10 @@ export const useUpdateUserRole = () => {
   return useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) =>
       request(endpoint, UPDATE_USER_ROLE, { id, role }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
   });
 };
 
@@ -393,6 +434,7 @@ export const useRestaurantSettings = () =>
       if (!raw) return null;
       return mapId<RestaurantSettings>(raw);
     },
+    staleTime: 60 * 1000,
   });
 
 export const useUpdateRestaurantSettings = () => {
@@ -411,6 +453,7 @@ export const useUpdateRestaurantSettings = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['restaurantSettings'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
 };
@@ -422,4 +465,46 @@ export const useTables = () =>
       const data = await request(endpoint, GET_TABLES);
       return ((data as any)?.tables || []) as TableStatus[];
     },
+    staleTime: 30 * 1000,
+  });
+
+export interface DashboardStats {
+  totalOrders: number;
+  pendingOrders: number;
+  preparingOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  totalReservations: number;
+  confirmedReservations: number;
+  completedReservations: number;
+  cancelledReservations: number;
+  totalMenuItems: number;
+  availableMenuItems: number;
+  totalUsers: number;
+  totalCategories: number;
+  totalTables: number;
+  busyTables: number;
+  freeTables: number;
+  totalRevenue: number;
+  todayOrders: number;
+  todayReservations: number;
+  recentOrders: Order[];
+  ordersByStatus: { status: string; count: number }[];
+  reservationsByStatus: { status: string; count: number }[];
+}
+
+export const useDashboardStats = () =>
+  useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: async () => {
+      const data = await request(endpoint, GET_DASHBOARD_STATS);
+      const raw = (data as any)?.dashboardStats;
+      if (!raw) return null;
+      return {
+        ...raw,
+        recentOrders: mapArray<Order>(raw.recentOrders || []),
+      } as DashboardStats;
+    },
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
   });

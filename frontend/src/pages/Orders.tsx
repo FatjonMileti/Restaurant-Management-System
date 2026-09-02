@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useAuth } from '../store/authStore';
 import OrderFormComponent from '../components/pages/OrderForm';
 import OrderList from '../components/pages/OrderList';
+import PageHeader from '../components/PageHeader';
 import { Order } from '../api/queries';
 
 export default function Orders() {
@@ -12,23 +13,23 @@ export default function Orders() {
 
   return (
     <Box>
-      <Box className="flex justify-between items-center mb-2">
-        <Typography variant="h4" className="page-heading">
-          Orders
-        </Typography>
-        {user?.role !== 'customer' && (
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => {
-              setShowCreate(!showCreate);
-              setEditingOrder(null);
-            }}
-          >
-            {showCreate ? 'Cancel' : '+ New Order'}
-          </Button>
-        )}
-      </Box>
+      <PageHeader
+        title="Orders"
+        action={
+          user?.role !== 'customer' ? (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                setShowCreate(!showCreate);
+                setEditingOrder(null);
+              }}
+            >
+              {showCreate ? 'Cancel' : '+ New Order'}
+            </Button>
+          ) : undefined
+        }
+      />
       <OrderFormComponent
         showCreate={showCreate}
         setShowCreate={setShowCreate}
