@@ -16,11 +16,7 @@ export default function Dashboard() {
   }, [stats]);
 
   if (isLoading) {
-    return (
-      <Box className="loading-wrapper py-20">
-        <Box className="spinner" />
-      </Box>
-    );
+    return null;
   }
 
   if (error) {

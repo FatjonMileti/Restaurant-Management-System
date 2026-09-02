@@ -32,13 +32,7 @@ function App() {
           </div>
         )}
         <div className="p-5 max-w-6xl mx-auto">
-          <Suspense
-            fallback={
-              <div className="loading-wrapper py-20">
-                <div className="spinner" />
-              </div>
-            }
-          >
+          <Suspense fallback={null}>
             <Routes>
               <Route path="/" element={<Menu />} />
               <Route path="/login" element={<Login />} />

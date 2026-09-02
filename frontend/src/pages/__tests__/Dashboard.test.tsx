@@ -12,10 +12,11 @@ const mockUseDashboardStats = jest.spyOn(queries, 'useDashboardStats');
 describe('Dashboard page', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('shows loading spinner when loading', () => {
+  it('shows no inline spinner when loading (global overlay handles it)', () => {
     mockUseDashboardStats.mockReturnValue({ data: undefined, isLoading: true, error: null } as any);
     const { container } = render(<Dashboard />);
-    expect(container.querySelector('.spinner')).toBeInTheDocument();
+    expect(container.querySelector('.spinner')).not.toBeInTheDocument();
+    expect(container.innerHTML).toBe('');
   });
 
   it('shows error on network failure', () => {

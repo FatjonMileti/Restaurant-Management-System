@@ -7,7 +7,7 @@ import TableCard from '../components/pages/TableCard';
 
 export default function Tables() {
   const { user } = useAuth();
-  const { data: tables = [], isLoading: tablesLoading } = useTables();
+  const { data: tables = [] } = useTables();
   const { data: settings } = useRestaurantSettings();
   const { data: orders = [] } = useOrders();
   const { data: reservations = [] } = useReservations();
@@ -45,22 +45,16 @@ export default function Tables() {
         {settings?.tableCount || tables.length} tables total • Free: {freeCount} • Busy: {busyCount}
       </Typography>
 
-      {tablesLoading ? (
-        <Box className="loading-wrapper !py-4">
-          <Box className="spinner" />
-        </Box>
-      ) : (
-        <Box className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
-          {tables.map((t) => (
-            <TableCard
-              key={t.number}
-              table={t}
-              order={t.isBusy ? orderMap.get(t.number) : null}
-              reservation={!orderMap.get(t.number) && t.isBusy ? reservationMap.get(t.number) : null}
-            />
-          ))}
-        </Box>
-      )}
+      <Box className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+        {tables.map((t) => (
+          <TableCard
+            key={t.number}
+            table={t}
+            order={t.isBusy ? orderMap.get(t.number) : null}
+            reservation={!orderMap.get(t.number) && t.isBusy ? reservationMap.get(t.number) : null}
+          />
+        ))}
+      </Box>
     </Box>
   );
 }

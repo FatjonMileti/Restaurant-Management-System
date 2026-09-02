@@ -31,13 +31,7 @@ export default function Settings() {
         </button>
       </Box>
 
-      <Suspense
-        fallback={
-          <Box className="loading-wrapper">
-            <Box className="spinner" />
-          </Box>
-        }
-      >
+      <Suspense fallback={null}>
         {activeTab === 'restaurant' && <RestaurantSection />}
         {activeTab === 'users' && <UserSection />}
         {activeTab === 'categories' && <CategorySection />}
