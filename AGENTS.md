@@ -95,7 +95,7 @@ All routes are mounted in `server.ts`:
 
 - TypeScript strict; keep imports with `.js` extension in backend (node16). Run `npm run build` in both `backend/` and `frontend/` before committing — must compile without errors.
 - Formatting: `.prettierrc` + `.editorconfig` at root; `prettier` installed — run `npm run format` (or `npx prettier --write .`) before commit.
-- No test framework or test files exist — do not add test setup unless requested.
+- **Testing required:** When implementing any new feature, fix, or refactor, write or update tests alongside the change. Backend: Jest + `ts-jest` (`backend/tests/`, `backend/jest.config.cjs`, `npm test` in `backend/`). Frontend: Testing Library + Jest via `react-scripts` (`frontend/src/**/__tests__/`, `frontend/src/setupTests.ts`, `npm test` in `frontend/`). Ensure both `npm run build` **and** `npm test` pass before committing. Keep coverage meaningful (validators, helpers, resolvers, components, pages, stores, hooks).
 - No CI/CD workflows — do not add GitHub Actions unless requested.
 
 ## Component Guidelines
