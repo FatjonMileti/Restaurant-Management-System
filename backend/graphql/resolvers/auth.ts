@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
 import User from '../../models/User.js';
 import { registerSchema, loginSchema, createUserSchema, updateUserRoleSchema, validate } from '../validation.js';
 import { formatUser } from '../helpers/formatters.js';

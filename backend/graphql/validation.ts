@@ -47,6 +47,7 @@ export const reservationSchema = z.object({
   guests: z.number().int().positive('Guests must be at least 1'),
   tableNumber: z.number().int().positive().optional(),
   specialRequests: z.string().optional(),
+  status: z.enum(['confirmed', 'completed', 'cancelled']).optional(),
 });
 
 export const categorySchema = z.object({

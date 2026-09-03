@@ -9,12 +9,16 @@ interface Props {
   onEdit?: (res: Reservation) => void;
   onCancel: (id: string) => void;
   onDelete: (id: string) => void;
-  onStatusChange: (id: string, status: string) => void;
 }
 
-function ReservationCard({ reservation: res, isStaff, isOwner, onEdit, onCancel, onDelete, onStatusChange }: Props) {
+function ReservationCard({ reservation: res, isStaff, isOwner, onEdit, onCancel, onDelete }: Props) {
+  const canEdit = (isStaff || isOwner) && onEdit;
+
   return (
-    <div className="card">
+    <div
+      className={`card ${canEdit ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+      onClick={canEdit ? () => onEdit(res) : undefined}
+    >
       <div className="flex justify-between">
         <div>
           <strong>
@@ -33,30 +37,12 @@ function ReservationCard({ reservation: res, isStaff, isOwner, onEdit, onCancel,
         </div>
         <div className="text-right">
           <StatusBadge status={res.status} className="text-sm" />
-          {isStaff && (
-            <div className="mt-2">
-              <select
-                value={res.status}
-                onChange={(e) => onStatusChange(res._id, e.target.value)}
-                className="form-input-sm !mb-0 w-32 text-xs py-1"
-              >
-                <option value="confirmed">Confirmed</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          )}
           {(isStaff || isOwner) && (
-            <div className="mt-2.5">
+            <div className="mt-2.5" onClick={(e) => e.stopPropagation()}>
               {res.status === 'confirmed' && (
-                <>
-                  <button onClick={() => onEdit?.(res)} className="btn-blue-sm">
-                    Edit
-                  </button>
-                  <button onClick={() => onCancel(res._id)} className="btn-danger-sm ml-1">
-                    Cancel
-                  </button>
-                </>
+                <button onClick={() => onCancel(res._id)} className="btn-danger-sm">
+                  Cancel
+                </button>
               )}
               {(res.status === 'cancelled' || res.status === 'completed') && (
                 <button onClick={() => onDelete(res._id)} className="btn-danger-sm">

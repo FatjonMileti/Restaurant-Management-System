@@ -19,6 +19,8 @@ export default function ReservationFormComponent({
   editingReservation,
   onEditDone,
 }: Props) {
+  const { user } = useAuth();
+  const isStaff = user?.role === 'admin' || user?.role === 'staff';
   const createReservation = useCreateReservation();
   const updateReservation = useUpdateReservation();
   const [actionError, setActionError] = useState('');
@@ -40,8 +42,9 @@ export default function ReservationFormComponent({
           guests: editingReservation.guests || 2,
           tableNumber: editingReservation.tableNumber || undefined,
           specialRequests: editingReservation.specialRequests || '',
+          status: (editingReservation.status as ReservationFormData['status']) || 'confirmed',
         }
-      : { date: '', time: '', guests: 2, tableNumber: undefined, specialRequests: '' },
+      : { date: '', time: '', guests: 2, tableNumber: undefined, specialRequests: '', status: 'confirmed' },
   });
   const selectedTable = watch('tableNumber');
 
@@ -55,6 +58,7 @@ export default function ReservationFormComponent({
         guests: editingReservation.guests || 2,
         tableNumber: editingReservation.tableNumber || undefined,
         specialRequests: editingReservation.specialRequests || '',
+        status: (editingReservation.status as ReservationFormData['status']) || 'confirmed',
       });
     }
   }, [editingReservation, reset]);
@@ -122,6 +126,16 @@ export default function ReservationFormComponent({
         {...register('specialRequests')}
         className="form-input-sm"
       />
+      {isStaff && editingReservation && (
+        <>
+          <label className="form-label">Status</label>
+          <select {...register('status')} className="form-input-sm">
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </>
+      )}
       {actionError && <p className="error-text">{actionError}</p>}
       <div className="flex gap-2 mt-2">
         <button

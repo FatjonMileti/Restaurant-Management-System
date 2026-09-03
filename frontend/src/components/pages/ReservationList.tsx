@@ -3,7 +3,6 @@ import {
   useReservations,
   useCancelReservation,
   useDeleteReservation,
-  useUpdateReservation,
   Reservation,
 } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
@@ -20,24 +19,12 @@ export default function ReservationList({ onEditReservation }: Props) {
   const { data: reservations = [], error: fetchError, isLoading } = useReservations();
   const cancelReservation = useCancelReservation();
   const deleteReservation = useDeleteReservation();
-  const updateReservation = useUpdateReservation();
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id?: string }>({ open: false });
   const [actionError, setActionError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [tableFilter, setTableFilter] = useState('');
 
   const isStaff = user?.role === 'admin' || user?.role === 'staff';
-
-  const handleStatusChange = useCallback(
-    async (id: string, newStatus: string) => {
-      try {
-        await updateReservation.mutateAsync({ id, data: { status: newStatus } as any });
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : 'Failed to update reservation status');
-      }
-    },
-    [updateReservation],
-  );
 
   const handleCancel = useCallback(
     async (id: string) => {
@@ -115,7 +102,6 @@ export default function ReservationList({ onEditReservation }: Props) {
             onEdit={onEditReservation}
             onCancel={handleCancel}
             onDelete={handleDeleteClick}
-            onStatusChange={handleStatusChange}
           />
         ))
       )}
