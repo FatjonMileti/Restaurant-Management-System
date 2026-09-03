@@ -17,7 +17,12 @@ const reservationSchema = new Schema<IReservation>(
     time: { type: String, required: true },
     guests: { type: Number, required: true },
     tableNumber: { type: Number, index: true },
-    status: { type: String, enum: ['confirmed', 'cancelled', 'completed'], default: 'confirmed', index: true },
+    status: {
+      type: String,
+      enum: ['confirmed', 'cancelled', 'completed'],
+      default: 'confirmed',
+      index: true,
+    },
     specialRequests: { type: String },
   },
   { timestamps: true },

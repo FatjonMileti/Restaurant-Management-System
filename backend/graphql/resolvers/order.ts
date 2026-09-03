@@ -35,7 +35,8 @@ export const orderResolvers = {
     if (!v.success) throw new Error(v.errors.join(', '));
     const menuItemIds = v.data.items.map((i) => i.menuItem);
     const existingItems = await MenuItem.find({ _id: { $in: menuItemIds } }).lean();
-    if (existingItems.length !== menuItemIds.length) throw new Error('One or more menu items not found');
+    if (existingItems.length !== menuItemIds.length)
+      throw new Error('One or more menu items not found');
     if (v.data.tableNumber) {
       const busyTable = await Order.findOne({
         tableNumber: v.data.tableNumber,
@@ -72,7 +73,10 @@ export const orderResolvers = {
       }).lean();
       if (busyTable) throw new Error('Table is busy');
     }
-    const order: any = await Order.findByIdAndUpdate(id, updates, { new: true, runValidators: true }).lean();
+    const order: any = await Order.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    }).lean();
     if (!order) return null;
     emitEvent('orders:changed');
     emitEvent('tables:changed');

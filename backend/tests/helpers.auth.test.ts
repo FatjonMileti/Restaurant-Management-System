@@ -9,7 +9,7 @@ jest.mock('../models/User', () => ({
 
 import User from '../models/User';
 
-const mockedFindById = (User.findById as unknown) as jest.Mock;
+const mockedFindById = User.findById as unknown as jest.Mock;
 
 describe('auth helpers', () => {
   beforeEach(() => jest.clearAllMocks());

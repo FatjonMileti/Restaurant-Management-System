@@ -23,7 +23,10 @@ export const categoryResolvers = {
   updateCategory: async ({ id, name }: any) => {
     const v = validate(categorySchema, { name });
     if (!v.success) throw new Error(v.errors.join(', '));
-    const cat = await Category.findByIdAndUpdate(id, v.data, { new: true, runValidators: true }).lean();
+    const cat = await Category.findByIdAndUpdate(id, v.data, {
+      new: true,
+      runValidators: true,
+    }).lean();
     emitEvent('categories:changed');
     return formatCategory(cat);
   },

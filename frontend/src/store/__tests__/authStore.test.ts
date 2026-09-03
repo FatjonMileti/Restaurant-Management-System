@@ -20,7 +20,10 @@ describe('authStore', () => {
   it('login persists user', async () => {
     const mockRequest = gqlRequest.request as unknown as jest.Mock;
     mockRequest.mockResolvedValue({
-      login: { token: 'tok123', user: { id: 'u1', name: 'John', email: 'john@example.com', role: 'customer' } },
+      login: {
+        token: 'tok123',
+        user: { id: 'u1', name: 'John', email: 'john@example.com', role: 'customer' },
+      },
     });
     const user = await useAuthStore.getState().login('john@example.com', 'secret123');
     expect(user._id).toBe('u1');
@@ -32,16 +35,26 @@ describe('authStore', () => {
   it('register persists user', async () => {
     const mockRequest = gqlRequest.request as unknown as jest.Mock;
     mockRequest.mockResolvedValue({
-      register: { token: 'regTok', user: { id: 'u2', name: 'Jane', email: 'jane@example.com', role: 'customer' } },
+      register: {
+        token: 'regTok',
+        user: { id: 'u2', name: 'Jane', email: 'jane@example.com', role: 'customer' },
+      },
     });
-    const user = await useAuthStore.getState().register('Jane', 'jane@example.com', 'pwd123', '123');
+    const user = await useAuthStore
+      .getState()
+      .register('Jane', 'jane@example.com', 'pwd123', '123');
     expect(user._id).toBe('u2');
     expect(localStorage.getItem('user')).toContain('u2');
   });
 
   it('logout clears storage', () => {
-    localStorage.setItem('user', JSON.stringify({ _id: 'u1', name: 'John', email: 'a@b.com', role: 'customer', token: 't' }));
-    useAuthStore.setState({ user: { _id: 'u1', name: 'John', email: 'a@b.com', role: 'customer', token: 't' } } as any);
+    localStorage.setItem(
+      'user',
+      JSON.stringify({ _id: 'u1', name: 'John', email: 'a@b.com', role: 'customer', token: 't' }),
+    );
+    useAuthStore.setState({
+      user: { _id: 'u1', name: 'John', email: 'a@b.com', role: 'customer', token: 't' },
+    } as any);
     useAuthStore.getState().logout();
     expect(useAuthStore.getState().user).toBeNull();
     expect(localStorage.getItem('user')).toBeNull();
@@ -50,7 +63,10 @@ describe('authStore', () => {
   it('persists user to localStorage', async () => {
     const mockRequest = gqlRequest.request as unknown as jest.Mock;
     mockRequest.mockResolvedValue({
-      login: { token: 'tok', user: { id: 'u3', name: 'Bob', email: 'bob@example.com', role: 'staff' } },
+      login: {
+        token: 'tok',
+        user: { id: 'u3', name: 'Bob', email: 'bob@example.com', role: 'staff' },
+      },
     });
     await useAuthStore.getState().login('bob@example.com', 'pwd');
     const stored = JSON.parse(localStorage.getItem('user')!);

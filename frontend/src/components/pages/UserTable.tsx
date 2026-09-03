@@ -12,8 +12,12 @@ const roleColors: Record<string, string> = {
 };
 
 const getGraphQLErrorMessage = (err: unknown): string => {
-  if (err instanceof ClientError) return err.response.errors?.[0]?.message || err.message || 'Operation failed';
-  if (err instanceof TypeError && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')))
+  if (err instanceof ClientError)
+    return err.response.errors?.[0]?.message || err.message || 'Operation failed';
+  if (
+    err instanceof TypeError &&
+    (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))
+  )
     return 'Network error: backend is unavailable';
   if (err instanceof Error) return err.message || 'Operation failed';
   return 'Operation failed';
@@ -80,7 +84,9 @@ export default function UserTable() {
   const { data: users = [] } = useUsers();
   const deleteUser = useDeleteUser();
   const updateUserRole = useUpdateUserRole();
-  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id?: string }>({ open: false });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id?: string }>({
+    open: false,
+  });
   const [editingRole, setEditingRole] = useState<string | null>(null);
 
   const handleDeleteUser = useCallback(async () => {

@@ -15,17 +15,19 @@ jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
 import Category from '../models/Category';
 import { categoryResolvers } from '../graphql/resolvers/category';
 
-const mockFind = (Category.find as unknown) as jest.Mock;
-const mockFindById = (Category.findById as unknown) as jest.Mock;
-const mockCreate = (Category.create as unknown) as jest.Mock;
-const mockUpdate = (Category.findByIdAndUpdate as unknown) as jest.Mock;
+const mockFind = Category.find as unknown as jest.Mock;
+const mockFindById = Category.findById as unknown as jest.Mock;
+const mockCreate = Category.create as unknown as jest.Mock;
+const mockUpdate = Category.findByIdAndUpdate as unknown as jest.Mock;
 
 describe('category resolvers', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('categories returns formatted list sorted', async () => {
     const docs = [{ _id: new mongoose.Types.ObjectId(), name: 'Drinks' }];
-    mockFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(docs) }) });
+    mockFind.mockReturnValue({
+      sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(docs) }),
+    });
     const res = await categoryResolvers.categories();
     expect(res[0].id).toBe(docs[0]._id.toString());
     expect(mockFind).toHaveBeenCalled();
@@ -40,7 +42,11 @@ describe('category resolvers', () => {
 
   it('createCategory validates and formats', async () => {
     const id = new mongoose.Types.ObjectId();
-    mockCreate.mockResolvedValue({ _id: id, name: 'Dessert', toObject: () => ({ _id: id, name: 'Dessert' }) } as any);
+    mockCreate.mockResolvedValue({
+      _id: id,
+      name: 'Dessert',
+      toObject: () => ({ _id: id, name: 'Dessert' }),
+    } as any);
     // create uses formatCategory which calls toObject, so mock with toObject
     const res: any = await categoryResolvers.createCategory({ name: 'Dessert' });
     expect(res.name).toBe('Dessert');

@@ -18,7 +18,9 @@ export default function UserSection() {
         }
         className="mb-4"
       />
-      {showForm && <UserForm onSuccess={() => setShowForm(false)} onCancel={() => setShowForm(false)} />}
+      {showForm && (
+        <UserForm onSuccess={() => setShowForm(false)} onCancel={() => setShowForm(false)} />
+      )}
       <UserTable />
     </SectionCard>
   );

@@ -16,7 +16,11 @@ function MenuCategoryFilter({ categories, value, onChange }: Props) {
       <Typography variant="body2" className="font-semibold">
         Filter:
       </Typography>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="form-input-sm w-40 mt-3">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="form-input-sm w-40 mt-3"
+      >
         <option value="">All</option>
         {categories.map((c) => (
           <option key={c} value={c}>

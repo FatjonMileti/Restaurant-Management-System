@@ -1,6 +1,12 @@
 import jwt from 'jsonwebtoken';
 import User from '../../models/User.js';
-import { registerSchema, loginSchema, createUserSchema, updateUserRoleSchema, validate } from '../validation.js';
+import {
+  registerSchema,
+  loginSchema,
+  createUserSchema,
+  updateUserRoleSchema,
+  validate,
+} from '../validation.js';
 import { formatUser } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
 
@@ -40,7 +46,8 @@ export const authResolvers = {
     const v = validate(loginSchema, { email, password });
     if (!v.success) throw new Error(v.errors.join(', '));
     const user = await User.findOne({ email });
-    if (!user || !(await user.matchPassword(password))) throw new Error('Invalid email or password');
+    if (!user || !(await user.matchPassword(password)))
+      throw new Error('Invalid email or password');
     const token = generateToken(user._id.toString());
     return { token, user: formatUser(user) };
   },

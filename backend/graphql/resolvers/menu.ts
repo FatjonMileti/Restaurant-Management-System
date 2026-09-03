@@ -31,7 +31,10 @@ export const menuResolvers = {
     await requireAdmin(context);
     const v = validate(menuItemSchema.partial(), rest);
     if (!v.success) throw new Error(v.errors.join(', '));
-    const item = await MenuItem.findByIdAndUpdate(id, v.data, { new: true, runValidators: true }).lean();
+    const item = await MenuItem.findByIdAndUpdate(id, v.data, {
+      new: true,
+      runValidators: true,
+    }).lean();
     emitEvent('menu:changed');
     return formatMenuItem(item);
   },

@@ -20,7 +20,9 @@ import { tablesResolvers } from '../graphql/resolvers/tables';
 
 describe('tables resolver', () => {
   it('returns table statuses with busy mapping', async () => {
-    (Order.find as unknown as jest.Mock).mockReturnValue({ select: () => ({ lean: () => Promise.resolve([{ tableNumber: 1, _id: 'o1' }]) }) } as any);
+    (Order.find as unknown as jest.Mock).mockReturnValue({
+      select: () => ({ lean: () => Promise.resolve([{ tableNumber: 1, _id: 'o1' }]) }),
+    } as any);
     (Reservation.find as unknown as jest.Mock).mockReturnValue({
       select: () => ({ lean: () => Promise.resolve([{ tableNumber: 2, _id: 'r1' }]) }),
     } as any);
@@ -33,8 +35,12 @@ describe('tables resolver', () => {
   });
 
   it('returns all free when no busy', async () => {
-    (Order.find as unknown as jest.Mock).mockReturnValue({ select: () => ({ lean: () => Promise.resolve([]) }) } as any);
-    (Reservation.find as unknown as jest.Mock).mockReturnValue({ select: () => ({ lean: () => Promise.resolve([]) }) } as any);
+    (Order.find as unknown as jest.Mock).mockReturnValue({
+      select: () => ({ lean: () => Promise.resolve([]) }),
+    } as any);
+    (Reservation.find as unknown as jest.Mock).mockReturnValue({
+      select: () => ({ lean: () => Promise.resolve([]) }),
+    } as any);
     const res = await tablesResolvers.tables();
     expect(res.every((t: any) => !t.isBusy)).toBe(true);
   });

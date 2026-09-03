@@ -22,7 +22,9 @@ describe('api queries', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('useCategories maps id to _id', async () => {
-    (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({ categories: [{ id: 'c1', name: 'Food' }] });
+    (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({
+      categories: [{ id: 'c1', name: 'Food' }],
+    });
     const { result } = renderHook(() => useCategories(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.[0]._id).toBe('c1');
@@ -73,6 +75,11 @@ describe('api queries', () => {
     (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({ categories: [] });
     const { result } = renderHook(() => useCategories(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(gqlRequest.request).toHaveBeenCalledWith(expect.anything(), expect.anything(), undefined, { Authorization: 'Bearer test-token' });
+    expect(gqlRequest.request).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      undefined,
+      { Authorization: 'Bearer test-token' },
+    );
   });
 });

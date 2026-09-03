@@ -20,7 +20,11 @@ describe('Dashboard page', () => {
   });
 
   it('shows error on network failure', () => {
-    mockUseDashboardStats.mockReturnValue({ data: undefined, isLoading: false, error: new Error('Failed to fetch') } as any);
+    mockUseDashboardStats.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('Failed to fetch'),
+    } as any);
     render(<Dashboard />);
     expect(screen.getByText(/Network error/)).toBeInTheDocument();
   });
@@ -48,7 +52,15 @@ describe('Dashboard page', () => {
         todayOrders: 2,
         todayReservations: 1,
         recentOrders: [
-          { _id: 'o1', totalAmount: 25, status: 'pending', tableNumber: 1, createdAt: new Date().toISOString(), user: { name: 'John' }, items: [] },
+          {
+            _id: 'o1',
+            totalAmount: 25,
+            status: 'pending',
+            tableNumber: 1,
+            createdAt: new Date().toISOString(),
+            user: { name: 'John' },
+            items: [],
+          },
         ],
         ordersByStatus: [{ status: 'pending', count: 3 }],
         reservationsByStatus: [{ status: 'confirmed', count: 5 }],

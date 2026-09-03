@@ -19,7 +19,9 @@ export default function ReservationList({ onEditReservation }: Props) {
   const { data: reservations = [], error: fetchError, isLoading } = useReservations();
   const cancelReservation = useCancelReservation();
   const deleteReservation = useDeleteReservation();
-  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id?: string }>({ open: false });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id?: string }>({
+    open: false,
+  });
   const [actionError, setActionError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [tableFilter, setTableFilter] = useState('');
@@ -56,7 +58,9 @@ export default function ReservationList({ onEditReservation }: Props) {
     () =>
       reservations.filter((res: Reservation) => {
         const matchesStatus = statusFilter ? res.status === statusFilter : true;
-        const matchesTable = tableFilter ? res.tableNumber && String(res.tableNumber) === tableFilter : true;
+        const matchesTable = tableFilter
+          ? res.tableNumber && String(res.tableNumber) === tableFilter
+          : true;
         return matchesStatus && matchesTable;
       }),
     [reservations, statusFilter, tableFilter],

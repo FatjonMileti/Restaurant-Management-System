@@ -24,10 +24,10 @@ import { menuResolvers } from '../graphql/resolvers/menu';
 import { requireAdmin } from '../graphql/helpers/auth';
 
 const mockRequireAdmin = requireAdmin as unknown as jest.Mock;
-const mockFind = (MenuItem.find as unknown) as jest.Mock;
-const mockFindById = (MenuItem.findById as unknown) as jest.Mock;
-const mockCreate = (MenuItem.create as unknown) as jest.Mock;
-const mockFindByIdAndUpdate = (MenuItem.findByIdAndUpdate as unknown) as jest.Mock;
+const mockFind = MenuItem.find as unknown as jest.Mock;
+const mockFindById = MenuItem.findById as unknown as jest.Mock;
+const mockCreate = MenuItem.create as unknown as jest.Mock;
+const mockFindByIdAndUpdate = MenuItem.findByIdAndUpdate as unknown as jest.Mock;
 
 describe('menu resolvers', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -35,14 +35,18 @@ describe('menu resolvers', () => {
   describe('menuItems', () => {
     it('filters by category and available', async () => {
       const docs = [{ _id: new mongoose.Types.ObjectId(), name: 'Pizza' }];
-      mockFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(docs) }) });
+      mockFind.mockReturnValue({
+        sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(docs) }),
+      });
       const res = await menuResolvers.menuItems({ category: 'Food', available: true });
       expect(mockFind).toHaveBeenCalledWith({ category: 'Food', available: true });
       expect(res[0].id).toBe(docs[0]._id.toString());
     });
     it('returns all when no filter', async () => {
       const docs = [{ _id: new mongoose.Types.ObjectId(), name: 'A' }];
-      mockFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(docs) }) });
+      mockFind.mockReturnValue({
+        sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(docs) }),
+      });
       const res = await menuResolvers.menuItems({});
       expect(mockFind).toHaveBeenCalledWith({});
       expect(res).toHaveLength(1);
@@ -67,13 +71,18 @@ describe('menu resolvers', () => {
   describe('createMenuItem', () => {
     it('requires admin', async () => {
       mockRequireAdmin.mockRejectedValue(new Error('Not authorized, admin only'));
-      await expect(menuResolvers.createMenuItem({ name: 'Pizza', price: 10, category: 'Food' }, {})).rejects.toThrow(
-        'Not authorized',
-      );
+      await expect(
+        menuResolvers.createMenuItem({ name: 'Pizza', price: 10, category: 'Food' }, {}),
+      ).rejects.toThrow('Not authorized');
     });
     it('creates item when valid and admin', async () => {
       mockRequireAdmin.mockResolvedValue({ role: 'admin' });
-      const created = { _id: new mongoose.Types.ObjectId(), name: 'Pizza', price: 10, category: 'Food' };
+      const created = {
+        _id: new mongoose.Types.ObjectId(),
+        name: 'Pizza',
+        price: 10,
+        category: 'Food',
+      };
       mockCreate.mockResolvedValue(created);
       const res: any = await menuResolvers.createMenuItem(
         { name: 'Pizza', price: 10, category: 'Food', image: '' },
@@ -84,7 +93,9 @@ describe('menu resolvers', () => {
     });
     it('throws validation error for negative price', async () => {
       mockRequireAdmin.mockResolvedValue({ role: 'admin' });
-      await expect(menuResolvers.createMenuItem({ name: 'Pizza', price: -5, category: 'Food' }, {})).rejects.toThrow();
+      await expect(
+        menuResolvers.createMenuItem({ name: 'Pizza', price: -5, category: 'Food' }, {}),
+      ).rejects.toThrow();
     });
   });
 

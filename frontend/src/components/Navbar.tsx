@@ -2,7 +2,16 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/authStore';
 import { useRestaurantSettings } from '../api/queries';
-import { AppBar, Toolbar, Button, Typography, Box, IconButton, Menu, MenuItem } from '@mui/material';
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Typography,
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+} from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 
 function Navbar() {
@@ -32,7 +41,9 @@ function Navbar() {
         { label: 'Dashboard', path: '/dashboard' },
         { label: 'Orders', path: '/orders' },
         { label: 'Reservations', path: '/reservations' },
-        ...(user.role === 'admin' || user.role === 'staff' ? [{ label: 'Tables', path: '/tables' }] : []),
+        ...(user.role === 'admin' || user.role === 'staff'
+          ? [{ label: 'Tables', path: '/tables' }]
+          : []),
         ...(user.role === 'admin' ? [{ label: 'Settings', path: '/settings' }] : []),
       ]
     : [

@@ -21,7 +21,8 @@ export default function Tables() {
     });
     const rMap = new Map<number, any>();
     reservations.forEach((r) => {
-      if (r.tableNumber && r.status === 'confirmed' && !oMap.has(r.tableNumber)) rMap.set(r.tableNumber, r);
+      if (r.tableNumber && r.status === 'confirmed' && !oMap.has(r.tableNumber))
+        rMap.set(r.tableNumber, r);
     });
     return { freeCount: free, busyCount: busy, orderMap: oMap, reservationMap: rMap };
   }, [tables, orders, reservations]);

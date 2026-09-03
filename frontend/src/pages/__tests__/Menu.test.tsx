@@ -7,7 +7,9 @@ jest.mock('../../store/authStore', () => ({
   useAuth: () => ({ user: { role: 'admin', _id: 'u1' } }),
 }));
 
-jest.mock('../../components/pages/MenuItemCard', () => (props: any) => <div data-testid="card">{props.item.name}</div>);
+jest.mock('../../components/pages/MenuItemCard', () => (props: any) => (
+  <div data-testid="card">{props.item.name}</div>
+));
 jest.mock('../../components/pages/MenuItemForm', () => () => <div>Form</div>);
 
 const mockUseMenu = jest.spyOn(queries, 'useMenu');
@@ -35,7 +37,12 @@ describe('Menu page', () => {
       error: null,
       isLoading: false,
     } as any);
-    mockUseCategories.mockReturnValue({ data: [{ _id: 'c1', name: 'Food' }, { _id: 'c2', name: 'Drinks' }] } as any);
+    mockUseCategories.mockReturnValue({
+      data: [
+        { _id: 'c1', name: 'Food' },
+        { _id: 'c2', name: 'Drinks' },
+      ],
+    } as any);
     render(<Menu />);
     expect(screen.getAllByTestId('card')).toHaveLength(2);
     // Change filter to Drinks
@@ -45,7 +52,11 @@ describe('Menu page', () => {
   });
 
   it('shows error on network failure', () => {
-    mockUseMenu.mockReturnValue({ data: [], error: new TypeError('Failed to fetch'), isLoading: false } as any);
+    mockUseMenu.mockReturnValue({
+      data: [],
+      error: new TypeError('Failed to fetch'),
+      isLoading: false,
+    } as any);
     render(<Menu />);
     expect(screen.getByText(/Network error/)).toBeInTheDocument();
   });

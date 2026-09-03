@@ -61,15 +61,16 @@ describe('dashboard resolver', () => {
       .mockResolvedValueOnce(2) // preparing
       .mockResolvedValueOnce(4) // completed
       .mockResolvedValueOnce(1) // cancelled
-      .mockResolvedValueOnce(5) // todayOrders (after other mocks, order matters)
-      ;
+      .mockResolvedValueOnce(5); // todayOrders (after other mocks, order matters)
     (Reservation.countDocuments as unknown as jest.Mock)
       .mockResolvedValueOnce(7) // totalReservations
       .mockResolvedValueOnce(5) // confirmed
       .mockResolvedValueOnce(1) // completed
       .mockResolvedValueOnce(1) // cancelled
       .mockResolvedValueOnce(2); // todayReservations
-    (MenuItem.countDocuments as unknown as jest.Mock).mockResolvedValueOnce(20).mockResolvedValueOnce(18);
+    (MenuItem.countDocuments as unknown as jest.Mock)
+      .mockResolvedValueOnce(20)
+      .mockResolvedValueOnce(18);
     (Category.countDocuments as unknown as jest.Mock).mockResolvedValue(4);
     (User.countDocuments as unknown as jest.Mock).mockResolvedValue(12);
     (Order.countDocuments as unknown as jest.Mock).mockResolvedValueOnce(2); // todayOrders already?
@@ -78,27 +79,37 @@ describe('dashboard resolver', () => {
     // Reset and use generic mockResolvedValue for remaining countDocuments calls
     (Order.countDocuments as unknown as jest.Mock).mockResolvedValue(1);
     (Reservation.countDocuments as unknown as jest.Mock).mockResolvedValue(1);
-    (Order.aggregate as unknown as jest.Mock).mockResolvedValueOnce([{ _id: null, total: 1500 }]).mockResolvedValueOnce([{ _id: 'pending', count: 3 }]);
-    (Reservation.aggregate as unknown as jest.Mock).mockResolvedValue([{ _id: 'confirmed', count: 5 }]);
-    (Order.find as unknown as jest.Mock).mockImplementation(() => ({
-      populate: () => ({
-        populate: () => ({
-          sort: () => ({
-            limit: () => ({
-              lean: () => Promise.resolve([]),
+    (Order.aggregate as unknown as jest.Mock)
+      .mockResolvedValueOnce([{ _id: null, total: 1500 }])
+      .mockResolvedValueOnce([{ _id: 'pending', count: 3 }]);
+    (Reservation.aggregate as unknown as jest.Mock).mockResolvedValue([
+      { _id: 'confirmed', count: 5 },
+    ]);
+    (Order.find as unknown as jest.Mock).mockImplementation(
+      () =>
+        ({
+          populate: () => ({
+            populate: () => ({
+              sort: () => ({
+                limit: () => ({
+                  lean: () => Promise.resolve([]),
+                }),
+              }),
             }),
           }),
-        }),
-      }),
-      select: () => ({
-        lean: () => Promise.resolve([]),
-      }),
-    }) as any);
-    (Reservation.find as unknown as jest.Mock).mockImplementation(() => ({
-      select: () => ({
-        lean: () => Promise.resolve([]),
-      }),
-    }) as any);
+          select: () => ({
+            lean: () => Promise.resolve([]),
+          }),
+        }) as any,
+    );
+    (Reservation.find as unknown as jest.Mock).mockImplementation(
+      () =>
+        ({
+          select: () => ({
+            lean: () => Promise.resolve([]),
+          }),
+        }) as any,
+    );
 
     // Need to re-mock User.findById for requireAuth
     (User.findById as unknown as jest.Mock).mockResolvedValue({ _id: userId, role: 'customer' });

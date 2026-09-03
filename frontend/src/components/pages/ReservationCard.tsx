@@ -11,7 +11,14 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-function ReservationCard({ reservation: res, isStaff, isOwner, onEdit, onCancel, onDelete }: Props) {
+function ReservationCard({
+  reservation: res,
+  isStaff,
+  isOwner,
+  onEdit,
+  onCancel,
+  onDelete,
+}: Props) {
   const canEdit = (isStaff || isOwner) && onEdit;
 
   return (
@@ -27,7 +34,9 @@ function ReservationCard({ reservation: res, isStaff, isOwner, onEdit, onCancel,
           <p className="text-sm">
             {res.guests} guest(s) {res.tableNumber ? `| Table ${res.tableNumber}` : ''}
           </p>
-          {res.specialRequests && <p className="text-gray-500 text-sm">Note: {res.specialRequests}</p>}
+          {res.specialRequests && (
+            <p className="text-gray-500 text-sm">Note: {res.specialRequests}</p>
+          )}
           {isStaff && res.user && (
             <p className="text-gray-400 text-xs">
               By: {res.user.name} ({res.user.email})

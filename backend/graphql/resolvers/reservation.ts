@@ -21,7 +21,10 @@ export const reservationResolvers = {
     return formatReservation(doc);
   },
 
-  createReservation: async ({ date, time, guests, tableNumber, specialRequests }: any, context?: any) => {
+  createReservation: async (
+    { date, time, guests, tableNumber, specialRequests }: any,
+    context?: any,
+  ) => {
     if (!context?.userId) throw new Error('Not authenticated');
     const v = validate(reservationSchema, { date, time, guests, tableNumber, specialRequests });
     if (!v.success) throw new Error(v.errors.join(', '));

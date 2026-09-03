@@ -15,7 +15,9 @@ export default function OrderList({ onEditOrder }: Props) {
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
   const [actionError, setActionError] = useState('');
-  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id?: string }>({ open: false });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id?: string }>({
+    open: false,
+  });
   const [statusFilter, setStatusFilter] = useState('');
   const [tableFilter, setTableFilter] = useState('');
 

@@ -1,5 +1,12 @@
 import mongoose from 'mongoose';
-import { formatUser, formatMenuItem, formatCategory, formatOrder, formatReservation, formatRestaurantSettings } from '../graphql/helpers/formatters';
+import {
+  formatUser,
+  formatMenuItem,
+  formatCategory,
+  formatOrder,
+  formatReservation,
+  formatRestaurantSettings,
+} from '../graphql/helpers/formatters';
 
 describe('formatUser', () => {
   it('returns null for null', () => {
@@ -25,13 +32,23 @@ describe('formatUser', () => {
     expect(res.createdAt).toContain('2024-01-01');
   });
   it('handles plain object without toObject', () => {
-    const plain = { _id: new mongoose.Types.ObjectId(), name: 'Jane', email: 'jane@example.com', role: 'admin' };
+    const plain = {
+      _id: new mongoose.Types.ObjectId(),
+      name: 'Jane',
+      email: 'jane@example.com',
+      role: 'admin',
+    };
     const res: any = formatUser(plain as any);
     expect(res.name).toBe('Jane');
     expect(res.id).toBeDefined();
   });
   it('defaults phone to null', () => {
-    const plain = { _id: new mongoose.Types.ObjectId(), name: 'A', email: 'a@b.com', role: 'customer' };
+    const plain = {
+      _id: new mongoose.Types.ObjectId(),
+      name: 'A',
+      email: 'a@b.com',
+      role: 'customer',
+    };
     const res: any = formatUser(plain as any);
     expect(res.phone).toBeNull();
   });
@@ -73,7 +90,14 @@ describe('formatOrder', () => {
     const order: any = {
       _id: orderId,
       user: { _id: userId, name: 'John', email: 'john@example.com', role: 'customer' },
-      items: [{ name: 'Pizza', quantity: 2, price: 10, menuItem: { _id: menuId, name: 'Pizza', price: 10, category: 'Food' } }],
+      items: [
+        {
+          name: 'Pizza',
+          quantity: 2,
+          price: 10,
+          menuItem: { _id: menuId, name: 'Pizza', price: 10, category: 'Food' },
+        },
+      ],
       totalAmount: 20,
       status: 'pending',
       tableNumber: 5,

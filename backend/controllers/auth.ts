@@ -134,15 +134,13 @@ export const createUserByAdmin = async (req: Request, res: Response): Promise<vo
 
     const user = await User.create({ name, email, password, phone, role: userRole });
 
-    res
-      .status(201)
-      .json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        phone: user.phone,
-      });
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+    });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Server error' });
   }

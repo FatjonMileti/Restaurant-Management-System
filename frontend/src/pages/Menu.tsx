@@ -28,7 +28,8 @@ function Menu() {
   );
 
   const filteredItems = useMemo(
-    () => items.filter((item: MenuItem) => (categoryFilter ? item.category === categoryFilter : true)),
+    () =>
+      items.filter((item: MenuItem) => (categoryFilter ? item.category === categoryFilter : true)),
     [items, categoryFilter],
   );
 
@@ -51,7 +52,11 @@ function Menu() {
           ) : undefined
         }
       />
-      <MenuCategoryFilter categories={categories} value={categoryFilter} onChange={setCategoryFilter} />
+      <MenuCategoryFilter
+        categories={categories}
+        value={categoryFilter}
+        onChange={setCategoryFilter}
+      />
       {showForm && (
         <MenuItemForm
           categories={categories}

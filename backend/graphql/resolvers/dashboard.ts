@@ -52,13 +52,24 @@ export const dashboardResolvers = {
       User.countDocuments(),
       Category.countDocuments(),
       getOrCreateRestaurantSettings(),
-      Order.aggregate([{ $match: { status: 'completed' } }, { $group: { _id: null, total: { $sum: '$totalAmount' } } }]),
+      Order.aggregate([
+        { $match: { status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } },
+      ]),
       Order.countDocuments({ createdAt: { $gte: startOfToday } }),
       Reservation.countDocuments({ createdAt: { $gte: startOfToday } }),
-      Order.find().populate('user', 'name email role _id').populate('items.menuItem').sort('-createdAt').limit(5).lean(),
+      Order.find()
+        .populate('user', 'name email role _id')
+        .populate('items.menuItem')
+        .sort('-createdAt')
+        .limit(5)
+        .lean(),
       Order.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
       Reservation.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
-      Order.find({ status: { $in: ['pending', 'preparing'] }, tableNumber: { $exists: true, $ne: null } })
+      Order.find({
+        status: { $in: ['pending', 'preparing'] },
+        tableNumber: { $exists: true, $ne: null },
+      })
         .select('tableNumber')
         .lean(),
       Reservation.find({ status: 'confirmed', tableNumber: { $exists: true, $ne: null } })

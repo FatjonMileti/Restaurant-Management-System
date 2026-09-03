@@ -44,7 +44,14 @@ export default function ReservationFormComponent({
           specialRequests: editingReservation.specialRequests || '',
           status: (editingReservation.status as ReservationFormData['status']) || 'confirmed',
         }
-      : { date: '', time: '', guests: 2, tableNumber: undefined, specialRequests: '', status: 'confirmed' },
+      : {
+          date: '',
+          time: '',
+          guests: 2,
+          tableNumber: undefined,
+          specialRequests: '',
+          status: 'confirmed',
+        },
   });
   const selectedTable = watch('tableNumber');
 

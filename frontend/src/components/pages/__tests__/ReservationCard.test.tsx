@@ -18,20 +18,43 @@ const mockReservation = (overrides: Partial<Reservation> = {}): Reservation => (
 
 describe('ReservationCard', () => {
   it('renders date, time, guests', () => {
-    render(<ReservationCard reservation={mockReservation()} isStaff isOwner={false} onCancel={jest.fn()} onDelete={jest.fn()} />);
+    render(
+      <ReservationCard
+        reservation={mockReservation()}
+        isStaff
+        isOwner={false}
+        onCancel={jest.fn()}
+        onDelete={jest.fn()}
+      />,
+    );
     expect(screen.getByText(/4 guest/)).toBeInTheDocument();
     expect(screen.getByText(/Table 5/)).toBeInTheDocument();
   });
 
   it('shows specialRequests', () => {
-    render(<ReservationCard reservation={mockReservation()} isStaff isOwner onCancel={jest.fn()} onDelete={jest.fn()} />);
+    render(
+      <ReservationCard
+        reservation={mockReservation()}
+        isStaff
+        isOwner
+        onCancel={jest.fn()}
+        onDelete={jest.fn()}
+      />,
+    );
     expect(screen.getByText(/Window seat/)).toBeInTheDocument();
   });
 
   it('shows Cancel for confirmed and calls onEdit on card click', () => {
     const onEdit = jest.fn();
     render(
-      <ReservationCard reservation={mockReservation({ status: 'confirmed' })} isStaff isOwner onEdit={onEdit} onCancel={jest.fn()} onDelete={jest.fn()} />,
+      <ReservationCard
+        reservation={mockReservation({ status: 'confirmed' })}
+        isStaff
+        isOwner
+        onEdit={onEdit}
+        onCancel={jest.fn()}
+        onDelete={jest.fn()}
+      />,
     );
     expect(screen.queryByText('Edit')).not.toBeInTheDocument();
     expect(screen.getByText('Cancel')).toBeInTheDocument();
@@ -41,7 +64,15 @@ describe('ReservationCard', () => {
 
   it('calls onCancel', () => {
     const onCancel = jest.fn();
-    render(<ReservationCard reservation={mockReservation()} isStaff isOwner onCancel={onCancel} onDelete={jest.fn()} />);
+    render(
+      <ReservationCard
+        reservation={mockReservation()}
+        isStaff
+        isOwner
+        onCancel={onCancel}
+        onDelete={jest.fn()}
+      />,
+    );
     fireEvent.click(screen.getByText('Cancel'));
     expect(onCancel).toHaveBeenCalledWith('res1');
   });
@@ -49,7 +80,13 @@ describe('ReservationCard', () => {
   it('shows Delete for cancelled', () => {
     const onDelete = jest.fn();
     render(
-      <ReservationCard reservation={mockReservation({ status: 'cancelled' })} isStaff isOwner onCancel={jest.fn()} onDelete={onDelete} />,
+      <ReservationCard
+        reservation={mockReservation({ status: 'cancelled' })}
+        isStaff
+        isOwner
+        onCancel={jest.fn()}
+        onDelete={onDelete}
+      />,
     );
     expect(screen.getByText('Delete')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Delete'));

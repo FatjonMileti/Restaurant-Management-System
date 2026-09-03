@@ -8,8 +8,12 @@ import { userFormSchema, UserFormData } from '../../validation/schemas';
 const ROLES = ['customer', 'staff', 'admin'] as const;
 
 const getGraphQLErrorMessage = (err: unknown): string => {
-  if (err instanceof ClientError) return err.response.errors?.[0]?.message || err.message || 'Operation failed';
-  if (err instanceof TypeError && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')))
+  if (err instanceof ClientError)
+    return err.response.errors?.[0]?.message || err.message || 'Operation failed';
+  if (
+    err instanceof TypeError &&
+    (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))
+  )
     return 'Network error: backend is unavailable';
   if (err instanceof Error) return err.message || 'Operation failed';
   return 'Operation failed';
@@ -48,7 +52,12 @@ export default function UserForm({ onSuccess, onCancel }: Props) {
       {errors.name && <p className="error-text text-sm">{errors.name.message}</p>}
       <input type="email" placeholder="Email" {...register('email')} className="form-input-sm" />
       {errors.email && <p className="error-text text-sm">{errors.email.message}</p>}
-      <input type="password" placeholder="Password" {...register('password')} className="form-input-sm" />
+      <input
+        type="password"
+        placeholder="Password"
+        {...register('password')}
+        className="form-input-sm"
+      />
       {errors.password && <p className="error-text text-sm">{errors.password.message}</p>}
       <input placeholder="Phone" {...register('phone')} className="form-input-sm" />
       <select {...register('role')} className="form-input-sm">

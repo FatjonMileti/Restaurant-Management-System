@@ -13,15 +13,25 @@ describe('settings resolvers', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('restaurantSettings returns formatted settings', async () => {
-    const fake = { _id: 'id', name: 'Rest', logo: '', tableCount: 10, toObject: () => ({ _id: 'id', name: 'Rest', tableCount: 10 }) };
+    const fake = {
+      _id: 'id',
+      name: 'Rest',
+      logo: '',
+      tableCount: 10,
+      toObject: () => ({ _id: 'id', name: 'Rest', tableCount: 10 }),
+    };
     (RestaurantSettings.findOne as unknown as jest.Mock).mockResolvedValue(fake as any);
     const res: any = await settingsResolvers.restaurantSettings();
     expect(res.name).toBe('Rest');
   });
 
   it('updateRestaurantSettings requires admin', async () => {
-    (requireAdmin as unknown as jest.Mock).mockRejectedValue(new Error('Not authorized, admin only'));
-    await expect(settingsResolvers.updateRestaurantSettings({ name: 'New' }, {})).rejects.toThrow('Not authorized');
+    (requireAdmin as unknown as jest.Mock).mockRejectedValue(
+      new Error('Not authorized, admin only'),
+    );
+    await expect(settingsResolvers.updateRestaurantSettings({ name: 'New' }, {})).rejects.toThrow(
+      'Not authorized',
+    );
   });
 
   it('validates tableCount', async () => {
@@ -32,6 +42,8 @@ describe('settings resolvers', () => {
       tableCount: 10,
       toObject: () => ({ _id: 'id', name: 'Old', tableCount: 10 }),
     } as any);
-    await expect(settingsResolvers.updateRestaurantSettings({ tableCount: 0 }, { userId: '1' })).rejects.toThrow();
+    await expect(
+      settingsResolvers.updateRestaurantSettings({ tableCount: 0 }, { userId: '1' }),
+    ).rejects.toThrow();
   });
 });
