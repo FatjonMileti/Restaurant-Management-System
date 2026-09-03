@@ -9,7 +9,10 @@ interface Props {
 
 function MenuCategoryFilter({ categories, value, onChange }: Props) {
   return (
-    <Box className="flex gap-2 mb-2 bg-gray-100 p-2 rounded items-center">
+    <Box
+      className="flex gap-2 mb-2 bg-gray-100 p-2 rounded items-center"
+      sx={{ position: 'sticky', top: 114, zIndex: 9 }}
+    >
       <Typography variant="body2" className="font-semibold">
         Filter:
       </Typography>

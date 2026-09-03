@@ -1,22 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/authStore';
 import { useRestaurantSettings } from '../api/queries';
-import { AppBar, Toolbar, Button, Typography, Box } from '@mui/material';
+import { AppBar, Toolbar, Button, Typography, Box, IconButton, Menu, MenuItem } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 
 function Navbar() {
   const { user, logout } = useAuth();
   const { data: settings } = useRestaurantSettings();
   const navigate = useNavigate();
   const location = useLocation();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+    setAnchorEl(null);
   };
 
+  const handleNav = (path: string) => {
+    navigate(path);
+    setAnchorEl(null);
+  };
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const navLinks = user
+    ? [
+        { label: 'Menu', path: '/menu' },
+        { label: 'Dashboard', path: '/dashboard' },
+        { label: 'Orders', path: '/orders' },
+        { label: 'Reservations', path: '/reservations' },
+        ...(user.role === 'admin' || user.role === 'staff' ? [{ label: 'Tables', path: '/tables' }] : []),
+        ...(user.role === 'admin' ? [{ label: 'Settings', path: '/settings' }] : []),
+      ]
+    : [
+        { label: 'Menu', path: '/menu' },
+        { label: 'Login', path: '/login' },
+        { label: 'Register', path: '/register' },
+      ];
+
   return (
-    <AppBar position="static" className="!bg-[#1a1a2e] !px-4 !py-1">
+    <AppBar position="sticky" className="!bg-[#1a1a2e] !px-4 !py-1">
       <Toolbar disableGutters className="flex justify-between">
         <Box
           component={Link}
@@ -47,56 +73,21 @@ function Navbar() {
             )}
           </Box>
         </Box>
-        <Box className="flex items-center gap-2">
-          <Button
-            component={Link}
-            to="/menu"
-            className={`nav-link ${location.pathname === '/menu' ? 'nav-link-active' : ''}`}
-          >
-            Menu
-          </Button>
 
-          {user ? (
+        {/* Desktop nav */}
+        <Box className="hidden md:flex items-center gap-2">
+          {navLinks.map((link) => (
+            <Button
+              key={link.path}
+              component={Link}
+              to={link.path}
+              className={`nav-link ${isActive(link.path) ? 'nav-link-active' : ''}`}
+            >
+              {link.label}
+            </Button>
+          ))}
+          {user && (
             <>
-              <Button
-                component={Link}
-                to="/dashboard"
-                className={`nav-link ${location.pathname === '/dashboard' ? 'nav-link-active' : ''}`}
-              >
-                Dashboard
-              </Button>
-              <Button
-                component={Link}
-                to="/orders"
-                className={`nav-link ${location.pathname === '/orders' ? 'nav-link-active' : ''}`}
-              >
-                Orders
-              </Button>
-              <Button
-                component={Link}
-                to="/reservations"
-                className={`nav-link ${location.pathname === '/reservations' ? 'nav-link-active' : ''}`}
-              >
-                Reservations
-              </Button>
-              {(user.role === 'admin' || user.role === 'staff') && (
-                <Button
-                  component={Link}
-                  to="/tables"
-                  className={`nav-link ${location.pathname === '/tables' ? 'nav-link-active' : ''}`}
-                >
-                  Tables
-                </Button>
-              )}
-              {user.role === 'admin' && (
-                <Button
-                  component={Link}
-                  to="/settings"
-                  className={`nav-link ${location.pathname === '/settings' ? 'nav-link-active' : ''}`}
-                >
-                  Settings
-                </Button>
-              )}
               <Typography className="!text-white mx-1">{user.name}</Typography>
               <Button
                 onClick={handleLogout}
@@ -106,25 +97,46 @@ function Navbar() {
                 Logout
               </Button>
             </>
-          ) : (
-            <>
-              <Button
-                component={Link}
-                to="/login"
-                className={`nav-link ${location.pathname === '/login' ? 'nav-link-active' : ''}`}
-              >
-                Login
-              </Button>
-              <Button
-                component={Link}
-                to="/register"
-                className={`nav-link ${location.pathname === '/register' ? 'nav-link-active' : ''}`}
-              >
-                Register
-              </Button>
-            </>
           )}
         </Box>
+
+        {/* Mobile hamburger */}
+        <IconButton
+          className="!text-white"
+          sx={{ display: { xs: 'flex', md: 'none' } }}
+          onClick={(e) => setAnchorEl(e.currentTarget)}
+        >
+          <MenuIcon />
+        </IconButton>
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={() => setAnchorEl(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          {navLinks.map((link) => (
+            <MenuItem
+              key={link.path}
+              onClick={() => handleNav(link.path)}
+              className={isActive(link.path) ? '!bg-gray-100' : ''}
+            >
+              {link.label}
+            </MenuItem>
+          ))}
+          {user && (
+            <>
+              <MenuItem disabled>
+                <Typography variant="body2" className="!text-gray-500">
+                  {user.name}
+                </Typography>
+              </MenuItem>
+              <MenuItem onClick={handleLogout} className="!text-[#e94560]">
+                Logout
+              </MenuItem>
+            </>
+          )}
+        </Menu>
       </Toolbar>
     </AppBar>
   );

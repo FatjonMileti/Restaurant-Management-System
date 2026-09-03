@@ -33,7 +33,10 @@ export default function FilterBar({
 }: FilterBarProps) {
   const containerClass = theme === 'blue' ? 'filter-bar-blue' : 'filter-bar-gray';
   return (
-    <div className={`filter-bar ${containerClass}`}>
+    <div
+      className={`filter-bar ${containerClass}`}
+      style={{ position: 'sticky', top: 114, zIndex: 9 }}
+    >
       <span className="text-sm font-semibold text-gray-700">{label}</span>
       <select
         value={value}

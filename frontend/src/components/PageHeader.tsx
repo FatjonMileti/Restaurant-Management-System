@@ -15,7 +15,10 @@ export default function PageHeader({
   headingVariant = 'h4',
 }: PageHeaderProps) {
   return (
-    <Box className={`flex justify-between items-center mb-2 ${className}`.trim()}>
+    <Box
+      className={`flex justify-between items-center mb-2 ${className}`.trim()}
+      sx={{ position: 'sticky', top: 64, zIndex: 10, bgcolor: 'background.paper', py: 1 }}
+    >
       <Typography variant={headingVariant} className="page-heading">
         {title}
       </Typography>

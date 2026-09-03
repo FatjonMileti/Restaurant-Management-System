@@ -8,5 +8,7 @@
 - [x] Restore `App.tsx` loading overlay (`useIsFetching`/`useIsMutating`)
 - [x] frontend: add specific error handling for generic errors.
 - [x] admin and staff should be able to select table instead of writing table number, forms and filter bar.
+- [x] Make navbar static (sticky) on top of the page
+- [x] Make navbar responsive with hamburger menu on mobile
 
 ## To Do
