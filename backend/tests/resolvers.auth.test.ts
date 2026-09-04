@@ -29,7 +29,7 @@ beforeEach(() => {
 describe('auth resolvers', () => {
   it('register creates user and returns token', async () => {
     mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
-    const mockUser = { _id: { toString: () => '123' }, name: 'John', email: 'john@example.com', role: 'customer' } as any;
+    const mockUser = { _id: { toString: () => '123' }, name: 'John', email: 'john@example.com', role: 'customer', toJSON: () => ({ _id: '123', name: 'John', email: 'john@example.com', role: 'customer' }) } as any;
     mockUsers.insert.mockResolvedValue(mockUser);
     const res: any = await authResolvers.register({ name: 'John', email: 'john@example.com', password: 'secret123' });
     expect(res.token).toBe('fake-token');
