@@ -1,8 +1,7 @@
 import { createRxDatabase, addRxPlugin } from 'rxdb';
 import { RxDBSQLiteAdapter } from '@basepurpose/rxdb-sqlite';
-import { RxDBValidatePlugin } from 'rxdb/plugins/validate';
+// Validation plugin not required for this setup
 
-addRxPlugin(RxDBValidatePlugin);
 addRxPlugin(RxDBSQLiteAdapter);
 
 type Collections = {
