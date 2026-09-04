@@ -2,7 +2,10 @@ import { createRxDatabase, addRxPlugin } from 'rxdb';
 import { RxDBSQLiteAdapter } from '@basepurpose/rxdb-sqlite';
 // Validation plugin not required for this setup
 
-addRxPlugin(RxDBSQLiteAdapter);
+if (process.env.NODE_ENV !== 'test') {
+  addRxPlugin(RxDBSQLiteAdapter);
+}
+
 
 type Collections = {
   users: any; // RxCollection<UserDoc>
