@@ -15,8 +15,10 @@ export const menuResolvers = {
   },
 
   menuItem: async ({ id }: any) => {
-    const doc = await MenuItem.findById(id).lean();
-    return formatMenuItem(doc);
+    const db = await getDB();
+    const doc = await db.menuItems.findOne({ _id: id }).exec();
+    if (!doc) return null;
+    return formatMenuItem(doc.toJSON());
   },
 
   createMenuItem: async ({ name, description, price, category, image }: any, context?: any) => {
