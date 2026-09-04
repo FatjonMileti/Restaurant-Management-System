@@ -1,4 +1,4 @@
-import Reservation from '../../models/Reservation.js';
+import { getDB } from '../../config/rxdb.js';
 import { reservationSchema, validate } from '../validation.js';
 import { formatReservation } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
@@ -8,62 +8,58 @@ export const reservationResolvers = {
     const filter: any = {};
     if (status) filter.status = status;
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
-    const docs = await Reservation.find(filter)
-      .populate('user', 'name email role _id')
-      .sort('-date')
-      .lean();
-    return docs.map(formatReservation);
+    const db = await getDB();
+    const docs = await db.reservations.find(filter).sort('-date').exec();
+    return docs.map((doc: any) => formatReservation(doc.toJSON()));
   },
-
   reservation: async ({ id }: any) => {
-    const doc: any = await Reservation.findById(id).populate('user', 'name email role _id').lean();
+    const db = await getDB();
+    const doc = await db.reservations.findOne({ _id: id }).exec();
     if (!doc) return null;
-    return formatReservation(doc);
+    return formatReservation(doc.toJSON());
   },
-
-  createReservation: async (
-    { date, time, guests, tableNumber, specialRequests }: any,
-    context?: any,
-  ) => {
+  createReservation: async ({ date, time, guests, tableNumber, specialRequests }: any, context?: any) => {
     if (!context?.userId) throw new Error('Not authenticated');
     const v = validate(reservationSchema, { date, time, guests, tableNumber, specialRequests });
     if (!v.success) throw new Error(v.errors.join(', '));
-    const reservation = await Reservation.create({ user: context.userId, ...v.data });
+    const db = await getDB();
+    const resDoc = await db.reservations.insert({
+      user: context.userId,
+      ...v.data,
+    });
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
-    const obj: any = reservation.toObject();
-    return { ...obj, id: obj._id.toString() };
+    const res = resDoc.toJSON();
+    return { ...res, id: res._id };
   },
-
   updateReservation: async ({ id, ...rest }: any) => {
     const v = validate(reservationSchema.partial(), rest);
     if (!v.success) throw new Error(v.errors.join(', '));
-    const reservation: any = await Reservation.findByIdAndUpdate(id, v.data, {
-      new: true,
-      runValidators: true,
-    }).lean();
+    const db = await getDB();
+    const doc = await db.reservations.findOne({ _id: id }).exec();
+    if (!doc) throw new Error('Reservation not found');
+    await doc.update({ $set: v.data });
     emitEvent('reservations:changed');
-    emitEvent('tables:changed');
-    if (!reservation) return null;
-    return { ...reservation, id: reservation._id.toString() };
+    emitEvent('tables:change');
+    return formatReservation(doc.toJSON());
   },
-
   deleteReservation: async ({ id }: any) => {
-    const res = await Reservation.findByIdAndDelete(id);
-    if (!res) throw new Error('Reservation not found');
+    const db = await getDB();
+    const doc = await db.reservations.findOne({ _id: id }).exec();
+    if (!doc) throw new Error('Reservation not found');
+    await doc.remove();
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
     return 'Reservation removed';
   },
-
   cancelReservation: async ({ id }: any) => {
-    const res = await Reservation.findById(id);
-    if (!res) throw new Error('Reservation not found');
-    res.status = 'cancelled';
-    await res.save();
-    const obj: any = res.toObject();
+    const db = await getDB();
+    const doc = await db.reservations.findOne({ _id: id }).exec();
+    if (!doc) throw new Error('Reservation not found');
+    await doc.update({ $set: { status: 'cancelled' } });
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
-    return { ...obj, id: obj._id.toString() };
+    const res = doc.toJSON();
+    return { ...res, id: res._id };
   },
 };
