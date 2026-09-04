@@ -9,8 +9,9 @@ jest.mock('../config/rxdb', () => ({
 }));
 
 jest.mock('jsonwebtoken', () => ({ sign: jest.fn().mockReturnValue('fake-token') }));
-jest.mock('bcryptjs', () => ({ compare: jest.fn() }));
+jest.mock('bcryptjs', () => ({ compare: jest.fn(), genSalt: jest.fn().mockResolvedValue('salt'), hash: jest.fn().mockResolvedValue('hashed') }));
 jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
+
 
 import { getDB } from '../config/rxdb';
 import { authResolvers } from '../graphql/resolvers/auth';
