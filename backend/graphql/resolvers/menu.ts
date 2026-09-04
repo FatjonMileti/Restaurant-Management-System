@@ -1,4 +1,4 @@
-import MenuItem from '../../models/MenuItem.js';
+import { getDB } from '../../config/rxdb.js';
 import { menuItemSchema, validate } from '../validation.js';
 import { requireAdmin } from '../helpers/auth.js';
 import { formatMenuItem } from '../helpers/formatters.js';
@@ -9,7 +9,8 @@ export const menuResolvers = {
     const filter: any = {};
     if (category) filter.category = category;
     if (available !== undefined) filter.available = available;
-    const docs = await MenuItem.find(filter).sort('category').lean();
+    const db = await getDB();
+    const docs = await db.menuItems.find(filter).sort('category').exec();
     return docs.map(formatMenuItem);
   },
 
@@ -22,7 +23,8 @@ export const menuResolvers = {
     await requireAdmin(context);
     const v = validate(menuItemSchema, { name, description, price, category, image });
     if (!v.success) throw new Error(v.errors.join(', '));
-    const item = await MenuItem.create(v.data);
+    const db = await getDB();
+    const item = await db.menuItems.insert(v.data);
     emitEvent('menu:changed');
     return formatMenuItem(item);
   },
@@ -31,19 +33,23 @@ export const menuResolvers = {
     await requireAdmin(context);
     const v = validate(menuItemSchema.partial(), rest);
     if (!v.success) throw new Error(v.errors.join(', '));
-    const item = await MenuItem.findByIdAndUpdate(id, v.data, {
-      new: true,
-      runValidators: true,
-    }).lean();
+    const db = await getDB();
+    const existing = await db.menuItems.findOne({ _id: id }).exec();
+    if (!existing) throw new Error('Menu item not found');
+    await existing.update({ $set: v.data });
+    const item = existing; // RxDB doc
     emitEvent('menu:changed');
     return formatMenuItem(item);
   },
 
   deleteMenuItem: async ({ id }: any, context?: any) => {
     await requireAdmin(context);
-    const item = await MenuItem.findByIdAndDelete(id);
+    const db = await getDB();
+    const item = await db.menuItems.findOne({ _id: id }).exec();
     if (!item) throw new Error('Menu item not found');
+    await item.remove();
     emitEvent('menu:changed');
     return 'Menu item removed';
+
   },
 };
