@@ -8,7 +8,7 @@ jest.mock('../socket', () => ({
   emitEvent: jest.fn(),
 }));
 
-jest.mock('../../graphql/helpers/auth', () => ({
+jest.mock('../graphql/helpers/auth', () => ({
   requireAdmin: jest.fn(),
 }));
 
