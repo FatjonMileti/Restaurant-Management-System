@@ -13,4 +13,13 @@
 
 ## To Do
 
-- [x] ReservationForm - when edit a reservation and open form for creating new reservation, the form should be cleared
+- [x] Set up RxDB with SQLite adapter in backend
+- [ ] Create RxDB collections for User, MenuItem, Category, Order, Reservation, RestaurantSettings
+- [ ] Refactor db config to initialize RxDB instance instead of Mongoose
+- [ ] Update models to use RxDB collection methods (insert, find, update, remove)
+- [ ] Modify GraphQL resolvers to query RxDB collections
+- [ ] Adjust seed script to populate RxDB data
+- [ ] Update Jest tests to work with RxDB (mock RxDB where needed)
+- [ ] Remove Mongoose dependency and related imports
+- [ ] Verify TypeScript typings for RxDB collections
+- [ ] Ensure end‑to‑end functionality works with SQLite persistence
