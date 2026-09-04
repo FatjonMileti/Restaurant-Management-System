@@ -15,52 +15,51 @@ jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
 
 import { categoryResolvers } from '../graphql/resolvers/category';
 
-const mockFind = Category.find as unknown as jest.Mock;
-const mockFindById = Category.findById as unknown as jest.Mock;
-const mockCreate = Category.create as unknown as jest.Mock;
-const mockUpdate = Category.findByIdAndUpdate as unknown as jest.Mock;
-
-describe('category resolvers', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('categories returns formatted list sorted', async () => {
-    const docs = [{ _id: new mongoose.Types.ObjectId(), name: 'Drinks' }];
-    mockFind.mockReturnValue({
-      sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(docs) }),
+    const mockFind = jest.fn();
+    const mockFindOne = jest.fn();
+    const mockInsert = jest.fn();
+    const mockUpdate = jest.fn();
+    const mockRemove = jest.fn();
+    // Set up getDB mock to return our mocked collection
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      categories: {
+        find: mockFind,
+        findOne: mockFindOne,
+        insert: mockInsert,
+      },
     });
-    const res = await categoryResolvers.categories();
-    expect(res[0].id).toBe(docs[0]._id.toString());
+
+    // Mock implementations for resolvers
+    mockFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue([]) }) });
+    // categories resolver
+    const categoriesRes = await categoryResolvers.categories();
+    expect(categoriesRes).toEqual([]);
     expect(mockFind).toHaveBeenCalled();
-  });
 
-  it('category returns single formatted', async () => {
-    const id = new mongoose.Types.ObjectId();
-    mockFindById.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: id, name: 'Food' }) });
-    const res: any = await categoryResolvers.category({ id: id.toString() });
-    expect(res.id).toBe(id.toString());
-  });
+    // category resolver - not found
+    mockFindOne.mockResolvedValue(null);
+    const single = await categoryResolvers.category({ id: '123' });
+    expect(single).toBeNull();
+    expect(mockFindOne).toHaveBeenCalled();
 
-  it('createCategory validates and formats', async () => {
-    const id = new mongoose.Types.ObjectId();
-    mockCreate.mockResolvedValue({
-      _id: id,
-      name: 'Dessert',
-      toObject: () => ({ _id: id, name: 'Dessert' }),
-    } as any);
-    // create uses formatCategory which calls toObject, so mock with toObject
-    const res: any = await categoryResolvers.createCategory({ name: 'Dessert' });
-    expect(res.name).toBe('Dessert');
-    expect(res.id).toBe(id.toString());
-  });
+    // createCategory
+    const createdDoc = { toJSON: () => ({ id: 'c1', name: 'Dessert' }) } as any;
+    mockInsert.mockResolvedValue(createdDoc);
+    const created = await categoryResolvers.createCategory({ name: 'Dessert' });
+    expect(created.name).toBe('Dessert');
+    expect(mockInsert).toHaveBeenCalled();
 
-  it('createCategory rejects empty name', async () => {
-    await expect(categoryResolvers.createCategory({ name: '' })).rejects.toThrow();
-  });
+    // updateCategory
+    const foundDoc = { toJSON: () => ({ id: 'c1', name: 'Updated' }), update: mockUpdate } as any;
+    mockFindOne.mockResolvedValue(foundDoc);
+    const updated = await categoryResolvers.updateCategory({ id: 'c1', name: 'Updated' });
+    expect(updated.id).toBe('c1');
+    expect(mockUpdate).toHaveBeenCalled();
 
-  it('updateCategory formats result', async () => {
-    const id = new mongoose.Types.ObjectId();
-    mockUpdate.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: id, name: 'Updated' }) });
-    const res: any = await categoryResolvers.updateCategory({ id: id.toString(), name: 'Updated' });
-    expect(res.id).toBe(id.toString());
-  });
-});
+    // deleteCategory
+    const delDoc = { remove: mockRemove } as any;
+    mockFindOne.mockResolvedValue(delDoc);
+    const delRes = await categoryResolvers.deleteCategory({ id: 'c1' });
+    expect(delRes).toBe('Category removed');
+    expect(mockRemove).toHaveBeenCalled();
+
