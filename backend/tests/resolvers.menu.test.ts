@@ -4,7 +4,7 @@ jest.mock('../config/rxdb', () => ({
   getDB: jest.fn(),
 }));
 
-jest.mock('../../socket', () => ({
+jest.mock('../socket', () => ({
   emitEvent: jest.fn(),
 }));
 
