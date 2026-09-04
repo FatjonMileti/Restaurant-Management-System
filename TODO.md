@@ -1,5 +1,9 @@
 # TODO
 
+## Main Task
+
+- [ ] Replace MongoDB with RxDB and persist data on SQLite
+
 ## Done
 
 - [x] Implement backend GraphQL schema (auth, menu, orders, reservations, categories)
@@ -20,6 +24,12 @@
 - [x] Modify GraphQL resolvers to query RxDB collections
 - [ ] Adjust seed script to populate RxDB data
 - [ ] Update Jest tests to work with RxDB (mock RxDB where needed)
+- [ ] Fix auth resolver tests (bcrypt mock \u0026 userDoc.toJSON)
+- [ ] Fix category and settings resolver tests (mock RxDB getDB correctly)
 - [ ] Remove Mongoose dependency and related imports
 - [ ] Verify TypeScript typings for RxDB collections
 - [ ] Ensure end‑to‑end functionality works with SQLite persistence
+- [ ] Clean up package.json (remove mongoose, add rxdb deps)
+- [ ] Update documentation for new persistence layer
+- [ ] Clean up package.json (remove mongoose, add rxdb deps)
+- [ ] Update documentation for new persistence layer

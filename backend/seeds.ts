@@ -1,30 +1,33 @@
-import mongoose from 'mongoose';
+import { getDB } from './config/rxdb.js';
+import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
-import User from './models/User.js';
-import MenuItem from './models/MenuItem.js';
-import Category from './models/Category.js';
-import Order from './models/Order.js';
-import Reservation from './models/Reservation.js';
-import RestaurantSettings from './models/RestaurantSettings.js';
 
 dotenv.config();
 
 const seed = async (): Promise<void> => {
   try {
-    await mongoose.connect(process.env.MONGO_URI as string);
-    console.log('MongoDB connected for seeding...');
+    const db = await getDB();
+    console.log('RxDB connected for seeding...');
 
+    // Helper to clear a collection
+    const clearCollection = async (col: any) => {
+      const docs = await col.find().exec();
+      await Promise.all(docs.map((doc: any) => doc.remove()));
+    };
+
+    // Clear existing data
     await Promise.all([
-      User.deleteMany({}),
-      MenuItem.deleteMany({}),
-      Category.deleteMany({}),
-      Order.deleteMany({}),
-      Reservation.deleteMany({}),
-      RestaurantSettings.deleteMany({}),
+      clearCollection(db.categories),
+      clearCollection(db.users),
+      clearCollection(db.menuItems),
+      clearCollection(db.orders),
+      clearCollection(db.reservations),
+      clearCollection(db.settings),
     ]);
     console.log('Cleared existing data');
 
-    const categories = await Category.create([
+    // Insert categories
+    const categories = await db.categories.insert([
       { name: 'appetizer' },
       { name: 'main' },
       { name: 'dessert' },
@@ -32,48 +35,55 @@ const seed = async (): Promise<void> => {
     ]);
     console.log(`Created ${categories.length} categories`);
 
-    const users = await User.create([
+    // Hash passwords for users
+    const hashPassword = async (pw: string) => {
+      const salt = await bcrypt.genSalt(10);
+      return bcrypt.hash(pw, salt);
+    };
+
+    const usersData = [
       {
         name: 'Admin User',
         email: 'admin@restaurant.com',
-        password: 'admin123',
+        password: await hashPassword('admin123'),
         role: 'admin',
         phone: '555-0100',
       },
       {
         name: 'Staff One',
         email: 'staff@restaurant.com',
-        password: 'staff123',
+        password: await hashPassword('staff123'),
         role: 'staff',
         phone: '555-0101',
       },
       {
         name: 'John Doe',
         email: 'john@example.com',
-        password: 'customer123',
+        password: await hashPassword('customer123'),
         role: 'customer',
         phone: '555-0102',
       },
       {
         name: 'Jane Smith',
         email: 'jane@example.com',
-        password: 'customer123',
+        password: await hashPassword('customer123'),
         role: 'customer',
         phone: '555-0103',
       },
       {
         name: 'Bob Johnson',
         email: 'bob@example.com',
-        password: 'customer123',
+        password: await hashPassword('customer123'),
         role: 'customer',
         phone: '555-0104',
       },
-    ]);
+    ];
+
+    const users = await db.users.insert(usersData);
     console.log(`Created ${users.length} users`);
 
-    const [admin, staff, john, jane, bob] = users;
-
-    const menuItems = await MenuItem.create([
+    // Insert menu items
+    const menuItemsData = [
       {
         name: 'Bruschetta',
         description: 'Toasted bread with tomato, basil, and mozzarella',
@@ -186,167 +196,16 @@ const seed = async (): Promise<void> => {
         image: '/images/water.jpg',
         available: true,
       },
-    ]);
+    ];
+
+    const menuItems = await db.menuItems.insert(menuItemsData);
     console.log(`Created ${menuItems.length} menu items`);
 
-    const [
-      bruschetta,
-      calamari,
-      springRolls,
-      salmon,
-      ribeye,
-      chickenParm,
-      veggiePasta,
-      burger,
-      tiramisu,
-      lavaCake,
-      cheesecake,
-      espresso,
-      oj,
-      water,
-    ] = menuItems;
-
-    const orders = await Order.create([
-      {
-        user: john._id,
-        items: [
-          { menuItem: calamari._id, name: 'Calamari', quantity: 1, price: 10.99 },
-          { menuItem: ribeye._id, name: 'Ribeye Steak', quantity: 1, price: 29.99 },
-          { menuItem: tiramisu._id, name: 'Tiramisu', quantity: 1, price: 8.49 },
-        ],
-        totalAmount: 49.47,
-        status: 'completed',
-        tableNumber: 5,
-        paymentMethod: 'card',
-      },
-      {
-        user: jane._id,
-        items: [
-          { menuItem: bruschetta._id, name: 'Bruschetta', quantity: 2, price: 8.99 },
-          { menuItem: salmon._id, name: 'Grilled Salmon', quantity: 1, price: 22.99 },
-          { menuItem: cheesecake._id, name: 'Cheesecake', quantity: 1, price: 7.99 },
-          { menuItem: oj._id, name: 'Fresh Orange Juice', quantity: 2, price: 4.99 },
-        ],
-        totalAmount: 53.94,
-        status: 'preparing',
-        tableNumber: 3,
-        paymentMethod: 'card',
-      },
-      {
-        user: bob._id,
-        items: [
-          { menuItem: springRolls._id, name: 'Spring Rolls', quantity: 1, price: 7.49 },
-          { menuItem: burger._id, name: 'Beef Burger', quantity: 1, price: 14.99 },
-          { menuItem: lavaCake._id, name: 'Chocolate Lava Cake', quantity: 1, price: 9.99 },
-        ],
-        totalAmount: 32.47,
-        status: 'pending',
-        tableNumber: 7,
-        paymentMethod: 'cash',
-      },
-      {
-        user: john._id,
-        items: [
-          { menuItem: chickenParm._id, name: 'Chicken Parmesan', quantity: 1, price: 17.99 },
-          { menuItem: espresso._id, name: 'Espresso', quantity: 1, price: 3.49 },
-        ],
-        totalAmount: 21.48,
-        status: 'cancelled',
-        tableNumber: 2,
-        paymentMethod: 'cash',
-      },
-      {
-        user: jane._id,
-        items: [
-          { menuItem: veggiePasta._id, name: 'Vegetable Pasta', quantity: 1, price: 15.49 },
-          { menuItem: water._id, name: 'Mineral Water', quantity: 1, price: 2.49 },
-        ],
-        totalAmount: 17.98,
-        status: 'completed',
-        tableNumber: 1,
-        paymentMethod: 'card',
-      },
-    ]);
-    console.log(`Created ${orders.length} orders`);
-
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date(today);
-    dayAfter.setDate(dayAfter.getDate() + 2);
-    const nextWeek = new Date(today);
-    nextWeek.setDate(nextWeek.getDate() + 7);
-
-    const reservations = await Reservation.create([
-      {
-        user: john._id,
-        date: tomorrow,
-        time: '19:00',
-        guests: 4,
-        tableNumber: 5,
-        status: 'confirmed',
-        specialRequests: 'Anniversary celebration',
-      },
-      {
-        user: jane._id,
-        date: dayAfter,
-        time: '20:30',
-        guests: 2,
-        tableNumber: 3,
-        status: 'confirmed',
-        specialRequests: 'Window table preferred',
-      },
-      {
-        user: bob._id,
-        date: nextWeek,
-        time: '18:00',
-        guests: 6,
-        tableNumber: 8,
-        status: 'confirmed',
-        specialRequests: '',
-      },
-      {
-        user: john._id,
-        date: tomorrow,
-        time: '12:00',
-        guests: 2,
-        tableNumber: 2,
-        status: 'cancelled',
-        specialRequests: '',
-      },
-      {
-        user: jane._id,
-        date: new Date(today.setDate(today.getDate() - 1)),
-        time: '19:30',
-        guests: 3,
-        tableNumber: 4,
-        status: 'completed',
-        specialRequests: 'Birthday dinner',
-      },
-    ]);
-    console.log(`Created ${reservations.length} reservations`);
-
-    const settings = await RestaurantSettings.create({
-      name: 'Gusto Italiano',
-      logo: '',
-      address: '123 Main Street, New York, NY 10001',
-      phone: '+1 (555) 123-4567',
-      email: 'info@gustoitaliano.com',
-      tableCount: 12,
-    });
-    console.log(`Created restaurant settings: ${settings.name} with ${settings.tableCount} tables`);
-
-    console.log('\n✅ Seed data inserted successfully!');
-    console.log('\nLogin credentials:');
-    console.log('  Admin:    admin@restaurant.com / admin123');
-    console.log('  Staff:    staff@restaurant.com / staff123');
-    console.log('  Customer: john@example.com / customer123');
-    console.log('  Customer: jane@example.com / customer123');
-    console.log('  Customer: bob@example.com / customer123');
-
-    process.exit(0);
+    // Insert default restaurant settings
+    await db.settings.insert({ tableCount: 10 });
+    console.log('Inserted default restaurant settings');
   } catch (error) {
-    console.error('Seeding failed:', error);
+    console.error('Seeding error:', error);
     process.exit(1);
   }
 };

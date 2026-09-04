@@ -1,18 +1,18 @@
 import mongoose from 'mongoose';
 
-jest.mock('../models/Category', () => ({
-  __esModule: true,
-  default: {
-    find: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn(),
-  },
+jest.mock('../config/rxdb', () => ({
+  getDB: jest.fn().mockResolvedValue({
+    categories: {
+      find: jest.fn().mockReturnValue({ sort: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue([]) }) }),
+      findOne: jest.fn(),
+      insert: jest.fn(),
+    },
+  }),
+  getRxDB: jest.fn(),
 }));
+
 jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
 
-import Category from '../models/Category';
 import { categoryResolvers } from '../graphql/resolvers/category';
 
 const mockFind = Category.find as unknown as jest.Mock;

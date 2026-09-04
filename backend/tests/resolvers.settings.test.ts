@@ -1,9 +1,18 @@
-jest.mock('../models/RestaurantSettings', () => ({
-  __esModule: true,
-  default: { findOne: jest.fn(), create: jest.fn() },
+jest.mock('../config/rxdb', () => ({
+  getDB: jest.fn().mockResolvedValue({
+    settings: {
+      findOne: jest.fn().mockResolvedValue({
+        _id: 'id', name: 'Rest', tableCount: 10, toJSON: () => ({ _id: 'id', name: 'Rest', tableCount: 10 })
+      }),
+      // update will be mocked via doc.update later
+    },
+  }),
+  getRxDB: jest.fn(),
 }));
+
 jest.mock('../graphql/helpers/auth', () => ({ requireAdmin: jest.fn() }));
 jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
+
 
 import RestaurantSettings from '../models/RestaurantSettings';
 import { settingsResolvers } from '../graphql/resolvers/settings';
