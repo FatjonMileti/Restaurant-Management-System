@@ -15,7 +15,7 @@
 
 - [x] Set up RxDB with SQLite adapter in backend
 - [x] Create RxDB collections for User ...
-- [ ] Refactor db config to initialize RxDB instance instead of Mongoose
+- [x] Refactor db config to initialize RxDB instance instead of Mongoose
 - [ ] Update models to use RxDB collection methods (insert, find, update, remove)
 - [ ] Modify GraphQL resolvers to query RxDB collections
 - [ ] Adjust seed script to populate RxDB data

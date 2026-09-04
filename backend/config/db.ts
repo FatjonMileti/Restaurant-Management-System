@@ -1,9 +1,11 @@
-import mongoose from 'mongoose';
+import { getRxDB } from './rxdb.js';
 
-const connectDB = async (): Promise<void> => {
+let dbInstance: any = null;
+
+export const connectDB = async (): Promise<void> => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI as string);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    dbInstance = await getRxDB();
+    console.log('RxDB Connected');
   } catch (error) {
     if (error instanceof Error) {
       console.error(`Error: ${error.message}`);
@@ -12,4 +14,5 @@ const connectDB = async (): Promise<void> => {
   }
 };
 
-export default connectDB;
+export const getDB = () => dbInstance;
+
