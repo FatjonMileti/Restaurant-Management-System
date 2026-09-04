@@ -12,8 +12,8 @@ jest.mock('../graphql/helpers/auth', () => ({
   requireAdmin: jest.fn(),
 }));
 
-import { menuResolvers } from '../../graphql/resolvers/menu';
-import { requireAdmin } from '../../graphql/helpers/auth';
+import { menuResolvers } from '../graphql/resolvers/menu';
+import { requireAdmin } from '../graphql/helpers/auth';
 
 const mockRequireAdmin = requireAdmin as unknown as jest.Mock;
 
