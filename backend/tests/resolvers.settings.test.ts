@@ -19,7 +19,13 @@ describe('settings resolvers', () => {
       tableCount: 10,
       toJSON: () => ({ _id: 'id', name: 'Rest', tableCount: 10 }),
     };
-    (getDB as unknown as jest.Mock).mockResolvedValue({ settings: { findOne: jest.fn().mockResolvedValue(fake) } });
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      settings: {
+        findOne: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue(fake),
+        }),
+      },
+    });
     const res: any = await settingsResolvers.restaurantSettings();
     expect(res.name).toBe('Rest');
   });
@@ -38,14 +44,19 @@ describe('settings resolvers', () => {
     const fakeSettings = {
       _id: 'id',
       name: 'Old',
-      save: jest.fn().mockResolvedValue(true),
       tableCount: 10,
+      update: jest.fn().mockResolvedValue(true),
       toJSON: () => ({ _id: 'id', name: 'Old', tableCount: 10 }),
     };
-    (getDB as unknown as jest.Mock).mockResolvedValue({ settings: { findOne: jest.fn().mockResolvedValue(fakeSettings) } });
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      settings: {
+        findOne: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue(fakeSettings),
+        }),
+      },
+    });
     await expect(
       settingsResolvers.updateRestaurantSettings({ tableCount: 0 }, { userId: '1' })
     ).rejects.toThrow();
-
   });
 });

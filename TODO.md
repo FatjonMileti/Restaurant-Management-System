@@ -2,7 +2,7 @@
 
 ## Main Task
 
-- [ ] Replace MongoDB with RxDB and persist data on SQLite
+- [x] Replace MongoDB with RxDB and persist data on SQLite
 
 ## Done
 
@@ -18,18 +18,16 @@
 ## To Do
 
 - [x] Set up RxDB with SQLite adapter in backend
-- [x] Create RxDB collections for User ...
+- [x] Create RxDB collections for User ...
 - [x] Refactor db config to initialize RxDB instance instead of Mongoose
 - [x] Update models to use RxDB collection methods (insert, find, update, remove)
 - [x] Modify GraphQL resolvers to query RxDB collections
-- [ ] Adjust seed script to populate RxDB data
-- [ ] Update Jest tests to work with RxDB (mock RxDB where needed)
-- [ ] Fix auth resolver tests (bcrypt mock \u0026 userDoc.toJSON)
-- [ ] Fix category and settings resolver tests (mock RxDB getDB correctly)
-- [ ] Remove Mongoose dependency and related imports
-- [ ] Verify TypeScript typings for RxDB collections
-- [ ] Ensure end‑to‑end functionality works with SQLite persistence
-- [ ] Clean up package.json (remove mongoose, add rxdb deps)
-- [ ] Update documentation for new persistence layer
-- [ ] Clean up package.json (remove mongoose, add rxdb deps)
-- [ ] Update documentation for new persistence layer
+- [x] Adjust seed script to populate RxDB data
+- [x] Update Jest tests to work with RxDB (mock RxDB where needed)
+- [x] Fix auth resolver tests (bcrypt mock & userDoc.toJSON)
+- [x] Fix category and settings resolver tests (mock RxDB getDB correctly)
+- [x] Remove Mongoose dependency and related imports
+- [x] Verify TypeScript typings for RxDB collections
+- [x] Ensure end-to-end functionality works with SQLite persistence
+- [x] Clean up package.json (remove mongoose, add rxdb deps)
+- [x] Update documentation for new persistence layer

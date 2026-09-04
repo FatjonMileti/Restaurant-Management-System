@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import bcrypt from 'bcryptjs';
 import {
@@ -10,6 +11,8 @@ import {
 } from '../validation.js';
 import { formatUser } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
+
+const genId = () => crypto.randomUUID();
 
 function generateToken(id: string): string {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, { expiresIn: '30d' });
@@ -55,7 +58,7 @@ export const authResolvers = {
     if (existing) throw new Error('User already exists');
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
-    const userDoc = await db.users.insert({ name, email, password: hashed, phone, role: 'customer' });
+    const userDoc = await db.users.insert({ _id: genId(), name, email, password: hashed, phone, role: 'customer' });
     const token = generateToken(userDoc._id as string);
     const user = userDoc.toJSON();
     delete user.password;
@@ -87,6 +90,7 @@ export const authResolvers = {
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(v.data.password, salt);
     const userDoc = await db.users.insert({
+      _id: genId(),
       name: v.data.name,
       email: v.data.email,
       password: hashed,

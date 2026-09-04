@@ -1,9 +1,16 @@
-import { IUser } from '../models/User';
+export {};
 
 declare global {
   namespace Express {
     interface Request {
-      user?: IUser;
+      user?: {
+        _id: string;
+        name: string;
+        email: string;
+        password?: string;
+        role: 'customer' | 'staff' | 'admin';
+        phone?: string;
+      };
     }
   }
 }

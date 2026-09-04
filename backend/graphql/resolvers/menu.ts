@@ -1,8 +1,11 @@
+import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import { menuItemSchema, validate } from '../validation.js';
 import { requireAdmin } from '../helpers/auth.js';
 import { formatMenuItem } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
+
+const genId = () => crypto.randomUUID();
 
 export const menuResolvers = {
   menuItems: async ({ category, available }: any) => {
@@ -26,7 +29,7 @@ export const menuResolvers = {
     const v = validate(menuItemSchema, { name, description, price, category, image });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const item = await db.menuItems.insert(v.data);
+    const item = await db.menuItems.insert({ _id: genId(), ...v.data });
     emitEvent('menu:changed');
     return formatMenuItem(item);
   },

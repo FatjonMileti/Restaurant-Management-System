@@ -1,9 +1,21 @@
+import crypto from 'crypto';
 import moment from 'moment';
-import RestaurantSettings from '../../models/RestaurantSettings.js';
+import { getDB } from '../../config/rxdb.js';
+
+const genId = () => crypto.randomUUID();
+
+const unwrapDoc = (doc: any) => {
+  if (doc.toObject) return doc.toObject();
+  if (doc.toJSON && typeof doc.toJSON === 'function') {
+    const json = doc.toJSON();
+    if (json !== doc) return json;
+  }
+  return doc;
+};
 
 export const formatUser = (userDoc: any) => {
   if (!userDoc) return null;
-  const d = userDoc.toObject ? userDoc.toObject() : userDoc;
+  const d = unwrapDoc(userDoc);
   return {
     id: d._id ? d._id.toString() : d.id || '',
     name: d.name || '',
@@ -17,7 +29,7 @@ export const formatUser = (userDoc: any) => {
 
 export const formatRestaurantSettings = (doc: any) => {
   if (!doc) return null;
-  const d = doc.toObject ? doc.toObject() : doc;
+  const d = unwrapDoc(doc);
   return {
     id: d._id ? d._id.toString() : d.id || '',
     name: d.name,
@@ -32,9 +44,11 @@ export const formatRestaurantSettings = (doc: any) => {
 };
 
 export const getOrCreateRestaurantSettings = async () => {
-  let settings = await RestaurantSettings.findOne();
+  const db = await getDB();
+  let settings = await db.settings.findOne().exec();
   if (!settings) {
-    settings = await RestaurantSettings.create({
+    const doc = await db.settings.insert({
+      _id: genId(),
       name: 'Restaurant MS',
       logo: '',
       address: '',
@@ -42,8 +56,9 @@ export const getOrCreateRestaurantSettings = async () => {
       email: '',
       tableCount: 10,
     });
+    return doc.toJSON();
   }
-  return settings;
+  return settings.toJSON();
 };
 
 export const formatOrder = (o: any) => {
@@ -84,7 +99,7 @@ export const formatOrder = (o: any) => {
 };
 
 export const formatReservation = (doc: any) => {
-  const d = doc.toObject ? doc.toObject() : doc;
+  const d = unwrapDoc(doc);
   const userObj = formatUser(d.user);
   return {
     ...d,
@@ -96,7 +111,7 @@ export const formatReservation = (doc: any) => {
 
 export const formatMenuItem = (doc: any) => {
   if (!doc) return null;
-  const d = doc.toObject ? doc.toObject() : doc;
+  const d = unwrapDoc(doc);
   return {
     ...d,
     id: d._id ? d._id.toString() : d.id || '',
@@ -105,7 +120,7 @@ export const formatMenuItem = (doc: any) => {
 
 export const formatCategory = (doc: any) => {
   if (!doc) return null;
-  const d = doc.toObject ? doc.toObject() : doc;
+  const d = unwrapDoc(doc);
   return {
     ...d,
     id: d._id ? d._id.toString() : d.id || '',

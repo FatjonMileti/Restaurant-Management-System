@@ -1,51 +1,54 @@
-import { requireAuth, requireAdmin } from '../graphql/helpers/auth';
-
-jest.mock('../models/User', () => ({
-  __esModule: true,
-  default: {
-    findById: jest.fn(),
-  },
+jest.mock('../config/rxdb', () => ({
+  getDB: jest.fn(),
 }));
 
-import User from '../models/User';
+import { getDB } from '../config/rxdb';
+import { requireAuth, requireAdmin } from '../graphql/helpers/auth';
 
-const mockedFindById = User.findById as unknown as jest.Mock;
+const mockUsers = {
+  findOne: jest.fn(),
+};
+
+beforeEach(() => {
+  (getDB as unknown as jest.Mock).mockResolvedValue({ users: mockUsers });
+  jest.clearAllMocks();
+});
 
 describe('auth helpers', () => {
-  beforeEach(() => jest.clearAllMocks());
-
   describe('requireAuth', () => {
     it('throws if no userId in context', async () => {
       await expect(requireAuth({})).rejects.toThrow('Not authenticated');
       await expect(requireAuth(null)).rejects.toThrow('Not authenticated');
     });
     it('throws if user not found', async () => {
-      mockedFindById.mockResolvedValue(null);
+      mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
       await expect(requireAuth({ userId: 'abc' })).rejects.toThrow('Not authenticated');
     });
     it('returns user if found', async () => {
-      const fakeUser = { _id: '123', role: 'customer' };
-      mockedFindById.mockResolvedValue(fakeUser);
+      const fakeUser = { _id: '123', role: 'customer', toJSON: () => ({ _id: '123', role: 'customer' }) };
+      mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(fakeUser) });
       const res = await requireAuth({ userId: '123' });
-      expect(res).toBe(fakeUser);
-      expect(mockedFindById).toHaveBeenCalledWith('123');
+      expect(res._id).toBe('123');
+      expect(mockUsers.findOne).toHaveBeenCalledWith({ _id: '123' });
     });
   });
 
   describe('requireAdmin', () => {
     it('throws if not admin', async () => {
-      mockedFindById.mockResolvedValue({ _id: '1', role: 'customer' });
+      const userDoc = { _id: '1', role: 'customer', toJSON: () => ({ _id: '1', role: 'customer' }) };
+      mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(userDoc) });
       await expect(requireAdmin({ userId: '1' })).rejects.toThrow('Not authorized, admin only');
     });
     it('throws if staff', async () => {
-      mockedFindById.mockResolvedValue({ _id: '1', role: 'staff' });
+      const userDoc = { _id: '1', role: 'staff', toJSON: () => ({ _id: '1', role: 'staff' }) };
+      mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(userDoc) });
       await expect(requireAdmin({ userId: '1' })).rejects.toThrow('Not authorized, admin only');
     });
     it('returns user if admin', async () => {
-      const admin = { _id: '1', role: 'admin' };
-      mockedFindById.mockResolvedValue(admin);
+      const adminDoc = { _id: '1', role: 'admin', toJSON: () => ({ _id: '1', role: 'admin' }) };
+      mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(adminDoc) });
       const res = await requireAdmin({ userId: '1' });
-      expect(res).toBe(admin);
+      expect(res.role).toBe('admin');
     });
     it('throws if not authenticated', async () => {
       await expect(requireAdmin({})).rejects.toThrow('Not authenticated');

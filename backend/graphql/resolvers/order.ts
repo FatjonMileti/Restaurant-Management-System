@@ -1,7 +1,10 @@
+import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import { createOrderSchema, updateOrderSchema, validate } from '../validation.js';
 import { formatOrder } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
+
+const genId = () => crypto.randomUUID();
 
 export const orderResolvers = {
   orders: async ({ status, tableNumber }: any) => {
@@ -31,6 +34,7 @@ export const orderResolvers = {
     }
     const totalAmount = v.data.items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
     const orderDoc = await db.orders.insert({
+      _id: genId(),
       user: context.userId,
       items: v.data.items,
       totalAmount,

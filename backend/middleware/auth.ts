@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import { getDB } from '../config/rxdb.js';
 
 interface JwtPayload {
   id: string;
@@ -13,7 +13,13 @@ const protect = async (req: Request, res: Response, next: NextFunction): Promise
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
-      req.user = (await User.findById(decoded.id).select('-password')) || undefined;
+      const db = await getDB();
+      const userDoc = await db.users.findOne({ _id: decoded.id }).exec();
+      if (userDoc) {
+        const user = userDoc.toJSON();
+        delete user.password;
+        req.user = user;
+      }
       next();
       return;
     } catch (error) {

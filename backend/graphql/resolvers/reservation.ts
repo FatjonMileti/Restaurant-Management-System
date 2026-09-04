@@ -1,7 +1,10 @@
+import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import { reservationSchema, validate } from '../validation.js';
 import { formatReservation } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
+
+const genId = () => crypto.randomUUID();
 
 export const reservationResolvers = {
   reservations: async ({ status, tableNumber }: any) => {
@@ -24,6 +27,7 @@ export const reservationResolvers = {
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
     const resDoc = await db.reservations.insert({
+      _id: genId(),
       user: context.userId,
       ...v.data,
     });

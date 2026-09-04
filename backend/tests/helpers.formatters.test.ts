@@ -1,4 +1,8 @@
-import mongoose from 'mongoose';
+jest.mock('../config/rxdb', () => ({
+  getDB: jest.fn(),
+}));
+
+import { getDB } from '../config/rxdb';
 import {
   formatUser,
   formatMenuItem,
@@ -12,10 +16,10 @@ describe('formatUser', () => {
   it('returns null for null', () => {
     expect(formatUser(null)).toBeNull();
   });
-  it('formats mongoose doc with toObject', () => {
+  it('formats doc with toJSON', () => {
     const doc = {
-      toObject: () => ({
-        _id: new mongoose.Types.ObjectId(),
+      toJSON: () => ({
+        _id: 'user1',
         name: 'John',
         email: 'john@example.com',
         role: 'customer',
@@ -28,23 +32,23 @@ describe('formatUser', () => {
     expect(res.name).toBe('John');
     expect(res.email).toBe('john@example.com');
     expect(res.phone).toBe('123');
-    expect(res.id).toBeDefined();
+    expect(res.id).toBe('user1');
     expect(res.createdAt).toContain('2024-01-01');
   });
-  it('handles plain object without toObject', () => {
+  it('handles plain object without toJSON', () => {
     const plain = {
-      _id: new mongoose.Types.ObjectId(),
+      _id: 'user2',
       name: 'Jane',
       email: 'jane@example.com',
       role: 'admin',
     };
     const res: any = formatUser(plain as any);
     expect(res.name).toBe('Jane');
-    expect(res.id).toBeDefined();
+    expect(res.id).toBe('user2');
   });
   it('defaults phone to null', () => {
     const plain = {
-      _id: new mongoose.Types.ObjectId(),
+      _id: 'user3',
       name: 'A',
       email: 'a@b.com',
       role: 'customer',
@@ -56,46 +60,40 @@ describe('formatUser', () => {
 
 describe('formatMenuItem', () => {
   it('maps _id to id', () => {
-    const id = new mongoose.Types.ObjectId();
-    const doc = { _id: id, name: 'Pizza', price: 10, category: 'Food', available: true };
+    const doc = { _id: 'menu1', name: 'Pizza', price: 10, category: 'Food', available: true };
     const res: any = formatMenuItem(doc as any);
-    expect(res.id).toBe(id.toString());
+    expect(res.id).toBe('menu1');
     expect(res.name).toBe('Pizza');
   });
   it('returns null for null', () => {
     expect(formatMenuItem(null as any)).toBeNull();
   });
-  it('handles toObject doc', () => {
-    const id = new mongoose.Types.ObjectId();
-    const doc = { toObject: () => ({ _id: id, name: 'Burger', price: 5, category: 'Food' }) };
+  it('handles toJSON doc', () => {
+    const doc = { toJSON: () => ({ _id: 'menu2', name: 'Burger', price: 5, category: 'Food' }) };
     const res: any = formatMenuItem(doc as any);
-    expect(res.id).toBe(id.toString());
+    expect(res.id).toBe('menu2');
   });
 });
 
 describe('formatCategory', () => {
   it('maps _id to id', () => {
-    const id = new mongoose.Types.ObjectId();
-    const res: any = formatCategory({ _id: id, name: 'Drinks' } as any);
-    expect(res.id).toBe(id.toString());
+    const res: any = formatCategory({ _id: 'cat1', name: 'Drinks' } as any);
+    expect(res.id).toBe('cat1');
     expect(res.name).toBe('Drinks');
   });
 });
 
 describe('formatOrder', () => {
   it('formats order with populated menuItem', () => {
-    const orderId = new mongoose.Types.ObjectId();
-    const menuId = new mongoose.Types.ObjectId();
-    const userId = new mongoose.Types.ObjectId();
     const order: any = {
-      _id: orderId,
-      user: { _id: userId, name: 'John', email: 'john@example.com', role: 'customer' },
+      _id: 'order1',
+      user: { _id: 'user1', name: 'John', email: 'john@example.com', role: 'customer' },
       items: [
         {
           name: 'Pizza',
           quantity: 2,
           price: 10,
-          menuItem: { _id: menuId, name: 'Pizza', price: 10, category: 'Food' },
+          menuItem: { _id: 'menu1', name: 'Pizza', price: 10, category: 'Food' },
         },
       ],
       totalAmount: 20,
@@ -106,36 +104,33 @@ describe('formatOrder', () => {
       updatedAt: new Date(),
     };
     const res: any = formatOrder(order);
-    expect(res.id).toBe(orderId.toString());
-    expect(res.items[0].menuItem.id).toBe(menuId.toString());
-    expect(res.user.id).toBe(userId.toString());
+    expect(res.id).toBe('order1');
+    expect(res.items[0].menuItem.id).toBe('menu1');
+    expect(res.user.id).toBe('user1');
     expect(res.totalAmount).toBe(20);
   });
   it('handles lean order without populated user', () => {
-    const orderId = new mongoose.Types.ObjectId();
-    const order: any = { _id: orderId, items: [], totalAmount: 0, status: 'pending' };
+    const order: any = { _id: 'order2', items: [], totalAmount: 0, status: 'pending' };
     const res: any = formatOrder(order);
-    expect(res.id).toBe(orderId.toString());
+    expect(res.id).toBe('order2');
     expect(res.user).toBeNull();
   });
 });
 
 describe('formatReservation', () => {
   it('formats date with moment', () => {
-    const id = new mongoose.Types.ObjectId();
-    const userId = new mongoose.Types.ObjectId();
     const doc: any = {
-      _id: id,
-      user: { _id: userId, name: 'Jane', email: 'jane@example.com', role: 'customer' },
+      _id: 'res1',
+      user: { _id: 'user1', name: 'Jane', email: 'jane@example.com', role: 'customer' },
       date: new Date('2025-06-15'),
       time: '19:00',
       guests: 2,
       status: 'confirmed',
     };
     const res: any = formatReservation(doc);
-    expect(res.id).toBe(id.toString());
+    expect(res.id).toBe('res1');
     expect(res.date).toBe('2025-06-15');
-    expect(res.user.id).toBe(userId.toString());
+    expect(res.user.id).toBe('user1');
   });
 });
 
@@ -144,9 +139,8 @@ describe('formatRestaurantSettings', () => {
     expect(formatRestaurantSettings(null as any)).toBeNull();
   });
   it('formats settings', () => {
-    const id = new mongoose.Types.ObjectId();
-    const res: any = formatRestaurantSettings({ _id: id, name: 'My Rest', tableCount: 12 } as any);
-    expect(res.id).toBe(id.toString());
+    const res: any = formatRestaurantSettings({ _id: 'set1', name: 'My Rest', tableCount: 12 } as any);
+    expect(res.id).toBe('set1');
     expect(res.name).toBe('My Rest');
     expect(res.tableCount).toBe(12);
   });

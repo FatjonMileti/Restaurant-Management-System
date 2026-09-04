@@ -1,7 +1,10 @@
+import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import { categorySchema, validate } from '../validation.js';
 import { formatCategory } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
+
+const genId = () => crypto.randomUUID();
 
 export const categoryResolvers = {
   categories: async () => {
@@ -19,7 +22,7 @@ export const categoryResolvers = {
     const v = validate(categorySchema, { name });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const catDoc = await db.categories.insert(v.data);
+    const catDoc = await db.categories.insert({ _id: genId(), ...v.data });
     emitEvent('categories:changed');
     return formatCategory(catDoc.toJSON());
   },
