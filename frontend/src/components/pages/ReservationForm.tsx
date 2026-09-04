@@ -56,6 +56,7 @@ export default function ReservationFormComponent({
   const selectedTable = watch('tableNumber');
 
   useEffect(() => {
+    setActionError('');
     if (editingReservation) {
       reset({
         date: editingReservation.date
@@ -66,6 +67,15 @@ export default function ReservationFormComponent({
         tableNumber: editingReservation.tableNumber || undefined,
         specialRequests: editingReservation.specialRequests || '',
         status: (editingReservation.status as ReservationFormData['status']) || 'confirmed',
+      });
+    } else {
+      reset({
+        date: '',
+        time: '',
+        guests: 2,
+        tableNumber: undefined,
+        specialRequests: '',
+        status: 'confirmed',
       });
     }
   }, [editingReservation, reset]);

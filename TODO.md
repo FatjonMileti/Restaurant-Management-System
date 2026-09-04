@@ -12,3 +12,5 @@
 - [x] Make navbar responsive with hamburger menu on mobile
 
 ## To Do
+
+- [x] ReservationForm - when edit a reservation and open form for creating new reservation, the form should be cleared
