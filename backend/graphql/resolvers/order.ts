@@ -1,4 +1,4 @@
-import { getDB } from '../../config/rxdb';
+import { getDB } from '../../config/rxdb.js';
 import { createOrderSchema, updateOrderSchema, validate } from '../validation.js';
 import { formatOrder } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
@@ -24,13 +24,12 @@ export const orderResolvers = {
     if (!context?.userId) throw new Error('Not authenticated');
     const v = validate(createOrderSchema, { items, tableNumber, paymentMethod });
     if (!v.success) throw new Error(v.errors.join(', '));
-    // assume menu items validation elsewhere; skip for brevity
+    const db = await getDB();
     if (v.data.tableNumber) {
       const busy = await db.orders.findOne({ tableNumber: v.data.tableNumber, status: { $in: ['pending', 'preparing'] } }).exec();
       if (busy) throw new Error('Table is busy');
     }
     const totalAmount = v.data.items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
-    const db = await getDB();
     const orderDoc = await db.orders.insert({
       user: context.userId,
       items: v.data.items,

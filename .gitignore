@@ -4,3 +4,18 @@ build/
 .env
 *.log
 .DS_Store
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db

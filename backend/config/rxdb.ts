@@ -1,25 +1,20 @@
-import { createRxDatabase, addRxPlugin } from 'rxdb';
-import { RxDBSQLiteAdapter } from '@basepurpose/rxdb-sqlite';
-// Validation plugin not required for this setup
-
-if (process.env.NODE_ENV !== 'test') {
-  addRxPlugin(RxDBSQLiteAdapter);
-}
-
+import { createRxDatabase } from 'rxdb';
 
 type Collections = {
-  users: any; // RxCollection<UserDoc>
-  // other collections will be added later
+  users: any;
 };
 
 let dbInstance: any = null;
 
 export const getRxDB = async (): Promise<any> => {
   if (dbInstance) return dbInstance;
+
+  const { getRxStorageSQLite } = await import('@basepurpose/rxdb-sqlite');
+  const { getNodeAdapter } = await import('@basepurpose/rxdb-sqlite/node');
+
   dbInstance = await createRxDatabase<{ collections: Collections }>({
     name: 'restaurant-db',
-    storage: RxDBSQLiteAdapter,
-    ignoreDuplicate: true,
+    storage: getRxStorageSQLite({ adapter: getNodeAdapter }),
   });
 
   // Define User collection schema
@@ -28,8 +23,9 @@ export const getRxDB = async (): Promise<any> => {
     version: 0,
     description: 'user collection',
     type: 'object',
+    primaryKey: '_id',
     properties: {
-      _id: { type: 'string', primary: true },
+      _id: { type: 'string', maxLength: 100 },
       name: { type: 'string' },
       email: { type: 'string', unique: true },
       password: { type: 'string' },
@@ -46,8 +42,9 @@ export const getRxDB = async (): Promise<any> => {
     version: 0,
     description: 'menuItem collection',
     type: 'object',
+    primaryKey: '_id',
     properties: {
-      _id: { type: 'string', primary: true },
+      _id: { type: 'string', maxLength: 100 },
       name: { type: 'string' },
       description: { type: 'string' },
       price: { type: 'number' },
@@ -64,8 +61,9 @@ export const getRxDB = async (): Promise<any> => {
     version: 0,
     description: 'category collection',
     type: 'object',
+    primaryKey: '_id',
     properties: {
-      _id: { type: 'string', primary: true },
+      _id: { type: 'string', maxLength: 100 },
       name: { type: 'string' },
     },
     required: ['name'],
@@ -78,8 +76,9 @@ export const getRxDB = async (): Promise<any> => {
     version: 0,
     description: 'order collection',
     type: 'object',
+    primaryKey: '_id',
     properties: {
-      _id: { type: 'string', primary: true },
+      _id: { type: 'string', maxLength: 100 },
       items: { type: 'array', items: { type: 'string' } },
       table: { type: 'number' },
       status: { type: 'string' },
@@ -95,8 +94,9 @@ export const getRxDB = async (): Promise<any> => {
     version: 0,
     description: 'reservation collection',
     type: 'object',
+    primaryKey: '_id',
     properties: {
-      _id: { type: 'string', primary: true },
+      _id: { type: 'string', maxLength: 100 },
       name: { type: 'string' },
       phone: { type: 'string' },
       date: { type: 'string', format: 'date-time' },
@@ -113,8 +113,9 @@ export const getRxDB = async (): Promise<any> => {
     version: 0,
     description: 'restaurant settings collection',
     type: 'object',
+    primaryKey: '_id',
     properties: {
-      _id: { type: 'string', primary: true },
+      _id: { type: 'string', maxLength: 100 },
       tableCount: { type: 'number' },
     },
     required: ['tableCount'],
@@ -129,7 +130,7 @@ export const getRxDB = async (): Promise<any> => {
     reservations: { schema: reservationSchema },
     settings: { schema: settingsSchema },
   });
-
-
-  return dbInstance;
 };
+export const getDB = () => dbInstance;
+
+
