@@ -16,7 +16,7 @@
 - [x] Set up RxDB with SQLite adapter in backend
 - [x] Create RxDB collections for User ...
 - [x] Refactor db config to initialize RxDB instance instead of Mongoose
-- [ ] Update models to use RxDB collection methods (insert, find, update, remove)
+- [x] Update models to use RxDB collection methods (insert, find, update, remove)
 - [ ] Modify GraphQL resolvers to query RxDB collections
 - [ ] Adjust seed script to populate RxDB data
 - [ ] Update Jest tests to work with RxDB (mock RxDB where needed)
