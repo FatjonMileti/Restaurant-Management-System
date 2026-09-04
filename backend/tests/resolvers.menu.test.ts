@@ -1,6 +1,6 @@
-import { getDB } from '../../config/rxdb';
+import { getDB } from '../config/rxdb';
 
-jest.mock('../../config/rxdb', () => ({
+jest.mock('../config/rxdb', () => ({
   getDB: jest.fn(),
 }));
 

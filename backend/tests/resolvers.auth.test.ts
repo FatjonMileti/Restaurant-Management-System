@@ -1,3 +1,8 @@
+jest.mock('../config/rxdb', () => ({
+  getDB: jest.fn(),
+  getRxDB: jest.fn(),
+}));
+
 jest.mock('../models/User', () => ({
   __esModule: true,
   default: {
