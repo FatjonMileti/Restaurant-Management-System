@@ -1,7 +1,13 @@
 jest.mock('../config/rxdb', () => ({
-  getDB: jest.fn(),
+  getDB: jest.fn().mockResolvedValue({
+    users: {
+      findOne: jest.fn(),
+      insert: jest.fn(),
+    },
+  }),
   getRxDB: jest.fn(),
 }));
+
 
 jest.mock('../models/User', () => ({
   __esModule: true,
