@@ -14,7 +14,7 @@
 ## To Do
 
 - [x] Set up RxDB with SQLite adapter in backend
-- [ ] Create RxDB collections for User, MenuItem, Category, Order, Reservation, RestaurantSettings
+- [x] Create RxDB collections for User ...
 - [ ] Refactor db config to initialize RxDB instance instead of Mongoose
 - [ ] Update models to use RxDB collection methods (insert, find, update, remove)
 - [ ] Modify GraphQL resolvers to query RxDB collections
