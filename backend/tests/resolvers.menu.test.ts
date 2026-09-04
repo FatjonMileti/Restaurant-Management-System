@@ -1,68 +1,64 @@
-import mongoose from 'mongoose';
+import { getDB } from '../../config/rxdb';
 
-jest.mock('../models/MenuItem', () => ({
-  __esModule: true,
-  default: {
-    find: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn(),
-  },
+jest.mock('../../config/rxdb', () => ({
+  getDB: jest.fn(),
 }));
 
-jest.mock('../socket', () => ({
+jest.mock('../../socket', () => ({
   emitEvent: jest.fn(),
 }));
 
-jest.mock('../graphql/helpers/auth', () => ({
+jest.mock('../../graphql/helpers/auth', () => ({
   requireAdmin: jest.fn(),
 }));
 
-import MenuItem from '../models/MenuItem';
-import { menuResolvers } from '../graphql/resolvers/menu';
-import { requireAdmin } from '../graphql/helpers/auth';
+import { menuResolvers } from '../../graphql/resolvers/menu';
+import { requireAdmin } from '../../graphql/helpers/auth';
 
 const mockRequireAdmin = requireAdmin as unknown as jest.Mock;
-const mockFind = MenuItem.find as unknown as jest.Mock;
-const mockFindById = MenuItem.findById as unknown as jest.Mock;
-const mockCreate = MenuItem.create as unknown as jest.Mock;
-const mockFindByIdAndUpdate = MenuItem.findByIdAndUpdate as unknown as jest.Mock;
 
-describe('menu resolvers', () => {
+const mockMenuItems = {
+  find: jest.fn(),
+  findOne: jest.fn(),
+  insert: jest.fn(),
+};
+
+;(getDB as jest.Mock).mockResolvedValue({ menuItems: mockMenuItems });
+
+describe('menu resolvers (RxDB)', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('menuItems', () => {
     it('filters by category and available', async () => {
-      const docs = [{ _id: new mongoose.Types.ObjectId(), name: 'Pizza' }];
-      mockFind.mockReturnValue({
-        sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(docs) }),
+      const docs = [{ _id: '1', name: 'Pizza', toJSON: () => ({ _id: '1', name: 'Pizza' }) }];
+      mockMenuItems.find.mockReturnValue({
+        sort: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(docs) }),
       });
       const res = await menuResolvers.menuItems({ category: 'Food', available: true });
-      expect(mockFind).toHaveBeenCalledWith({ category: 'Food', available: true });
-      expect(res[0].id).toBe(docs[0]._id.toString());
+      expect(mockMenuItems.find).toHaveBeenCalledWith({ category: 'Food', available: true });
+      expect(res[0].id).toBe('1');
     });
+
     it('returns all when no filter', async () => {
-      const docs = [{ _id: new mongoose.Types.ObjectId(), name: 'A' }];
-      mockFind.mockReturnValue({
-        sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(docs) }),
+      const docs = [{ _id: '2', name: 'A', toJSON: () => ({ _id: '2', name: 'A' }) }];
+      mockMenuItems.find.mockReturnValue({
+        sort: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(docs) }),
       });
       const res = await menuResolvers.menuItems({});
-      expect(mockFind).toHaveBeenCalledWith({});
+      expect(mockMenuItems.find).toHaveBeenCalledWith({});
       expect(res).toHaveLength(1);
     });
   });
 
   describe('menuItem', () => {
     it('returns single item formatted', async () => {
-      const id = new mongoose.Types.ObjectId();
-      const doc = { _id: id, name: 'Burger' };
-      mockFindById.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
-      const res: any = await menuResolvers.menuItem({ id: id.toString() });
-      expect(res.id).toBe(id.toString());
+      const doc = { _id: '3', name: 'Burger', toJSON: () => ({ _id: '3', name: 'Burger' }) };
+      mockMenuItems.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(doc) });
+      const res: any = await menuResolvers.menuItem({ id: '3' });
+      expect(res.id).toBe('3');
     });
     it('returns null if not found', async () => {
-      mockFindById.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+      mockMenuItems.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
       const res = await menuResolvers.menuItem({ id: 'nonexistent' });
       expect(res).toBeNull();
     });
@@ -70,7 +66,7 @@ describe('menu resolvers', () => {
 
   describe('createMenuItem', () => {
     it('requires admin', async () => {
-      mockRequireAdmin.mockRejectedValue(new Error('Not authorized, admin only'));
+      mockRequireAdmin.mockRejectedValue(new Error('Not authorized'));
       await expect(
         menuResolvers.createMenuItem({ name: 'Pizza', price: 10, category: 'Food' }, {}),
       ).rejects.toThrow('Not authorized');
@@ -78,18 +74,19 @@ describe('menu resolvers', () => {
     it('creates item when valid and admin', async () => {
       mockRequireAdmin.mockResolvedValue({ role: 'admin' });
       const created = {
-        _id: new mongoose.Types.ObjectId(),
+        _id: '4',
         name: 'Pizza',
         price: 10,
         category: 'Food',
+        toJSON: () => ({ _id: '4', name: 'Pizza', price: 10, category: 'Food' }),
       };
-      mockCreate.mockResolvedValue(created);
+      mockMenuItems.insert.mockResolvedValue(created);
       const res: any = await menuResolvers.createMenuItem(
         { name: 'Pizza', price: 10, category: 'Food', image: '' },
         { userId: 'adminId' },
       );
-      expect(res.id).toBe(created._id.toString());
-      expect(mockCreate).toHaveBeenCalled();
+      expect(res.id).toBe('4');
+      expect(mockMenuItems.insert).toHaveBeenCalled();
     });
     it('throws validation error for negative price', async () => {
       mockRequireAdmin.mockResolvedValue({ role: 'admin' });
@@ -100,14 +97,29 @@ describe('menu resolvers', () => {
   });
 
   describe('updateMenuItem', () => {
-    it('updates via findByIdAndUpdate and formats', async () => {
+    it('updates via findOne and update', async () => {
       mockRequireAdmin.mockResolvedValue({ role: 'admin' });
-      const id = new mongoose.Types.ObjectId();
-      const updated = { _id: id, name: 'Updated', price: 12, category: 'Food' };
-      mockFindByIdAndUpdate.mockReturnValue({ lean: jest.fn().mockResolvedValue(updated) });
-      const res: any = await menuResolvers.updateMenuItem({ id: id.toString(), price: 12 }, {});
-      expect(res.id).toBe(id.toString());
-      expect(res.price).toBe(12);
+      const doc = {
+        _id: '5',
+        name: 'Old',
+        price: 5,
+        toJSON: () => ({ _id: '5', name: 'Old', price: 5 }),
+        update: jest.fn().mockResolvedValue(undefined),
+      };
+      mockMenuItems.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(doc) });
+      const res: any = await menuResolvers.updateMenuItem({ id: '5', price: 12 }, {});
+      expect(doc.update).toHaveBeenCalledWith({ $set: { price: 12 } });
+      expect(res.id).toBe('5');
+    });
+  });
+
+  describe('deleteMenuItem', () => {
+    it('removes item when found', async () => {
+      const doc = { _id: '6', remove: jest.fn().mockResolvedValue(undefined) };
+      mockMenuItems.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(doc) });
+      const res = await menuResolvers.deleteMenuItem({ id: '6' }, {});
+      expect(doc.remove).toHaveBeenCalled();
+      expect(res).toBe('Menu item removed');
     });
   });
 });
