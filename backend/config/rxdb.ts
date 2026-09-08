@@ -1,4 +1,7 @@
-import { createRxDatabase } from 'rxdb';
+import { createRxDatabase, addRxPlugin } from 'rxdb';
+import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
+
+addRxPlugin(RxDBQueryBuilderPlugin);
 
 type Collections = {
   users: any;
