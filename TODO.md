@@ -19,5 +19,3 @@
 
 ## To Do
 
-- [x] Fix deleteUser frontend
-- [x] fix: 'Variable "$id" of required type "ID!" was not provided.' when edit user type.
