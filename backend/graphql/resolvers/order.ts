@@ -45,8 +45,9 @@ export const orderResolvers = {
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
     if (v.data.tableNumber) {
-      const busy = await db.orders.findOne({ tableNumber: v.data.tableNumber, status: { $in: ['pending', 'preparing'] } }).exec();
-      if (busy) throw new Error('Table is busy');
+      const pending = await db.orders.findOne({ tableNumber: v.data.tableNumber, status: 'pending' }).exec();
+      const preparing = await db.orders.findOne({ tableNumber: v.data.tableNumber, status: 'preparing' }).exec();
+      if (pending || preparing) throw new Error('Table is busy');
     }
     const totalAmount = v.data.items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
     const orderDoc = await db.orders.insert({
@@ -74,7 +75,9 @@ export const orderResolvers = {
       updates.totalAmount = v.data.items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
     }
     if (v.data.tableNumber) {
-      const busy = await db.orders.findOne({ tableNumber: v.data.tableNumber, status: { $in: ['pending', 'preparing'] }, _id: { $ne: id } }).exec();
+      const pending = await db.orders.findOne({ tableNumber: v.data.tableNumber, status: 'pending' }).exec();
+      const preparing = await db.orders.findOne({ tableNumber: v.data.tableNumber, status: 'preparing' }).exec();
+      const busy = (pending && pending.toJSON()._id !== id) || (preparing && preparing.toJSON()._id !== id);
       if (busy) throw new Error('Table is busy');
     }
     const doc = await db.orders.findOne({ _id: id }).exec();
