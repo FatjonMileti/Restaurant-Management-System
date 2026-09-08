@@ -38,6 +38,9 @@ describe('order resolvers', () => {
     (getDB as unknown as jest.Mock).mockResolvedValue({
       orders: {
         insert: mockInsert,
+        find: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue([]),
+        }),
         findOne: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue(null),
         }),
