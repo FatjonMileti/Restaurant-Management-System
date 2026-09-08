@@ -5,11 +5,11 @@ import { getDB } from '../../config/rxdb.js';
 const genId = () => crypto.randomUUID();
 
 const unwrapDoc = (doc: any) => {
-  if (doc.toObject) return doc.toObject();
   if (doc.toJSON && typeof doc.toJSON === 'function') {
     const json = doc.toJSON();
     if (json !== doc) return json;
   }
+  if (doc.toObject) return doc.toObject();
   return doc;
 };
 
