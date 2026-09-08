@@ -32,12 +32,12 @@ export const formatRestaurantSettings = (doc: any) => {
   const d = unwrapDoc(doc);
   return {
     id: d._id ? d._id.toString() : d.id || '',
-    name: d.name,
+    name: d.name || '',
     logo: d.logo || '',
     address: d.address || '',
     phone: d.phone || '',
     email: d.email || '',
-    tableCount: d.tableCount,
+    tableCount: d.tableCount || 10,
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
   };

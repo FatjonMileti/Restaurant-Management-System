@@ -32,6 +32,7 @@ export const settingsResolvers = {
     await doc.update({ $set: updates });
     emitEvent('settings:changed');
     emitEvent('tables:changed');
-    return formatRestaurantSettings(doc.toJSON());
+    const updated = await db.settings.findOne().exec();
+    return formatRestaurantSettings(updated?.toJSON() || doc.toJSON());
   },
 };
