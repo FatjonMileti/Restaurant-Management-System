@@ -3,7 +3,7 @@ import { getDB } from '../../config/rxdb.js';
 export const requireAuth = async (context: any) => {
   if (!context?.userId) throw new Error('Not authenticated');
   const db = await getDB();
-  const userDoc = await db.users.findOne({ _id: context.userId }).exec();
+  const userDoc = await db.users.findOne(context.userId).exec();
   if (!userDoc) throw new Error('Not authenticated');
   return userDoc.toJSON();
 };

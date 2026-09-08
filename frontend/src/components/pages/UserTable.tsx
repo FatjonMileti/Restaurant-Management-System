@@ -135,13 +135,13 @@ export default function UserTable() {
           <tbody>
             {users.map((u: any) => (
               <UserRow
-                key={u._id}
+                key={u.id}
                 user={u}
-                isCurrent={u._id === currentUser?._id}
-                editing={editingRole === u._id}
-                onStartEdit={() => setEditingRole(u._id)}
-                onRoleChange={(role) => handleRoleChange(u._id, role)}
-                onDelete={() => setDeleteConfirm({ open: true, id: u._id })}
+                isCurrent={u.id === currentUser?._id}
+                editing={editingRole === u.id}
+                onStartEdit={() => setEditingRole(u.id)}
+                onRoleChange={(role) => handleRoleChange(u.id, role)}
+                onDelete={() => setDeleteConfirm({ open: true, id: u.id })}
               />
             ))}
           </tbody>

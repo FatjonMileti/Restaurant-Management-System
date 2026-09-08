@@ -14,7 +14,7 @@ export const categoryResolvers = {
   },
   category: async ({ id }: any) => {
     const db = await getDB();
-    const doc = await db.categories.findOne({ _id: id }).exec();
+    const doc = await db.categories.findOne(id).exec();
     if (!doc) return null;
     return formatCategory(doc.toJSON());
   },
@@ -30,16 +30,16 @@ export const categoryResolvers = {
     const v = validate(categorySchema, { name });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const doc = await db.categories.findOne({ _id: id }).exec();
+    const doc = await db.categories.findOne(id).exec();
     if (!doc) throw new Error('Category not found');
     await doc.update({ $set: v.data });
     emitEvent('categories:changed');
-    const updated = await db.categories.findOne({ _id: id }).exec();
+    const updated = await db.categories.findOne(id).exec();
     return formatCategory(updated?.toJSON() || doc.toJSON());
   },
   deleteCategory: async ({ id }: any) => {
     const db = await getDB();
-    const doc = await db.categories.findOne({ _id: id }).exec();
+    const doc = await db.categories.findOne(id).exec();
     if (!doc) throw new Error('Category not found');
     await doc.remove();
     emitEvent('categories:changed');

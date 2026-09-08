@@ -31,3 +31,6 @@
 - [x] Ensure end-to-end functionality works with SQLite persistence
 - [x] Clean up package.json (remove mongoose, add rxdb deps)
 - [x] Update documentation for new persistence layer
+- [x] Fix RxDB findOne for non-primary keys — use find().exec() + JS filter
+- [x] Fix stale data after doc.update() — re-fetch after update in all resolvers
+- [x] Fix deleteUser frontend using u.id instead of u._id (GraphQL returns id not _id)

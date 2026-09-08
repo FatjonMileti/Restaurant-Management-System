@@ -17,7 +17,7 @@ export const reservationResolvers = {
   },
   reservation: async ({ id }: any) => {
     const db = await getDB();
-    const doc = await db.reservations.findOne({ _id: id }).exec();
+    const doc = await db.reservations.findOne(id).exec();
     if (!doc) return null;
     return formatReservation(doc.toJSON());
   },
@@ -41,17 +41,17 @@ export const reservationResolvers = {
     const v = validate(reservationSchema.partial(), rest);
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const doc = await db.reservations.findOne({ _id: id }).exec();
+    const doc = await db.reservations.findOne(id).exec();
     if (!doc) throw new Error('Reservation not found');
     await doc.update({ $set: v.data });
     emitEvent('reservations:changed');
     emitEvent('tables:change');
-    const updated = await db.reservations.findOne({ _id: id }).exec();
+    const updated = await db.reservations.findOne(id).exec();
     return formatReservation(updated?.toJSON() || doc.toJSON());
   },
   deleteReservation: async ({ id }: any) => {
     const db = await getDB();
-    const doc = await db.reservations.findOne({ _id: id }).exec();
+    const doc = await db.reservations.findOne(id).exec();
     if (!doc) throw new Error('Reservation not found');
     await doc.remove();
     emitEvent('reservations:changed');
@@ -60,12 +60,12 @@ export const reservationResolvers = {
   },
   cancelReservation: async ({ id }: any) => {
     const db = await getDB();
-    const doc = await db.reservations.findOne({ _id: id }).exec();
+    const doc = await db.reservations.findOne(id).exec();
     if (!doc) throw new Error('Reservation not found');
     await doc.update({ $set: { status: 'cancelled' } });
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
-    const updated = await db.reservations.findOne({ _id: id }).exec();
+    const updated = await db.reservations.findOne(id).exec();
     const res = updated?.toJSON() || doc.toJSON();
     return { ...res, id: res._id };
   },

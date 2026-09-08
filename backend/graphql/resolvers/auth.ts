@@ -22,7 +22,7 @@ export const authResolvers = {
   authMe: async (_args: any, context?: any) => {
     if (!context?.userId) return null;
     const db = await getDB();
-    const userDoc = await db.users.findOne({ _id: context.userId }).exec();
+    const userDoc = await db.users.findOne(context.userId).exec();
     if (!userDoc) return null;
     const user = userDoc.toJSON();
     delete user.password;
@@ -43,7 +43,7 @@ export const authResolvers = {
   authProfile: async (_args: any, context?: any) => {
     if (!context?.userId) return null;
     const db = await getDB();
-    const userDoc = await db.users.findOne({ _id: context.userId }).exec();
+    const userDoc = await db.users.findOne(context.userId).exec();
     if (!userDoc) return null;
     const user = userDoc.toJSON();
     delete user.password;
@@ -110,11 +110,11 @@ export const authResolvers = {
     const v = validate(updateUserRoleSchema, { role });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const userDoc = await db.users.findOne({ _id: id }).exec();
+    const userDoc = await db.users.findOne(id).exec();
     if (!userDoc) throw new Error('User not found');
     await userDoc.update({ $set: { role: v.data.role } });
     emitEvent('users:changed');
-    const updated = await db.users.findOne({ _id: id }).exec();
+    const updated = await db.users.findOne(id).exec();
     const user = updated?.toJSON() || userDoc.toJSON();
     delete user.password;
     return formatUser(user);
@@ -122,7 +122,7 @@ export const authResolvers = {
 
   deleteUser: async ({ id }: any) => {
     const db = await getDB();
-    const userDoc = await db.users.findOne({ _id: id }).exec();
+    const userDoc = await db.users.findOne(id).exec();
     if (!userDoc) throw new Error('User not found');
     const user = userDoc.toJSON();
     if (user.role === 'admin') throw new Error('Cannot delete admin user');

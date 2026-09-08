@@ -19,7 +19,7 @@ export const menuResolvers = {
 
   menuItem: async ({ id }: any) => {
     const db = await getDB();
-    const doc = await db.menuItems.findOne({ _id: id }).exec();
+    const doc = await db.menuItems.findOne(id).exec();
     if (!doc) return null;
     return formatMenuItem(doc.toJSON());
   },
@@ -39,18 +39,18 @@ export const menuResolvers = {
     const v = validate(menuItemSchema.partial(), rest);
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const existing = await db.menuItems.findOne({ _id: id }).exec();
+    const existing = await db.menuItems.findOne(id).exec();
     if (!existing) throw new Error('Menu item not found');
     await existing.update({ $set: v.data });
     emitEvent('menu:changed');
-    const updated = await db.menuItems.findOne({ _id: id }).exec();
+    const updated = await db.menuItems.findOne(id).exec();
     return formatMenuItem(updated?.toJSON() || existing.toJSON());
   },
 
   deleteMenuItem: async ({ id }: any, context?: any) => {
     await requireAdmin(context);
     const db = await getDB();
-    const item = await db.menuItems.findOne({ _id: id }).exec();
+    const item = await db.menuItems.findOne(id).exec();
     if (!item) throw new Error('Menu item not found');
     await item.remove();
     emitEvent('menu:changed');

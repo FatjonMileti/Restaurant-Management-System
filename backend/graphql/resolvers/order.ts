@@ -32,7 +32,7 @@ export const orderResolvers = {
   order: async ({ id }: any) => {
     const db = await getDB();
     const [doc, menuItemMap] = await Promise.all([
-      db.orders.findOne({ _id: id }).exec(),
+      db.orders.findOne(id).exec(),
       buildMenuItemMap(db),
     ]);
     if (!doc) return null;
@@ -85,19 +85,19 @@ export const orderResolvers = {
       });
       if (busy) throw new Error('Table is busy');
     }
-    const doc = await db.orders.findOne({ _id: id }).exec();
+    const doc = await db.orders.findOne(id).exec();
     if (!doc) return null;
     await doc.update({ $set: updates });
     emitEvent('orders:changed');
     emitEvent('tables:changed');
-    const updated = await db.orders.findOne({ _id: id }).exec();
+    const updated = await db.orders.findOne(id).exec();
     const order = updated?.toJSON() || doc.toJSON();
     return { ...order, id: order._id };
   },
 
   deleteOrder: async ({ id }: any) => {
     const db = await getDB();
-    const doc = await db.orders.findOne({ _id: id }).exec();
+    const doc = await db.orders.findOne(id).exec();
     if (!doc) throw new Error('Order not found');
     await doc.remove();
     emitEvent('orders:changed');
@@ -107,12 +107,12 @@ export const orderResolvers = {
 
   updateOrderStatus: async ({ id, status }: any) => {
     const db = await getDB();
-    const doc = await db.orders.findOne({ _id: id }).exec();
+    const doc = await db.orders.findOne(id).exec();
     if (!doc) return null;
     await doc.update({ $set: { status } });
     emitEvent('orders:changed');
     emitEvent('tables:changed');
-    const updated = await db.orders.findOne({ _id: id }).exec();
+    const updated = await db.orders.findOne(id).exec();
     const order = updated?.toJSON() || doc.toJSON();
     return { ...order, id: order._id };
   },

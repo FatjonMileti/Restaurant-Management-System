@@ -4,7 +4,7 @@
 
 Two independent packages under one root: `backend/` and `frontend/`. Always `cd` into the subdirectory before running package commands.
 
-## Backend (Express + Mongoose + TypeScript)
+## Backend (Express + RxDB + TypeScript)
 
 **Important TS quirk:** `tsconfig.json` uses `moduleResolution: "node16"`. All relative imports in `.ts` files **must use `.js` extension** (e.g. `from './config/db.js'`). This is required for `tsc` to compile correctly.
 
@@ -15,6 +15,16 @@ Two independent packages under one root: `backend/` and `frontend/`. Always `cd`
 | `npm start`     | `node dist/server.js` — runs compiled output                                                                               |
 | `npm run seed`  | `tsx seeds.ts` — populates DB with sample data                                                                             |
 
+**Data layer:** RxDB (`rxdb` v17) with `@basepurpose/rxdb-sqlite` adapter (SQLite via `better-sqlite3`). All resolvers and helpers use `getDB()` from `config/rxdb.ts` which returns the RxDB instance. Collections: `users`, `menuItems`, `categories`, `orders`, `reservations`, `settings`.
+
+**RxDB quirks:**
+- `findOne()` only works reliably with the primary key (`_id`). For non-primary fields (e.g. `email`, `status`), use `find().exec()` + JS `.find()` / `.filter()`.
+- `doc.update()` does not refresh the in-memory document — re-fetch after update if returning the result.
+- `$in` operator not supported — use separate queries or JS `.filter()`.
+- Required plugins registered in `config/rxdb.ts`: `RxDBQueryBuilderPlugin`, `RxDBUpdatePlugin`.
+- All documents require explicit `_id` field (use `crypto.randomUUID()`).
+- Formatters use `unwrapDoc()` which prefers `toJSON()` over `toObject()` for RxDB docs.
+
 **Auth middleware** (`middleware/auth.ts`):
 
 - `protect` — requires valid JWT `Bearer` token, attaches `req.user`
@@ -22,7 +32,7 @@ Two independent packages under one root: `backend/` and `frontend/`. Always `cd`
 - `staff` — requires role `admin` or `staff`
 - `req.user` type is augmented globally via `types/express.d.ts`
 
-**Env:** `backend/.env` is gitignored. Copy `backend/.env.example` and fill in `MONGO_URI` and `JWT_SECRET`.
+**Env:** `backend/.env` is gitignored. Copy `backend/.env.example` and fill in `JWT_SECRET`.
 
 ## Frontend (Create React App + TypeScript)
 
@@ -35,13 +45,7 @@ CRA 5 with TypeScript — no custom webpack. `proxy` in `package.json` forwards 
 
 ## API entrypoints
 
-All routes are mounted in `server.ts`:
-
-- `/api/auth` → `routes/auth.ts`
-- `/api/menu` → `routes/menu.ts`
-- `/api/orders` → `routes/orders.ts`
-- `/api/reservations` → `routes/reservations.ts`
-- `/api/categories` → `routes/category.ts`
+GraphQL only at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). REST routes have been removed.
 
 ## Seeded credentials
 
@@ -65,11 +69,12 @@ All routes are mounted in `server.ts`:
 
 ## API / GraphQL
 
-- Active API is **GraphQL** at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). REST routes in `backend/routes/*` are currently commented out in `server.ts:26`.
+- Active API is **GraphQL** at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). REST routes have been removed.
 - Frontend GraphQL documents live in `frontend/src/graphql/queries.ts`; typed hooks in `frontend/src/api/queries.ts` (uses `graphql-request` + `useAuthStore` token header). `GET_*` → `useQuery`, mutations → `useMutation` with `qc.invalidateQueries`.
-- Schema helpers: `formatUser`, `formatRestaurantSettings`, `getOrCreateRestaurantSettings`, `requireAuth` / `requireAdmin` in `schema.ts:141`.
-- Restaurant settings: `RestaurantSettings` model (`backend/models/RestaurantSettings.ts`) — singleton, `tableCount` drives `TableSelect` and `tables` query.
+- Schema helpers: `formatUser`, `formatRestaurantSettings`, `getOrCreateRestaurantSettings`, `requireAuth` / `requireAdmin` in `schema.ts`.
+- Restaurant settings: singleton in `db.settings` collection — `tableCount` drives `TableSelect` and `tables` query.
 - Tables: `tables: [TableStatus!]!` computed from busy orders (`pending`/`preparing`) and confirmed reservations; frontend `/tables` page is staff/admin only.
+- **Order items** store `menuItem` as a string ID — resolved via `buildMenuItemMap()` lookup in order resolvers (replaces Mongoose populate).
 
 ## Auth & Roles
 
@@ -84,6 +89,7 @@ All routes are mounted in `server.ts`:
 - Order edit: `pending` editable; `completed`/`cancelled` deletable. Reservation edit/delete: `confirmed` editable; `completed`/`cancelled` deletable.
 - Filtering: Menu (category dropdown), Orders/Reservations (status + table `TableSelect` dropdown).
 - Tables: `tableCount` in restaurant settings determines selectable tables everywhere; busy tables are labeled but selectable — backend returns `Table is busy` error for orders.
+- Default field values on insert: `MenuItem.available` defaults to `true`; `Reservation.status` defaults to `'confirmed'`.
 
 ## Frontend State & Data
 
@@ -108,7 +114,7 @@ All routes are mounted in `server.ts`:
 
 - Two packages under one root — `cd` into subdirectory before running npm commands.
 - Do not commit `backend/.env` (gitignored) or secrets; copy from `backend/.env.example`.
-- Commit messages: concise, imperative (e.g., `feat:`, `fix:`, `style:`). Stage only intended files; inspect `git status`/`git diff --cached`.
+- Commit messages: concise, imperative (e.g. `feat:`, `fix:`, `style:`). Stage only intended files; inspect `git status`/`git diff --cached`.
 - Push only when explicitly requested.
 
 ## Security
