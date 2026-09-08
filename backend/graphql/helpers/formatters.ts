@@ -115,6 +115,7 @@ export const formatMenuItem = (doc: any) => {
   return {
     ...d,
     id: d._id ? d._id.toString() : d.id || '',
+    available: d.available ?? true,
   };
 };
 
