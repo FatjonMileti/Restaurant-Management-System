@@ -29,7 +29,7 @@ describe('auth helpers', () => {
       mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(fakeUser) });
       const res = await requireAuth({ userId: '123' });
       expect(res._id).toBe('123');
-      expect(mockUsers.findOne).toHaveBeenCalledWith({ _id: '123' });
+      expect(mockUsers.findOne).toHaveBeenCalledWith('123');
     });
   });
 
