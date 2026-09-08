@@ -29,6 +29,7 @@ export const reservationResolvers = {
     const resDoc = await db.reservations.insert({
       _id: genId(),
       user: context.userId,
+      status: 'confirmed',
       ...v.data,
     });
     emitEvent('reservations:changed');

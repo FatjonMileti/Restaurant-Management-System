@@ -117,6 +117,7 @@ export const formatReservation = (doc: any) => {
     ...d,
     id: d._id ? d._id.toString() : d.id || null,
     user: userObj,
+    status: d.status || 'confirmed',
     date: d.date ? moment(d.date).format('YYYY-MM-DD') : d.date,
   };
 };
