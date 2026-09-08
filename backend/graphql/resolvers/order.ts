@@ -6,21 +6,37 @@ import { emitEvent } from '../../socket.js';
 
 const genId = () => crypto.randomUUID();
 
+const buildMenuItemMap = async (db: any): Promise<Map<string, any>> => {
+  const docs = await db.menuItems.find().exec();
+  const map = new Map<string, any>();
+  docs.forEach((doc: any) => {
+    const json = doc.toJSON();
+    map.set(json._id, json);
+  });
+  return map;
+};
+
 export const orderResolvers = {
   orders: async ({ status, tableNumber }: any) => {
     const filter: any = {};
     if (status) filter.status = status;
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
     const db = await getDB();
-    const docs = await db.orders.find(filter).sort({ createdAt: -1 }).exec();
-    return docs.map((doc: any) => formatOrder(doc.toJSON()));
+    const [docs, menuItemMap] = await Promise.all([
+      db.orders.find(filter).sort({ createdAt: -1 }).exec(),
+      buildMenuItemMap(db),
+    ]);
+    return docs.map((doc: any) => formatOrder(doc.toJSON(), menuItemMap));
   },
 
   order: async ({ id }: any) => {
     const db = await getDB();
-    const doc = await db.orders.findOne({ _id: id }).exec();
+    const [doc, menuItemMap] = await Promise.all([
+      db.orders.findOne({ _id: id }).exec(),
+      buildMenuItemMap(db),
+    ]);
     if (!doc) return null;
-    return formatOrder(doc.toJSON());
+    return formatOrder(doc.toJSON(), menuItemMap);
   },
 
   createOrder: async ({ items, tableNumber, paymentMethod }: any, context?: any) => {

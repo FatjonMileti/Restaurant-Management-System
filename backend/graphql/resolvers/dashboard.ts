@@ -70,7 +70,10 @@ export const dashboardResolvers = {
     const todayReservations = reservations.filter((r: any) => r.createdAt && new Date(r.createdAt) >= startOfToday).length;
 
     const recentOrdersDocs = await db.orders.find().sort('-createdAt').limit(5).exec();
-    const recentOrders = recentOrdersDocs.map((d: any) => formatOrder(d.toJSON()));
+    const menuItemDocs = await db.menuItems.find().exec();
+    const menuItemMap = new Map<string, any>();
+    menuItemDocs.forEach((d: any) => { const j = d.toJSON(); menuItemMap.set(j._id, j); });
+    const recentOrders = recentOrdersDocs.map((d: any) => formatOrder(d.toJSON(), menuItemMap));
 
     const orderStatusMap = new Map<string, number>();
     orders.forEach((o: any) => {

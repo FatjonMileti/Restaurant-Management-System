@@ -61,22 +61,34 @@ export const getOrCreateRestaurantSettings = async () => {
   return settings.toJSON();
 };
 
-export const formatOrder = (o: any) => {
+export const formatOrder = (o: any, menuItemMap?: Map<string, any>) => {
   const userObj = formatUser(o.user);
   const itemsArr = (o.items || []).map((item: any) => {
-    const menuItemObj: any = item.menuItem
-      ? {
-          id: item.menuItem._id ? item.menuItem._id.toString() : item.menuItem.id || null,
-          name: item.menuItem.name,
-          description: item.menuItem.description,
-          price: item.menuItem.price,
-          category: item.menuItem.category,
-          image: item.menuItem.image,
-          available: item.menuItem.available,
-          createdAt: item.menuItem.createdAt,
-          updatedAt: item.menuItem.updatedAt,
-        }
-      : null;
+    let menuItemObj: any = null;
+    if (item.menuItem && typeof item.menuItem === 'object' && item.menuItem._id) {
+      menuItemObj = {
+        id: item.menuItem._id.toString(),
+        name: item.menuItem.name,
+        description: item.menuItem.description,
+        price: item.menuItem.price,
+        category: item.menuItem.category,
+        image: item.menuItem.image,
+        available: item.menuItem.available ?? true,
+      };
+    } else if (typeof item.menuItem === 'string' && menuItemMap) {
+      const found = menuItemMap.get(item.menuItem);
+      if (found) {
+        menuItemObj = {
+          id: found._id,
+          name: found.name,
+          description: found.description,
+          price: found.price,
+          category: found.category,
+          image: found.image,
+          available: found.available ?? true,
+        };
+      }
+    }
     return {
       name: item.name,
       quantity: item.quantity,

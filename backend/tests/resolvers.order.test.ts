@@ -20,6 +20,11 @@ describe('order resolvers', () => {
           }),
         }),
       },
+      menuItems: {
+        find: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue([]),
+        }),
+      },
     });
     const res = await orderResolvers.orders({});
     expect(res).toEqual([]);
