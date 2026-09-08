@@ -34,7 +34,8 @@ export const categoryResolvers = {
     if (!doc) throw new Error('Category not found');
     await doc.update({ $set: v.data });
     emitEvent('categories:changed');
-    return formatCategory(doc.toJSON());
+    const updated = await db.categories.findOne({ _id: id }).exec();
+    return formatCategory(updated?.toJSON() || doc.toJSON());
   },
   deleteCategory: async ({ id }: any) => {
     const db = await getDB();

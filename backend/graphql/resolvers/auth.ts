@@ -114,7 +114,8 @@ export const authResolvers = {
     if (!userDoc) throw new Error('User not found');
     await userDoc.update({ $set: { role: v.data.role } });
     emitEvent('users:changed');
-    const user = userDoc.toJSON();
+    const updated = await db.users.findOne({ _id: id }).exec();
+    const user = updated?.toJSON() || userDoc.toJSON();
     delete user.password;
     return formatUser(user);
   },

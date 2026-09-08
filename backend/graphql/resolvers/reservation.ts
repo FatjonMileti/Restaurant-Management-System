@@ -46,7 +46,8 @@ export const reservationResolvers = {
     await doc.update({ $set: v.data });
     emitEvent('reservations:changed');
     emitEvent('tables:change');
-    return formatReservation(doc.toJSON());
+    const updated = await db.reservations.findOne({ _id: id }).exec();
+    return formatReservation(updated?.toJSON() || doc.toJSON());
   },
   deleteReservation: async ({ id }: any) => {
     const db = await getDB();
@@ -64,7 +65,8 @@ export const reservationResolvers = {
     await doc.update({ $set: { status: 'cancelled' } });
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
-    const res = doc.toJSON();
+    const updated = await db.reservations.findOne({ _id: id }).exec();
+    const res = updated?.toJSON() || doc.toJSON();
     return { ...res, id: res._id };
   },
 };

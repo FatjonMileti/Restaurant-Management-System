@@ -42,9 +42,9 @@ export const menuResolvers = {
     const existing = await db.menuItems.findOne({ _id: id }).exec();
     if (!existing) throw new Error('Menu item not found');
     await existing.update({ $set: v.data });
-    const item = existing; // RxDB doc
     emitEvent('menu:changed');
-    return formatMenuItem(item);
+    const updated = await db.menuItems.findOne({ _id: id }).exec();
+    return formatMenuItem(updated?.toJSON() || existing.toJSON());
   },
 
   deleteMenuItem: async ({ id }: any, context?: any) => {

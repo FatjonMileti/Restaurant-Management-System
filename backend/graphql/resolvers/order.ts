@@ -90,7 +90,8 @@ export const orderResolvers = {
     await doc.update({ $set: updates });
     emitEvent('orders:changed');
     emitEvent('tables:changed');
-    const order = doc.toJSON();
+    const updated = await db.orders.findOne({ _id: id }).exec();
+    const order = updated?.toJSON() || doc.toJSON();
     return { ...order, id: order._id };
   },
 
@@ -111,7 +112,8 @@ export const orderResolvers = {
     await doc.update({ $set: { status } });
     emitEvent('orders:changed');
     emitEvent('tables:changed');
-    const order = doc.toJSON();
+    const updated = await db.orders.findOne({ _id: id }).exec();
+    const order = updated?.toJSON() || doc.toJSON();
     return { ...order, id: order._id };
   },
 };
