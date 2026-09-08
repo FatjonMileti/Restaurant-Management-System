@@ -29,7 +29,7 @@ export const menuResolvers = {
     const v = validate(menuItemSchema, { name, description, price, category, image });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const item = await db.menuItems.insert({ _id: genId(), ...v.data });
+    const item = await db.menuItems.insert({ _id: genId(), available: true, ...v.data });
     emitEvent('menu:changed');
     return formatMenuItem(item);
   },
