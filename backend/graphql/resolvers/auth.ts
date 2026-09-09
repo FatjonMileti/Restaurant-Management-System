@@ -119,7 +119,7 @@ export const authResolvers = {
     const user = userDoc.toJSON();
     if (user.role === 'admin') throw new Error('Cannot delete admin user');
     await userDoc.remove();
-    await db.orders.cleanup(0);
+    await db.users.cleanup(0);
     emitEvent('users:changed');
     return 'User removed';
   },
