@@ -6,6 +6,7 @@ const statusColors: Record<string, string> = {
   completed: 'bg-green-600',
   cancelled: 'bg-red-500',
   confirmed: 'bg-green-600',
+  ready: 'bg-green-600',
 };
 
 interface StatusBadgeProps {

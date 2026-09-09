@@ -11,7 +11,7 @@ function ProtectedRoute({ children, adminOnly }: ProtectedRouteProps) {
   const { user } = useAuth();
 
   if (!user) return <Navigate to="/login" />;
-  if (adminOnly && user.role !== 'admin') return <Navigate to="/dashboard" />;
+  if (adminOnly && user.role !== 'admin') return <Navigate to="/" />;
 
   return <>{children}</>;
 }

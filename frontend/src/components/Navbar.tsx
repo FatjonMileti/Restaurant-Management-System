@@ -38,7 +38,7 @@ function Navbar() {
   const navLinks = user
     ? [
         { label: 'Menu', path: '/menu' },
-        { label: 'Dashboard', path: '/dashboard' },
+        ...(user.role === 'admin' ? [{ label: 'Dashboard', path: '/dashboard' }] : []),
         { label: 'Orders', path: '/orders' },
         { label: 'Reservations', path: '/reservations' },
         ...(user.role === 'admin' || user.role === 'staff'
