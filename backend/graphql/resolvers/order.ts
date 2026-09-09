@@ -48,7 +48,7 @@ export const orderResolvers = {
       const allOrders = await db.orders.find().exec();
       const busy = allOrders.some((d: any) => {
         const o = d.toJSON();
-        return o.tableNumber === v.data.tableNumber && ['pending', 'preparing'].includes(o.status);
+        return o.tableNumber === v.data.tableNumber && ['pending', 'preparing', 'ready'].includes(o.status);
       });
       if (busy) throw new Error('Table is busy');
     }
@@ -95,8 +95,14 @@ export const orderResolvers = {
     return { ...order, id: order._id };
   },
 
-  deleteOrder: async ({ id }: any) => {
+  deleteOrder: async ({ id }: any, context?: any) => {
+    if (!context?.userId) throw new Error('Not authenticated');
     const db = await getDB();
+    const userDoc = await db.users.findOne({ selector: { _id: context.userId } }).exec();
+    const user = userDoc?.toJSON();
+    if (!user) throw new Error('User not found');
+    const isAdmin = user.role === 'admin';
+    if (!isAdmin) return null;
     const doc = await db.orders.findOne(id).exec();
     if (!doc) throw new Error('Order not found');
     await doc.remove();

@@ -70,6 +70,7 @@ export default function OrderList({ onEditOrder }: Props) {
           { value: '', label: 'All' },
           { value: 'pending', label: 'Pending' },
           { value: 'preparing', label: 'Preparing' },
+          { value: 'ready', label: 'Ready' },
           { value: 'completed', label: 'Completed' },
           { value: 'cancelled', label: 'Cancelled' },
         ]}

@@ -58,13 +58,23 @@ function OrderCard({ order, isStaffView, isOwner, onEdit, onUpdateStatus, onDele
                   </button>
                 </>
               )}
-              {order.status === 'preparing' && (
+              {order.status === 'ready' && (
                 <>
                   <button
                     onClick={() => onUpdateStatus(order._id, 'completed')}
                     className="btn-blue-sm"
                   >
                     Mark Completed
+                  </button>
+                </>
+              )}
+              {order.status === 'preparing' && (
+                <>
+                  <button
+                    onClick={() => onUpdateStatus(order._id, 'ready')}
+                    className="btn-blue-sm"
+                  >
+                    Mark Ready
                   </button>
                   <button
                     onClick={() => onUpdateStatus(order._id, 'cancelled')}

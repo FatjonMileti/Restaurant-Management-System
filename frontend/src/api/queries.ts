@@ -88,7 +88,7 @@ export interface Order {
   user?: OrderUser;
   items: OrderItem[];
   totalAmount: number;
-  status: string;
+  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
   tableNumber?: number;
   createdAt: string;
 }
