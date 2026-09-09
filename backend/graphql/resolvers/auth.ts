@@ -71,7 +71,8 @@ export const authResolvers = {
     return { token, user: formatUser(user) };
   },
 
-  createUserByAdmin: async ({ name, email, password, phone, role }: any) => {
+  createUserByAdmin: async ({ name, email, password, phone, role }: any, context: any) => {
+    await requireAdmin(context);
     const v = validate(createUserSchema, { name, email, password, phone, role });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
@@ -95,7 +96,8 @@ export const authResolvers = {
     return formatUser(user);
   },
 
-  updateUserRole: async ({ id, role }: any) => {
+  updateUserRole: async ({ id, role }: any, context: any) => {
+    await requireAdmin(context);
     const v = validate(updateUserRoleSchema, { role });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
@@ -109,13 +111,15 @@ export const authResolvers = {
     return formatUser(user);
   },
 
-  deleteUser: async ({ id }: any) => {
+  deleteUser: async ({ id }: any, context: any) => {
+    await requireAdmin(context);
     const db = await getDB();
     const userDoc = await db.users.findOne(id).exec();
     if (!userDoc) throw new Error('User not found');
     const user = userDoc.toJSON();
     if (user.role === 'admin') throw new Error('Cannot delete admin user');
     await userDoc.remove();
+    await db.orders.cleanup(0);
     emitEvent('users:changed');
     return 'User removed';
   },

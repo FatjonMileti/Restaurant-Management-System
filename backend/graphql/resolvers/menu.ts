@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import { menuItemSchema, validate } from '../validation.js';
-import { requireAdmin } from '../helpers/auth.js';
+import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 import { formatMenuItem } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
 
@@ -17,7 +17,8 @@ export const menuResolvers = {
     return docs.map(formatMenuItem);
   },
 
-  menuItem: async ({ id }: any) => {
+  menuItem: async ({ id }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const db = await getDB();
     const doc = await db.menuItems.findOne(id).exec();
     if (!doc) return null;
@@ -53,6 +54,7 @@ export const menuResolvers = {
     const item = await db.menuItems.findOne(id).exec();
     if (!item) throw new Error('Menu item not found');
     await item.remove();
+    await db.menuItems.cleanup(0);
     emitEvent('menu:changed');
     return 'Menu item removed';
 

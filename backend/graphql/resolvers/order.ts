@@ -3,6 +3,7 @@ import { getDB } from '../../config/rxdb.js';
 import { createOrderSchema, updateOrderSchema, validate } from '../validation.js';
 import { formatOrder } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
+import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 
 const genId = () => crypto.randomUUID();
 
@@ -17,7 +18,8 @@ const buildMenuItemMap = async (db: any): Promise<Map<string, any>> => {
 };
 
 export const orderResolvers = {
-  orders: async ({ status, tableNumber }: any) => {
+  orders: async ({ status, tableNumber }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const filter: any = {};
     if (status) filter.status = status;
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
@@ -29,7 +31,8 @@ export const orderResolvers = {
     return docs.map((doc: any) => formatOrder(doc.toJSON(), menuItemMap));
   },
 
-  order: async ({ id }: any) => {
+  order: async ({ id }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const db = await getDB();
     const [doc, menuItemMap] = await Promise.all([
       db.orders.findOne(id).exec(),
@@ -69,7 +72,8 @@ export const orderResolvers = {
     return { ...order, id: order._id };
   },
 
-  updateOrder: async ({ id, ...rest }: any) => {
+  updateOrder: async ({ id, ...rest }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const v = validate(updateOrderSchema, rest);
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
@@ -96,22 +100,19 @@ export const orderResolvers = {
   },
 
   deleteOrder: async ({ id }: any, context?: any) => {
-    if (!context?.userId) throw new Error('Not authenticated');
+    await requireAdmin(context);
     const db = await getDB();
-    const userDoc = await db.users.findOne({ selector: { _id: context.userId } }).exec();
-    const user = userDoc?.toJSON();
-    if (!user) throw new Error('User not found');
-    const isAdmin = user.role === 'admin';
-    if (!isAdmin) return null;
     const doc = await db.orders.findOne(id).exec();
     if (!doc) throw new Error('Order not found');
     await doc.remove();
+    await db.orders.cleanup(0);
     emitEvent('orders:changed');
     emitEvent('tables:changed');
     return 'Order removed';
   },
 
-  updateOrderStatus: async ({ id, status }: any) => {
+  updateOrderStatus: async ({ id, status }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const db = await getDB();
     const doc = await db.orders.findOne(id).exec();
     if (!doc) return null;

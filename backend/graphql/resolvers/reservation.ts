@@ -3,11 +3,13 @@ import { getDB } from '../../config/rxdb.js';
 import { reservationSchema, validate } from '../validation.js';
 import { formatReservation } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
+import { requireStaffOrAdmin } from '../helpers/auth.js';
 
 const genId = () => crypto.randomUUID();
 
 export const reservationResolvers = {
-  reservations: async ({ status, tableNumber }: any) => {
+  reservations: async ({ status, tableNumber }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const filter: any = {};
     if (status) filter.status = status;
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
@@ -15,14 +17,15 @@ export const reservationResolvers = {
     const docs = await db.reservations.find(filter).sort('-date').exec();
     return docs.map((doc: any) => formatReservation(doc.toJSON()));
   },
-  reservation: async ({ id }: any) => {
+  reservation: async ({ id }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const db = await getDB();
     const doc = await db.reservations.findOne(id).exec();
     if (!doc) return null;
     return formatReservation(doc.toJSON());
   },
   createReservation: async ({ date, time, guests, tableNumber, specialRequests }: any, context?: any) => {
-    if (!context?.userId) throw new Error('Not authenticated');
+    await requireStaffOrAdmin(context);
     const v = validate(reservationSchema, { date, time, guests, tableNumber, specialRequests });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
@@ -37,7 +40,8 @@ export const reservationResolvers = {
     const res = resDoc.toJSON();
     return { ...res, id: res._id };
   },
-  updateReservation: async ({ id, ...rest }: any) => {
+  updateReservation: async ({ id, ...rest }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const v = validate(reservationSchema.partial(), rest);
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
@@ -49,16 +53,19 @@ export const reservationResolvers = {
     const updated = await db.reservations.findOne(id).exec();
     return formatReservation(updated?.toJSON() || doc.toJSON());
   },
-  deleteReservation: async ({ id }: any) => {
+  deleteReservation: async ({ id }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const db = await getDB();
     const doc = await db.reservations.findOne(id).exec();
     if (!doc) throw new Error('Reservation not found');
     await doc.remove();
+    await db.reservations.cleanup(0);
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
     return 'Reservation removed';
   },
-  cancelReservation: async ({ id }: any) => {
+  cancelReservation: async ({ id }: any, context?: any) => {
+    await requireStaffOrAdmin(context);
     const db = await getDB();
     const doc = await db.reservations.findOne(id).exec();
     if (!doc) throw new Error('Reservation not found');

@@ -5,14 +5,14 @@ import { requireAdmin } from '../helpers/auth.js';
 import { emitEvent } from '../../socket.js';
 
 export const settingsResolvers = {
-  restaurantSettings: async () => {
+  restaurantSettings: async (context: any) => {
     const db = await getDB();
     const doc = await db.settings.findOne().exec();
     if (!doc) throw new Error('Settings not found');
     return formatRestaurantSettings(doc.toJSON());
   },
 
-  updateRestaurantSettings: async ({ name, logo, address, phone, email, tableCount }: any, context?: any) => {
+  updateRestaurantSettings: async ({ name, logo, address, phone, email, tableCount }: any, context: any) => {
     await requireAdmin(context);
     const v = validate(restaurantSettingsSchema, { name, logo, address, phone, email, tableCount });
     if (!v.success) throw new Error(v.errors.join(', '));

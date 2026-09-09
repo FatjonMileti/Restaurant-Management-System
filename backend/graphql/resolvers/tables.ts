@@ -1,8 +1,10 @@
 import { getDB } from '../../config/rxdb.js';
+import { requireStaffOrAdmin } from '../helpers/auth.js';
 import { getOrCreateRestaurantSettings } from '../helpers/formatters.js';
 
 export const tablesResolvers = {
-  tables: async () => {
+  tables: async (_args: any, context: any) => {
+    await requireStaffOrAdmin(context);
     const settings = await getOrCreateRestaurantSettings();
     const count = settings.tableCount || 10;
 

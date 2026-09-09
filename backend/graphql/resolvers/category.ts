@@ -9,7 +9,6 @@ const genId = () => crypto.randomUUID();
 
 export const categoryResolvers = {
   categories: async (_args: any, context?: any) => {
-    await requireAdmin(context);
     const db = await getDB();
     const docs = await db.categories.find().sort('name').exec();
     return docs.map(formatCategory);

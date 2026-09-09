@@ -14,4 +14,11 @@ export const requireAdmin = async (context: any) => {
   return user;
 };
 
+export const requireStaffOrAdmin = async (context: any) => {
+  const user = await requireAuth(context);
+  if (user.role !== 'admin' && user.role !== 'staff')
+    throw new Error('Not authorized, staff or admin only');
+  return user;
+};
+
 
