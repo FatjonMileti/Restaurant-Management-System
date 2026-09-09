@@ -33,10 +33,6 @@ export const reservationSchema = z.object({
   status: z.enum(['confirmed', 'completed', 'cancelled']).optional(),
 });
 
-export const categorySchema = z.object({
-  name: z.string().min(1, 'Category name is required'),
-});
-
 export const restaurantSettingsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   logo: z.string().url('Invalid URL').optional().or(z.literal('')),
@@ -59,6 +55,5 @@ export type RegisterFormData = z.infer<typeof registerSchema>;
 export type MenuItemFormData = z.infer<typeof menuItemSchema>;
 export type OrderFormData = z.infer<typeof orderFormSchema>;
 export type ReservationFormData = z.infer<typeof reservationSchema>;
-export type CategoryFormData = z.infer<typeof categorySchema>;
 export type RestaurantSettingsFormData = z.infer<typeof restaurantSettingsSchema>;
 export type UserFormData = z.infer<typeof userFormSchema>;

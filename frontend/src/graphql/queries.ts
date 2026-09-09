@@ -1,11 +1,5 @@
 import { gql } from '@apollo/client';
 
-export const HELLO = gql`
-  query Hello {
-    hello
-  }
-`;
-
 export const GET_CATEGORIES = gql`
   query GetCategories {
     categories {
@@ -39,19 +33,6 @@ export const DELETE_CATEGORY = gql`
 export const GET_MENU_ITEMS = gql`
   query GetMenuItems($category: String, $available: Boolean) {
     menuItems(category: $category, available: $available) {
-      id
-      name
-      description
-      price
-      category
-      image
-      available
-    }
-  }
-`;
-export const GET_MENU_ITEM = gql`
-  query GetMenuItem($id: ID!) {
-    menuItem(id: $id) {
       id
       name
       description
@@ -148,32 +129,6 @@ export const GET_ORDERS = gql`
     }
   }
 `;
-export const GET_ORDER = gql`
-  query GetOrder($id: ID!) {
-    order(id: $id) {
-      id
-      user {
-        id
-        name
-        email
-      }
-      items {
-        menuItem {
-          id
-          name
-        }
-        name
-        quantity
-        price
-      }
-      totalAmount
-      status
-      tableNumber
-      paymentMethod
-      createdAt
-    }
-  }
-`;
 export const CREATE_ORDER = gql`
   mutation CreateOrder($items: [OrderItemInput!]!, $tableNumber: Int, $paymentMethod: String) {
     createOrder(items: $items, tableNumber: $tableNumber, paymentMethod: $paymentMethod) {
@@ -223,25 +178,6 @@ export const UPDATE_ORDER_STATUS = gql`
 export const GET_RESERVATIONS = gql`
   query GetReservations($status: String, $tableNumber: Int) {
     reservations(status: $status, tableNumber: $tableNumber) {
-      id
-      user {
-        id
-        name
-        email
-      }
-      date
-      time
-      guests
-      tableNumber
-      status
-      specialRequests
-      createdAt
-    }
-  }
-`;
-export const GET_RESERVATION = gql`
-  query GetReservation($id: ID!) {
-    reservation(id: $id) {
       id
       user {
         id
@@ -354,43 +290,6 @@ export const UPDATE_USER_ROLE = gql`
 export const DELETE_USER = gql`
   mutation DeleteUser($id: ID!) {
     deleteUser(id: $id)
-  }
-`;
-
-export const LOGIN = gql`
-  mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
-      token
-      user {
-        id
-        name
-        email
-        role
-      }
-    }
-  }
-`;
-export const REGISTER = gql`
-  mutation Register($name: String!, $email: String!, $password: String!, $phone: String) {
-    register(name: $name, email: $email, password: $password, phone: $phone) {
-      token
-      user {
-        id
-        name
-        email
-        role
-      }
-    }
-  }
-`;
-export const ME = gql`
-  query Me {
-    authMe {
-      id
-      name
-      email
-      role
-    }
   }
 `;
 

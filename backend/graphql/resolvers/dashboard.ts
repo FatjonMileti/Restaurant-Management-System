@@ -1,11 +1,11 @@
 import { getDB } from '../../config/rxdb.js';
-import { requireAuth } from '../helpers/auth.js';
+import { requireAdmin } from '../helpers/auth.js';
 import { formatOrder } from '../helpers/formatters.js';
 import { getOrCreateRestaurantSettings } from '../helpers/formatters.js';
 
 export const dashboardResolvers = {
   dashboardStats: async (_args: any, context?: any) => {
-    await requireAuth(context);
+    await requireAdmin(context);
 
     const db = await getDB();
     const startOfToday = new Date();

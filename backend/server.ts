@@ -35,9 +35,6 @@ app.use(
         userId = undefined;
       }
     }
-    if (!userId && req.url !== '/') {
-      throw new Error('Not authenticated');
-    }
     return {
       schema,
       rootValue: root,

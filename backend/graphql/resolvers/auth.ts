@@ -11,6 +11,7 @@ import {
 } from '../validation.js';
 import { formatUser } from '../helpers/formatters.js';
 import { emitEvent } from '../../socket.js';
+import { requireAdmin } from '../helpers/auth.js';
 
 const genId = () => crypto.randomUUID();
 
@@ -29,7 +30,8 @@ export const authResolvers = {
     return formatUser(user);
   },
 
-  authUsers: async () => {
+  authUsers: async (_args: any, context?: any) => {
+    await requireAdmin(context);
     const db = await getDB();
     const docs = await db.users.find().exec();
     const users = docs.map((doc: any) => {
@@ -38,16 +40,6 @@ export const authResolvers = {
       return formatUser(u);
     });
     return users;
-  },
-
-  authProfile: async (_args: any, context?: any) => {
-    if (!context?.userId) return null;
-    const db = await getDB();
-    const userDoc = await db.users.findOne(context.userId).exec();
-    if (!userDoc) return null;
-    const user = userDoc.toJSON();
-    delete user.password;
-    return formatUser(user);
   },
 
   register: async ({ name, email, password, phone }: any) => {

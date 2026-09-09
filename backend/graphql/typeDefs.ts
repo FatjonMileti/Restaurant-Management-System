@@ -134,7 +134,6 @@ export const typeDefs = `
 
     authMe: User
     authUsers: [User!]!
-    authProfile: User
 
     menuItems(category: String, available: Boolean): [MenuItem!]!
     menuItem(id: ID!): MenuItem
