@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getSocket } from '../socket';
+import { getEventSource } from '../eventSource';
 
-export const useSocket = () => {
+export const useEventSource = () => {
   const qc = useQueryClient();
 
   useEffect(() => {
-    const socket = getSocket();
+    const eventSource = getEventSource();
 
     const eventMap: Record<string, string[]> = {
       'menu:changed': ['menu', 'dashboardStats'],
@@ -24,8 +24,8 @@ export const useSocket = () => {
       const handler = () => {
         keys.forEach((key) => qc.invalidateQueries({ queryKey: [key] }));
       };
-      socket.on(event, handler);
-      handlers.push(() => socket.off(event, handler));
+      eventSource.addEventListener(event, handler as EventListener);
+      handlers.push(() => eventSource.removeEventListener(event, handler as EventListener));
     });
 
     return () => {

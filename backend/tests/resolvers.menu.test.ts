@@ -4,7 +4,7 @@ jest.mock('../config/rxdb', () => ({
   getDB: jest.fn(),
 }));
 
-jest.mock('../socket', () => ({
+jest.mock('../sse', () => ({
   emitEvent: jest.fn(),
 }));
 
@@ -23,7 +23,7 @@ const mockMenuItems = {
   insert: jest.fn(),
 };
 
-;(getDB as jest.Mock).mockResolvedValue({ menuItems: mockMenuItems });
+(getDB as jest.Mock).mockResolvedValue({ menuItems: mockMenuItems });
 
 describe('menu resolvers (RxDB)', () => {
   beforeEach(() => jest.clearAllMocks());

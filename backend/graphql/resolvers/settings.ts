@@ -2,7 +2,7 @@ import { getDB } from '../../config/rxdb.js';
 import { restaurantSettingsSchema, validate } from '../validation.js';
 import { formatRestaurantSettings, getOrCreateRestaurantSettings } from '../helpers/formatters.js';
 import { requireAdmin } from '../helpers/auth.js';
-import { emitEvent } from '../../socket.js';
+import { emitEvent } from '../../sse.js';
 
 export const settingsResolvers = {
   restaurantSettings: async (context: any) => {
@@ -12,7 +12,10 @@ export const settingsResolvers = {
     return formatRestaurantSettings(doc.toJSON());
   },
 
-  updateRestaurantSettings: async ({ name, logo, address, phone, email, tableCount }: any, context: any) => {
+  updateRestaurantSettings: async (
+    { name, logo, address, phone, email, tableCount }: any,
+    context: any,
+  ) => {
     await requireAdmin(context);
     const v = validate(restaurantSettingsSchema, { name, logo, address, phone, email, tableCount });
     if (!v.success) throw new Error(v.errors.join(', '));

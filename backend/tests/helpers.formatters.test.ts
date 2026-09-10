@@ -139,7 +139,11 @@ describe('formatRestaurantSettings', () => {
     expect(formatRestaurantSettings(null as any)).toBeNull();
   });
   it('formats settings', () => {
-    const res: any = formatRestaurantSettings({ _id: 'set1', name: 'My Rest', tableCount: 12 } as any);
+    const res: any = formatRestaurantSettings({
+      _id: 'set1',
+      name: 'My Rest',
+      tableCount: 12,
+    } as any);
     expect(res.id).toBe('set1');
     expect(res.name).toBe('My Rest');
     expect(res.tableCount).toBe(12);

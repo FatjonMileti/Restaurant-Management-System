@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import { createOrderSchema, updateOrderSchema, validate } from '../validation.js';
 import { formatOrder } from '../helpers/formatters.js';
-import { emitEvent } from '../../socket.js';
+import { emitEvent } from '../../sse.js';
 import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 
 const genId = () => crypto.randomUUID();
@@ -51,7 +51,10 @@ export const orderResolvers = {
       const allOrders = await db.orders.find().exec();
       const busy = allOrders.some((d: any) => {
         const o = d.toJSON();
-        return o.tableNumber === v.data.tableNumber && ['pending', 'preparing', 'ready'].includes(o.status);
+        return (
+          o.tableNumber === v.data.tableNumber &&
+          ['pending', 'preparing', 'ready'].includes(o.status)
+        );
       });
       if (busy) throw new Error('Table is busy');
     }
@@ -79,13 +82,20 @@ export const orderResolvers = {
     const db = await getDB();
     const updates: any = { ...v.data };
     if (v.data.items) {
-      updates.totalAmount = v.data.items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
+      updates.totalAmount = v.data.items.reduce(
+        (sum: number, i: any) => sum + i.price * i.quantity,
+        0,
+      );
     }
     if (v.data.tableNumber) {
       const allOrders = await db.orders.find().exec();
       const busy = allOrders.some((d: any) => {
         const o = d.toJSON();
-        return o.tableNumber === v.data.tableNumber && o._id !== id && ['pending', 'preparing'].includes(o.status);
+        return (
+          o.tableNumber === v.data.tableNumber &&
+          o._id !== id &&
+          ['pending', 'preparing'].includes(o.status)
+        );
       });
       if (busy) throw new Error('Table is busy');
     }

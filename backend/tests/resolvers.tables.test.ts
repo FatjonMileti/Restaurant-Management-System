@@ -2,14 +2,15 @@ jest.mock('../config/rxdb', () => ({
   getDB: jest.fn(),
 }));
 
-jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
+jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 
 import { getDB } from '../config/rxdb';
 import { tablesResolvers } from '../graphql/resolvers/tables';
 
-const mockFind = (data: any[]) => jest.fn().mockReturnValue({
-  exec: jest.fn().mockResolvedValue(data.map((d) => ({ toJSON: () => d }))),
-});
+const mockFind = (data: any[]) =>
+  jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(data.map((d) => ({ toJSON: () => d }))),
+  });
 
 const mockCollection = (data: any[]) => ({
   find: mockFind(data),
@@ -20,12 +21,8 @@ beforeEach(() => jest.clearAllMocks());
 describe('tables resolver', () => {
   it('returns table statuses with busy mapping', async () => {
     const mockDB = {
-      orders: mockCollection([
-        { _id: 'o1', status: 'pending', tableNumber: 1 },
-      ]),
-      reservations: mockCollection([
-        { _id: 'r1', status: 'confirmed', tableNumber: 2 },
-      ]),
+      orders: mockCollection([{ _id: 'o1', status: 'pending', tableNumber: 1 }]),
+      reservations: mockCollection([{ _id: 'r1', status: 'confirmed', tableNumber: 2 }]),
       settings: {
         findOne: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue({

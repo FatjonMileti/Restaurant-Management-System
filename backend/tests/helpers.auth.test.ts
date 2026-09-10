@@ -25,7 +25,11 @@ describe('auth helpers', () => {
       await expect(requireAuth({ userId: 'abc' })).rejects.toThrow('Not authenticated');
     });
     it('returns user if found', async () => {
-      const fakeUser = { _id: '123', role: 'customer', toJSON: () => ({ _id: '123', role: 'customer' }) };
+      const fakeUser = {
+        _id: '123',
+        role: 'customer',
+        toJSON: () => ({ _id: '123', role: 'customer' }),
+      };
       mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(fakeUser) });
       const res = await requireAuth({ userId: '123' });
       expect(res._id).toBe('123');
@@ -35,7 +39,11 @@ describe('auth helpers', () => {
 
   describe('requireAdmin', () => {
     it('throws if not admin', async () => {
-      const userDoc = { _id: '1', role: 'customer', toJSON: () => ({ _id: '1', role: 'customer' }) };
+      const userDoc = {
+        _id: '1',
+        role: 'customer',
+        toJSON: () => ({ _id: '1', role: 'customer' }),
+      };
       mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(userDoc) });
       await expect(requireAdmin({ userId: '1' })).rejects.toThrow('Not authorized, admin only');
     });

@@ -1,12 +1,12 @@
 import { getDB } from '../config/rxdb.js';
 import { orderResolvers } from '../graphql/resolvers/order';
-import { emitEvent } from '../socket.js';
+import { emitEvent } from '../sse.js';
 
 jest.mock('../config/rxdb', () => ({
   getDB: jest.fn(),
 }));
 
-jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
+jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 
 describe('order resolvers', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -32,7 +32,12 @@ describe('order resolvers', () => {
 
   it('createOrder inserts and returns formatted order', async () => {
     const mockInsert = jest.fn().mockResolvedValue({
-      toJSON: () => ({ _id: 'oid', totalAmount: 20, status: 'pending', items: [{ name: 'Pizza', quantity: 1, price: 20 }] }),
+      toJSON: () => ({
+        _id: 'oid',
+        totalAmount: 20,
+        status: 'pending',
+        items: [{ name: 'Pizza', quantity: 1, price: 20 }],
+      }),
       _id: 'oid',
     });
     (getDB as unknown as jest.Mock).mockResolvedValue({

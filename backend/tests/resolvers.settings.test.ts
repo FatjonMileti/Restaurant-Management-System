@@ -6,7 +6,7 @@ jest.mock('../config/rxdb', () => ({
   getDB: jest.fn(),
 }));
 jest.mock('../graphql/helpers/auth', () => ({ requireAdmin: jest.fn() }));
-jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
+jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 
 describe('settings resolvers', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -56,7 +56,7 @@ describe('settings resolvers', () => {
       },
     });
     await expect(
-      settingsResolvers.updateRestaurantSettings({ tableCount: 0 }, { userId: '1' })
+      settingsResolvers.updateRestaurantSettings({ tableCount: 0 }, { userId: '1' }),
     ).rejects.toThrow();
   });
 });

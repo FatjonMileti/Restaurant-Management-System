@@ -3,7 +3,7 @@ import { getDB } from '../../config/rxdb.js';
 import { menuItemSchema, validate } from '../validation.js';
 import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 import { formatMenuItem } from '../helpers/formatters.js';
-import { emitEvent } from '../../socket.js';
+import { emitEvent } from '../../sse.js';
 
 const genId = () => crypto.randomUUID();
 
@@ -57,6 +57,5 @@ export const menuResolvers = {
     await db.menuItems.cleanup(0);
     emitEvent('menu:changed');
     return 'Menu item removed';
-
   },
 };

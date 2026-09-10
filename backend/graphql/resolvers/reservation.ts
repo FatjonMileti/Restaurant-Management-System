@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import { reservationSchema, validate } from '../validation.js';
 import { formatReservation } from '../helpers/formatters.js';
-import { emitEvent } from '../../socket.js';
+import { emitEvent } from '../../sse.js';
 import { requireStaffOrAdmin } from '../helpers/auth.js';
 
 const genId = () => crypto.randomUUID();
@@ -24,7 +24,10 @@ export const reservationResolvers = {
     if (!doc) return null;
     return formatReservation(doc.toJSON());
   },
-  createReservation: async ({ date, time, guests, tableNumber, specialRequests }: any, context?: any) => {
+  createReservation: async (
+    { date, time, guests, tableNumber, specialRequests }: any,
+    context?: any,
+  ) => {
     await requireStaffOrAdmin(context);
     const v = validate(reservationSchema, { date, time, guests, tableNumber, specialRequests });
     if (!v.success) throw new Error(v.errors.join(', '));
@@ -49,7 +52,7 @@ export const reservationResolvers = {
     if (!doc) throw new Error('Reservation not found');
     await doc.update({ $set: v.data });
     emitEvent('reservations:changed');
-    emitEvent('tables:change');
+    emitEvent('tables:changed');
     const updated = await db.reservations.findOne(id).exec();
     return formatReservation(updated?.toJSON() || doc.toJSON());
   },

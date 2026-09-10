@@ -10,7 +10,7 @@ import {
   validate,
 } from '../validation.js';
 import { formatUser } from '../helpers/formatters.js';
-import { emitEvent } from '../../socket.js';
+import { emitEvent } from '../../sse.js';
 import { requireAdmin } from '../helpers/auth.js';
 
 const genId = () => crypto.randomUUID();
@@ -46,11 +46,18 @@ export const authResolvers = {
     const v = validate(registerSchema, { name, email, password, phone });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const existing = await db.users.findOne({email}).exec();
+    const existing = await db.users.findOne({ email }).exec();
     if (existing?.toJSON()) throw new Error('User already exists');
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
-    const userDoc = await db.users.insert({ _id: genId(), name, email, password: hashed, phone, role: 'customer' });
+    const userDoc = await db.users.insert({
+      _id: genId(),
+      name,
+      email,
+      password: hashed,
+      phone,
+      role: 'customer',
+    });
     const token = generateToken(userDoc._id as string);
     const user = userDoc.toJSON();
     delete user.password;
@@ -61,7 +68,7 @@ export const authResolvers = {
     const v = validate(loginSchema, { email, password });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const userDoc = await db.users.findOne({selector: {email}}).exec();
+    const userDoc = await db.users.findOne({ selector: { email } }).exec();
     if (!userDoc || userDoc.length === 0) throw new Error('Invalid email or password');
     const user = userDoc?.toJSON();
     const match = await bcrypt.compare(password, user.password);
@@ -76,7 +83,7 @@ export const authResolvers = {
     const v = validate(createUserSchema, { name, email, password, phone, role });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    const existing = await db.users.findOne({selector: {email}}).exec();
+    const existing = await db.users.findOne({ selector: { email } }).exec();
     if (existing?.toJSON()) throw new Error('User already exists');
     const validRoles = ['customer', 'staff', 'admin'];
     const userRole = validRoles.includes(v.data.role || '') ? v.data.role : 'customer';

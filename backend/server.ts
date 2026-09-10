@@ -8,7 +8,7 @@ import swaggerUI from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import connectDB from './config/db.js';
 import jwt from 'jsonwebtoken';
-import { initSocket } from './socket.js';
+import { initSSE } from './sse.js';
 
 dotenv.config();
 connectDB();
@@ -53,6 +53,7 @@ app.get('/', (_req, res) => {
   res.send('Restaurant Management API is running...');
 });
 
+initSSE(app);
+
 const PORT = process.env.PORT || 5000;
 const httpServer = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-initSocket(httpServer);

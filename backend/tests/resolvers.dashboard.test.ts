@@ -2,16 +2,17 @@ jest.mock('../config/rxdb', () => ({
   getDB: jest.fn(),
 }));
 
-jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
+jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 
 import { getDB } from '../config/rxdb';
 import { dashboardResolvers } from '../graphql/resolvers/dashboard';
 
-const mockFind = (data: any[]) => jest.fn().mockReturnValue({
-  exec: jest.fn().mockResolvedValue(data.map((d) => ({ toJSON: () => d }))),
-  sort: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-});
+const mockFind = (data: any[]) =>
+  jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(data.map((d) => ({ toJSON: () => d }))),
+    sort: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+  });
 
 const mockCollection = (data: any[]) => ({
   find: mockFind(data),
@@ -33,8 +34,20 @@ describe('dashboard resolver', () => {
   it('returns aggregated stats when authenticated', async () => {
     const mockDB = {
       orders: mockCollection([
-        { _id: 'o1', status: 'pending', totalAmount: 20, tableNumber: 1, createdAt: new Date().toISOString() },
-        { _id: 'o2', status: 'completed', totalAmount: 50, tableNumber: 2, createdAt: new Date().toISOString() },
+        {
+          _id: 'o1',
+          status: 'pending',
+          totalAmount: 20,
+          tableNumber: 1,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          _id: 'o2',
+          status: 'completed',
+          totalAmount: 50,
+          tableNumber: 2,
+          createdAt: new Date().toISOString(),
+        },
       ]),
       reservations: mockCollection([
         { _id: 'r1', status: 'confirmed', tableNumber: 3, createdAt: new Date().toISOString() },
@@ -43,12 +56,8 @@ describe('dashboard resolver', () => {
         { _id: 'm1', available: true },
         { _id: 'm2', available: false },
       ]),
-      users: mockCollection([
-        { _id: 'u1', role: 'admin' },
-      ]),
-      categories: mockCollection([
-        { _id: 'c1', name: 'Food' },
-      ]),
+      users: mockCollection([{ _id: 'u1', role: 'admin' }]),
+      categories: mockCollection([{ _id: 'c1', name: 'Food' }]),
       settings: {
         findOne: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue({

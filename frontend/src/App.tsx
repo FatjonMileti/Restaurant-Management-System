@@ -5,7 +5,7 @@ import Navbar from './components/Navbar';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
-import { useSocket } from './hooks/useSocket';
+import { useEventSource } from './hooks/useEventSource';
 
 const Home = React.lazy(() => import('./pages/Home'));
 const Login = React.lazy(() => import('./pages/Login'));
@@ -20,7 +20,7 @@ const Settings = React.lazy(() => import('./pages/Settings'));
 function App() {
   const isFetching = useIsFetching();
   const isMutating = useIsMutating();
-  useSocket();
+  useEventSource();
 
   return (
     <ErrorBoundary>

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import { categorySchema, validate } from '../validation.js';
 import { formatCategory } from '../helpers/formatters.js';
-import { emitEvent } from '../../socket.js';
+import { emitEvent } from '../../sse.js';
 import { requireAdmin } from '../helpers/auth.js';
 
 const genId = () => crypto.randomUUID();

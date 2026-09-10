@@ -17,6 +17,8 @@ Two independent packages under one root: `backend/` and `frontend/`. Always `cd`
 
 **Data layer:** RxDB (`rxdb` v17) with `@basepurpose/rxdb-sqlite` adapter (SQLite via `better-sqlite3`). All resolvers and helpers use `getDB()` from `config/rxdb.ts` which returns the RxDB instance. Collections: `users`, `menuItems`, `categories`, `orders`, `reservations`, `settings`.
 
+**Real-time layer (SSE, not socket.io):** Server-Sent Events at `GET /events` (`backend/sse.ts`). `initSSE(app)` registers the route; `emitEvent(event, data)` broadcasts to all connected clients. Resolvers call `emitEvent('<entity>:changed')` after mutations. Frontend `getEventSource()` in `frontend/src/eventSource.ts` opens an `EventSource` to `/events`; `useEventSource()` maps events to React Query cache invalidations.
+
 **RxDB quirks:**
 - `findOne()` only works reliably with the primary key (`_id`). For non-primary fields (e.g. `email`, `status`), use `find().exec()` + JS `.find()` / `.filter()`.
 - `doc.update()` does not refresh the in-memory document — re-fetch after update if returning the result.
@@ -126,3 +128,4 @@ GraphQL only at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). RES
 - Read relevant files fully before editing; verify with `npm run build` and/or `npm start` where feasible.
 - Keep exactly one `in_progress` todo at a time; mark completed only after verification.
 - Preserve user corrections and scope constraints across turns until explicitly lifted.
+- Update AGENTS.md whenever a new convention, command, or workflow is established that future agents should know about.

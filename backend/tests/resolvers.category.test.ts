@@ -2,7 +2,7 @@ jest.mock('../config/rxdb', () => ({
   getDB: jest.fn(),
 }));
 
-jest.mock('../socket', () => ({ emitEvent: jest.fn() }));
+jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 
 import { getDB } from '../config/rxdb';
 import { categoryResolvers } from '../graphql/resolvers/category';
@@ -22,7 +22,9 @@ beforeEach(() => {
       insert: mockInsert,
     },
   });
-  mockFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue([]) }) });
+  mockFind.mockReturnValue({
+    sort: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue([]) }),
+  });
 });
 
 describe('category resolvers', () => {
