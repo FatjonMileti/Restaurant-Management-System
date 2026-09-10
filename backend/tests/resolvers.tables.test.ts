@@ -91,9 +91,18 @@ describe('tables resolver', () => {
     expect(res[0]).toEqual({ number: 1, isBusy: true, busyType: 'reservation', occupiedBy: 'r1' });
   });
 
-  it('ignores past reservations outside the slot window', async () => {
+  it('marks table busy for a reservation earlier today', async () => {
     (getDB as unknown as jest.Mock).mockResolvedValue(
-      mockDB([], [reservationAt('r1', 1, -180)], 2),
+      mockDB([], [reservationAt('r1', 1, -300)], 2),
+    );
+
+    const res = await tablesResolvers.tables({}, staffContext);
+    expect(res[0]).toEqual({ number: 1, isBusy: true, busyType: 'reservation', occupiedBy: 'r1' });
+  });
+
+  it('ignores past reservations from previous days', async () => {
+    (getDB as unknown as jest.Mock).mockResolvedValue(
+      mockDB([], [reservationAt('r1', 1, -24 * 60)], 2),
     );
 
     const res = await tablesResolvers.tables({}, staffContext);
@@ -162,10 +171,19 @@ describe('tables resolver', () => {
   });
 
   it('ignores docs without a tableNumber', async () => {
+    const today = shiftMinutes(0);
     (getDB as unknown as jest.Mock).mockResolvedValue(
       mockDB(
         [{ _id: 'o1', status: 'pending' }],
-        [{ _id: 'r1', status: 'confirmed', tableNumber: null }],
+        [
+          {
+            _id: 'r1',
+            status: 'confirmed',
+            tableNumber: null,
+            date: toLocalDate(today),
+            time: toLocalTime(today),
+          },
+        ],
         2,
       ),
     );

@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { getDB } from '../../config/rxdb.js';
 import { requireStaffOrAdmin } from '../helpers/auth.js';
 import { getOrCreateRestaurantSettings } from '../helpers/formatters.js';
@@ -5,14 +6,13 @@ import { getOrCreateRestaurantSettings } from '../helpers/formatters.js';
 // Only these statuses can occupy a table; completed/cancelled docs are free.
 const ACTIVE_ORDER_STATUSES = ['pending', 'preparing', 'ready'];
 const ACTIVE_RESERVATION_STATUS = 'confirmed';
-// A confirmed reservation occupies its table from its start time for this long.
-const RESERVATION_SLOT_MS = 2 * 60 * 60 * 1000;
-
-const isReservationActive = (r: any, now: number): boolean => {
-  if (typeof r.date !== 'string' || typeof r.time !== 'string') return false;
-  const startsAt = new Date(`${r.date}T${r.time}`).getTime();
-  if (Number.isNaN(startsAt)) return false;
-  return now >= startsAt && now <= startsAt + RESERVATION_SLOT_MS;
+// A confirmed reservation occupies its table for the whole reservation day:
+// active if reserved for today, free if in the past or in the future.
+const isReservationActive = (r: any, now: moment.Moment): boolean => {
+  if (typeof r.date !== 'string') return false;
+  const day = moment(r.date, 'YYYY-MM-DD', true);
+  if (!day.isValid()) return false;
+  return day.isSame(now, 'day');
 };
 
 export const tablesResolvers = {
@@ -59,7 +59,7 @@ export const tablesResolvers = {
       occupied.set(o.tableNumber, { busyType: 'order', occupiedBy: o._id ?? null });
     }
 
-    const now = Date.now();
+    const now = moment();
     for (const doc of confirmedReservations) {
       const r = doc;
       if (r.tableNumber == null || occupied.has(r.tableNumber)) continue;
