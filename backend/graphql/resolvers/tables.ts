@@ -16,24 +16,31 @@ export const tablesResolvers = {
     // $in is unsupported by the RxDB SQLite adapter, so fetch one equality
     // query per active status instead of loading entire collections.
     const [pendingOrders, preparingOrders, confirmedReservations] = await Promise.all([
-      db.orders.find({ status: ACTIVE_ORDER_STATUSES[0] }).exec(),
-      db.orders.find({ status: ACTIVE_ORDER_STATUSES[1] }).exec(),
-      db.reservations.find({ status: ACTIVE_RESERVATION_STATUS }).exec(),
+      db.orders
+        .find({ selector: { status: ACTIVE_ORDER_STATUSES[0] } })
+        .exec()
+        .then((docs: any[]) => docs.map((d) => d.toJSON())),
+      db.orders
+        .find({ selector: { status: ACTIVE_ORDER_STATUSES[1] } })
+        .exec()
+        .then((docs: any[]) => docs.map((d) => d.toJSON())),
+      db.reservations
+        .find({ selector: { status: ACTIVE_RESERVATION_STATUS } })
+        .exec()
+        .then((docs: any[]) => docs.map((d) => d.toJSON())),
     ]);
-
-    const pending = pendingOrders.map((d: any) => d.toJSON());
-    const preparing = preparingOrders.map((d: any) => d.toJSON());
-    const confirmed = confirmedReservations.map((d: any) => d.toJSON());
 
     // Single lookup: tableNumber -> occupant. Orders win over reservations.
     const occupied = new Map<number, { busyType: string; occupiedBy: string | null }>();
-    for (const docs of [pending, preparing]) {
-      for (const o of docs) {
+    for (const docs of [pendingOrders, preparingOrders]) {
+      for (const doc of docs) {
+        const o = doc;
         if (o.tableNumber == null) continue;
         occupied.set(o.tableNumber, { busyType: 'order', occupiedBy: o._id ?? null });
       }
     }
-    for (const r of confirmed) {
+    for (const doc of confirmedReservations) {
+      const r = doc;
       if (r.tableNumber == null || occupied.has(r.tableNumber)) continue;
       occupied.set(r.tableNumber, { busyType: 'reservation', occupiedBy: r._id ?? null });
     }

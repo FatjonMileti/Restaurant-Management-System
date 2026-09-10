@@ -7,15 +7,16 @@ jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 import { getDB } from '../config/rxdb';
 import { tablesResolvers } from '../graphql/resolvers/tables';
 
-// Honors simple equality selectors like the RxDB queries in the resolver,
-// so tests verify filtering happens at query level, not just in JS.
+// Honors Mango-style { selector: {...} } equality queries like the RxDB
+// queries in the resolver, so tests verify filtering happens at query
+// level, not just in JS.
 const mockFind = (data: any[]) =>
-  jest.fn().mockImplementation((selector: any = {}) => ({
+  jest.fn().mockImplementation((query: any = {}) => ({
     exec: jest
       .fn()
       .mockResolvedValue(
         data
-          .filter((d) => Object.entries(selector).every(([k, v]) => d[k] === v))
+          .filter((d) => Object.entries(query.selector ?? query).every(([k, v]) => d[k] === v))
           .map((d) => ({ toJSON: () => d })),
       ),
   }));
@@ -132,8 +133,8 @@ describe('tables resolver', () => {
     (getDB as unknown as jest.Mock).mockResolvedValue(db);
 
     await tablesResolvers.tables({}, staffContext);
-    expect(db.orders.find).toHaveBeenCalledWith({ status: 'pending' });
-    expect(db.orders.find).toHaveBeenCalledWith({ status: 'preparing' });
-    expect(db.reservations.find).toHaveBeenCalledWith({ status: 'confirmed' });
+    expect(db.orders.find).toHaveBeenCalledWith({ selector: { status: 'pending' } });
+    expect(db.orders.find).toHaveBeenCalledWith({ selector: { status: 'preparing' } });
+    expect(db.reservations.find).toHaveBeenCalledWith({ selector: { status: 'confirmed' } });
   });
 });
