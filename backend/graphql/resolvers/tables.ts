@@ -2,6 +2,10 @@ import { getDB } from '../../config/rxdb.js';
 import { requireStaffOrAdmin } from '../helpers/auth.js';
 import { getOrCreateRestaurantSettings } from '../helpers/formatters.js';
 
+// Only these statuses can occupy a table; completed/cancelled docs are free.
+const ACTIVE_ORDER_STATUSES = ['pending', 'preparing'];
+const ACTIVE_RESERVATION_STATUS = 'confirmed';
+
 export const tablesResolvers = {
   tables: async (_args: any, context: any) => {
     await requireStaffOrAdmin(context);
@@ -9,55 +13,37 @@ export const tablesResolvers = {
     const count = settings.tableCount || 10;
 
     const db = await getDB();
-    const [allOrders, allReservations] = await Promise.all([
-      db.orders.find().exec(),
-      db.reservations.find().exec(),
+    // $in is unsupported by the RxDB SQLite adapter, so fetch one equality
+    // query per active status instead of loading entire collections.
+    const [pendingOrders, preparingOrders, confirmedReservations] = await Promise.all([
+      db.orders.find({ status: ACTIVE_ORDER_STATUSES[0] }).exec(),
+      db.orders.find({ status: ACTIVE_ORDER_STATUSES[1] }).exec(),
+      db.reservations.find({ status: ACTIVE_RESERVATION_STATUS }).exec(),
     ]);
 
-    const orders = allOrders.map((d: any) => d.toJSON());
-    const reservations = allReservations.map((d: any) => d.toJSON());
+    const pending = pendingOrders.map((d: any) => d.toJSON());
+    const preparing = preparingOrders.map((d: any) => d.toJSON());
+    const confirmed = confirmedReservations.map((d: any) => d.toJSON());
 
-    const busyOrderTableNumbers = new Set<number>();
-    const busyOrderDocs = new Map<number, any>();
-    orders
-      .filter((o: any) => ['pending', 'preparing'].includes(o.status) && o.tableNumber)
-      .forEach((o: any) => {
-        busyOrderTableNumbers.add(o.tableNumber);
-        busyOrderDocs.set(o.tableNumber, o);
-      });
-
-    const busyReservationTableNumbers = new Set<number>();
-    const busyReservationDocs = new Map<number, any>();
-    reservations
-      .filter((r: any) => r.status === 'confirmed' && r.tableNumber)
-      .forEach((r: any) => {
-        if (!busyOrderTableNumbers.has(r.tableNumber)) {
-          busyReservationTableNumbers.add(r.tableNumber);
-          busyReservationDocs.set(r.tableNumber, r);
-        }
-      });
-
-    const result: any[] = [];
-    for (let i = 1; i <= count; i++) {
-      if (busyOrderTableNumbers.has(i)) {
-        const doc = busyOrderDocs.get(i);
-        result.push({
-          number: i,
-          isBusy: true,
-          busyType: 'order',
-          occupiedBy: doc._id || null,
-        });
-      } else if (busyReservationTableNumbers.has(i)) {
-        const doc = busyReservationDocs.get(i);
-        result.push({
-          number: i,
-          isBusy: true,
-          busyType: 'reservation',
-          occupiedBy: doc._id || null,
-        });
-      } else {
-        result.push({ number: i, isBusy: false, busyType: null, occupiedBy: null });
+    // Single lookup: tableNumber -> occupant. Orders win over reservations.
+    const occupied = new Map<number, { busyType: string; occupiedBy: string | null }>();
+    for (const docs of [pending, preparing]) {
+      for (const o of docs) {
+        if (o.tableNumber == null) continue;
+        occupied.set(o.tableNumber, { busyType: 'order', occupiedBy: o._id ?? null });
       }
+    }
+    for (const r of confirmed) {
+      if (r.tableNumber == null || occupied.has(r.tableNumber)) continue;
+      occupied.set(r.tableNumber, { busyType: 'reservation', occupiedBy: r._id ?? null });
+    }
+
+    const result: any[] = new Array(count);
+    for (let i = 1; i <= count; i++) {
+      const occupant = occupied.get(i);
+      result[i - 1] = occupant
+        ? { number: i, isBusy: true, ...occupant }
+        : { number: i, isBusy: false, busyType: null, occupiedBy: null };
     }
     return result;
   },
