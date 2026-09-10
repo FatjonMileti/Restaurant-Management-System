@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import moment from 'moment';
 import { Reservation } from '../../api/queries';
 import StatusBadge from '../StatusBadge';
 
@@ -29,7 +30,7 @@ function ReservationCard({
       <div className="flex justify-between">
         <div>
           <strong>
-            {new Date(res.date).toLocaleDateString()} at {res.time}
+            {moment(res.date).format('L')} at {res.time}
           </strong>
           <p className="text-sm">
             {res.guests} guest(s) {res.tableNumber ? `| Table ${res.tableNumber}` : ''}
@@ -42,7 +43,9 @@ function ReservationCard({
               By: {res.user.name} ({res.user.email})
             </p>
           )}
-          <p className="text-gray-400 text-xs">{new Date(res.createdAt).toLocaleString()}</p>
+          <p className="text-gray-400 text-xs">
+            {moment(`${res.date} ${res.time}`, 'YYYY-MM-DD HH:mm').format('L LT')}
+          </p>
         </div>
         <div className="text-right">
           <StatusBadge status={res.status} className="text-sm" />
