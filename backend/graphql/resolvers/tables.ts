@@ -3,8 +3,17 @@ import { requireStaffOrAdmin } from '../helpers/auth.js';
 import { getOrCreateRestaurantSettings } from '../helpers/formatters.js';
 
 // Only these statuses can occupy a table; completed/cancelled docs are free.
-const ACTIVE_ORDER_STATUSES = ['pending', 'preparing'];
+const ACTIVE_ORDER_STATUSES = ['pending', 'preparing', 'ready'];
 const ACTIVE_RESERVATION_STATUS = 'confirmed';
+// A confirmed reservation occupies its table from its start time for this long.
+const RESERVATION_SLOT_MS = 2 * 60 * 60 * 1000;
+
+const isReservationActive = (r: any, now: number): boolean => {
+  if (typeof r.date !== 'string' || typeof r.time !== 'string') return false;
+  const startsAt = new Date(`${r.date}T${r.time}`).getTime();
+  if (Number.isNaN(startsAt)) return false;
+  return now >= startsAt && now <= startsAt + RESERVATION_SLOT_MS;
+};
 
 export const tablesResolvers = {
   tables: async (_args: any, context: any) => {
@@ -15,13 +24,17 @@ export const tablesResolvers = {
     const db = await getDB();
     // $in is unsupported by the RxDB SQLite adapter, so fetch one equality
     // query per active status instead of loading entire collections.
-    const [pendingOrders, preparingOrders, confirmedReservations] = await Promise.all([
+    const [pendingOrders, preparingOrders, readyOrders, confirmedReservations] = await Promise.all([
       db.orders
         .find({ selector: { status: ACTIVE_ORDER_STATUSES[0] } })
         .exec()
         .then((docs: any[]) => docs.map((d) => d.toJSON())),
       db.orders
         .find({ selector: { status: ACTIVE_ORDER_STATUSES[1] } })
+        .exec()
+        .then((docs: any[]) => docs.map((d) => d.toJSON())),
+      db.orders
+        .find({ selector: { status: ACTIVE_ORDER_STATUSES[2] } })
         .exec()
         .then((docs: any[]) => docs.map((d) => d.toJSON())),
       db.reservations
@@ -39,9 +52,18 @@ export const tablesResolvers = {
         occupied.set(o.tableNumber, { busyType: 'order', occupiedBy: o._id ?? null });
       }
     }
+
+    for (const doc of readyOrders) {
+      const o = doc;
+      if (o.tableNumber == null) continue;
+      occupied.set(o.tableNumber, { busyType: 'order', occupiedBy: o._id ?? null });
+    }
+
+    const now = Date.now();
     for (const doc of confirmedReservations) {
       const r = doc;
       if (r.tableNumber == null || occupied.has(r.tableNumber)) continue;
+      if (!isReservationActive(r, now)) continue;
       occupied.set(r.tableNumber, { busyType: 'reservation', occupiedBy: r._id ?? null });
     }
 
