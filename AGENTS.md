@@ -128,4 +128,5 @@ GraphQL only at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). RES
 - Read relevant files fully before editing; verify with `npm run build` and/or `npm start` where feasible.
 - Keep exactly one `in_progress` todo at a time; mark completed only after verification.
 - Preserve user corrections and scope constraints across turns until explicitly lifted.
+- Never revert user-made code changes. If the working tree differs from your last edit, the user modified it — reconcile with their version (adapt tests/docs to it) instead of overwriting it.
 - Update AGENTS.md whenever a new convention, command, or workflow is established that future agents should know about.
