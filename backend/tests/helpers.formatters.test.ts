@@ -3,6 +3,7 @@ jest.mock('../config/rxdb', () => ({
 }));
 
 import { getDB } from '../config/rxdb';
+import moment from 'moment';
 import {
   formatUser,
   formatMenuItem,
@@ -24,8 +25,8 @@ describe('formatUser', () => {
         email: 'john@example.com',
         role: 'customer',
         phone: '123',
-        createdAt: new Date('2024-01-01T10:00:00Z'),
-        updatedAt: new Date('2024-01-02T10:00:00Z'),
+        createdAt: moment('2024-01-01T10:00:00Z').toISOString(),
+        updatedAt: moment('2024-01-02T10:00:00Z').toISOString(),
       }),
     };
     const res: any = formatUser(doc as any);
@@ -112,8 +113,8 @@ describe('formatOrder', () => {
       status: 'pending',
       tableNumber: 5,
       paymentMethod: 'cash',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: moment().toISOString(),
+      updatedAt: moment().toISOString(),
     };
     const res: any = await formatOrder(order);
     expect(res.id).toBe('order1');
@@ -166,7 +167,7 @@ describe('formatReservation', () => {
     const doc: any = {
       _id: 'res1',
       user: { _id: 'user1', name: 'Jane', email: 'jane@example.com', role: 'customer' },
-      date: new Date('2025-06-15'),
+      date: moment('2025-06-15').format('YYYY-MM-DD'),
       time: '19:00',
       guests: 2,
       status: 'confirmed',

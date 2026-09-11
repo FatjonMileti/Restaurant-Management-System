@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import moment from 'moment';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../store/authStore';
@@ -35,9 +36,7 @@ export default function ReservationFormComponent({
     resolver: zodResolver(reservationSchema),
     defaultValues: editingReservation
       ? {
-          date: editingReservation.date
-            ? new Date(editingReservation.date).toISOString().split('T')[0]
-            : '',
+          date: editingReservation.date ? moment(editingReservation.date).format('YYYY-MM-DD') : '',
           time: editingReservation.time || '',
           guests: editingReservation.guests || 2,
           tableNumber: editingReservation.tableNumber || undefined,
@@ -59,9 +58,7 @@ export default function ReservationFormComponent({
     setActionError('');
     if (editingReservation) {
       reset({
-        date: editingReservation.date
-          ? new Date(editingReservation.date).toISOString().split('T')[0]
-          : '',
+        date: editingReservation.date ? moment(editingReservation.date).format('YYYY-MM-DD') : '',
         time: editingReservation.time || '',
         guests: editingReservation.guests || 2,
         tableNumber: editingReservation.tableNumber || undefined,

@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import moment from 'moment';
 import { getDB } from '../../config/rxdb.js';
 import { reservationSchema, validate } from '../validation.js';
 import { formatReservation } from '../helpers/formatters.js';
@@ -39,6 +40,7 @@ export const reservationResolvers = {
       _id: genId(),
       user: context.userId,
       status: 'confirmed',
+      createdAt: moment().toISOString(),
       ...v.data,
     });
     emitEvent('reservations:changed');

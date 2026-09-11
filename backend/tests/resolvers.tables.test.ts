@@ -5,6 +5,7 @@ jest.mock('../config/rxdb', () => ({
 jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 
 import { getDB } from '../config/rxdb';
+import moment from 'moment';
 import { tablesResolvers } from '../graphql/resolvers/tables';
 
 // Honors Mango-style { selector: {...} } equality queries like the RxDB
@@ -49,10 +50,9 @@ const mockDB = (orders: any[], reservations: any[], tableCount: number) => ({
 const staffContext = { userId: 'u1' };
 
 // Helpers to build reservation date/time (HTML date/time input format) relative to now.
-const pad = (n: number) => String(n).padStart(2, '0');
-const shiftMinutes = (minutes: number) => new Date(Date.now() + minutes * 60 * 1000);
-const toLocalDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const toLocalTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const shiftMinutes = (minutes: number) => moment().add(minutes, 'minutes');
+const toLocalDate = (d: moment.Moment) => d.format('YYYY-MM-DD');
+const toLocalTime = (d: moment.Moment) => d.format('HH:mm');
 const reservationAt = (id: string, tableNumber: number | null, minutesFromNow: number) => {
   const at = shiftMinutes(minutesFromNow);
   return {

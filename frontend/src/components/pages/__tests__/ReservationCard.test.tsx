@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ReservationCard from '../ReservationCard';
 import { Reservation } from '../../../api/queries';
@@ -12,7 +13,7 @@ const mockReservation = (overrides: Partial<Reservation> = {}): Reservation => (
   tableNumber: 5,
   status: 'confirmed',
   specialRequests: 'Window seat',
-  createdAt: new Date('2024-01-01T12:00:00Z').toISOString(),
+  createdAt: moment('2024-01-01T12:00:00Z').toISOString(),
   ...overrides,
 });
 

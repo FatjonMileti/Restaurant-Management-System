@@ -1,4 +1,5 @@
 import React, { memo, useCallback } from 'react';
+import moment from 'moment';
 import { Order } from '../../api/queries';
 import StatusBadge from '../StatusBadge';
 
@@ -20,7 +21,9 @@ function OrderCard({ order, isStaffView, isOwner, onEdit, onUpdateStatus, onDele
         <div>
           <strong>Order #{order._id.slice(-6).toUpperCase()}</strong>
           {order.tableNumber && <span> | Table {order.tableNumber}</span>}
-          <p className="text-gray-500 text-sm">{new Date(order.createdAt).toLocaleString()}</p>
+          <p className="text-gray-500 text-sm">
+            {moment(order.createdAt).format('DD/MM/YYYY, HH:mm:ss')}
+          </p>
           {order.user && isStaffView && (
             <p className="text-gray-400 text-xs">
               By: {order.user.name} ({order.user.email})

@@ -5,6 +5,7 @@ jest.mock('../config/rxdb', () => ({
 jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 
 import { getDB } from '../config/rxdb';
+import moment from 'moment';
 import { dashboardResolvers } from '../graphql/resolvers/dashboard';
 
 const mockDoc = (d: any) => ({ toJSON: () => d });
@@ -41,18 +42,32 @@ describe('dashboard resolver', () => {
           status: 'pending',
           totalAmount: 20,
           tableNumber: 1,
-          createdAt: new Date().toISOString(),
+          createdAt: moment().toISOString(),
         },
         {
           _id: 'o2',
           status: 'completed',
           totalAmount: 50,
           tableNumber: 2,
-          createdAt: new Date().toISOString(),
+          createdAt: moment().toISOString(),
         },
       ]),
       reservations: mockCollection([
-        { _id: 'r1', status: 'confirmed', tableNumber: 3, createdAt: new Date().toISOString() },
+        {
+          _id: 'r1',
+          status: 'confirmed',
+          tableNumber: 3,
+          date: moment().toISOString(),
+          createdAt: moment().toISOString(),
+        },
+        {
+          _id: 'r2',
+          status: 'confirmed',
+          tableNumber: 4,
+          // no createdAt (as created by createReservation before the fix) —
+          // must still count via booking `date`
+          date: moment().toISOString(),
+        },
       ]),
       menuItems: mockCollection([
         { _id: 'm1', available: true },
@@ -78,8 +93,9 @@ describe('dashboard resolver', () => {
     expect(res.totalOrders).toBe(2);
     expect(res.pendingOrders).toBe(1);
     expect(res.completedOrders).toBe(1);
-    expect(res.totalReservations).toBe(1);
-    expect(res.confirmedReservations).toBe(1);
+    expect(res.totalReservations).toBe(2);
+    expect(res.confirmedReservations).toBe(2);
+    expect(res.todayReservations).toBe(2);
     expect(res.totalMenuItems).toBe(2);
     expect(res.availableMenuItems).toBe(1);
     expect(res.totalUsers).toBe(1);

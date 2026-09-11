@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import moment from 'moment';
 import { Box, Typography } from '@mui/material';
 import { useAuth } from '../store/authStore';
 import { useDashboardStats } from '../api/queries';
@@ -146,7 +147,7 @@ export default function Dashboard() {
                     <span className="text-sm text-gray-500"> • Table {o.tableNumber}</span>
                   )}
                   <p className="text-xs text-gray-500">
-                    {new Date(o.createdAt).toLocaleString()}{' '}
+                    {moment(o.createdAt).format('DD/MM/YYYY, HH:mm:ss')}{' '}
                     {o.user?.name ? `• ${o.user.name}` : ''}
                   </p>
                 </Box>

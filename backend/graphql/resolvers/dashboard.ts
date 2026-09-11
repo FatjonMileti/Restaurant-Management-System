@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { getDB } from '../../config/rxdb.js';
 import { requireAdmin } from '../helpers/auth.js';
 import { formatOrder } from '../helpers/formatters.js';
@@ -8,8 +9,7 @@ export const dashboardResolvers = {
     await requireAdmin(context);
 
     const db = await getDB();
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    const today = moment().startOf('day');
 
     const [allOrders, allReservations, allMenuItems, allUsers, allCategories, settings] =
       await Promise.all([
@@ -62,11 +62,15 @@ export const dashboardResolvers = {
       .reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0);
 
     const todayOrders = orders.filter(
-      (o: any) => o.createdAt && new Date(o.createdAt) >= startOfToday,
+      (o: any) => o.createdAt && moment(o.createdAt).isSame(today, 'day'),
     ).length;
-    const todayReservations = reservations.filter(
-      (r: any) => r.createdAt && new Date(r.createdAt) >= startOfToday,
-    ).length;
+    // Reservations count by booking date (`date`), falling back to `createdAt`
+    // for legacy docs. `createdAt` is often missing because createReservation
+    // never set it, which is why this count was always 0.
+    const todayReservations = reservations.filter((r: any) => {
+      const d = r.date || r.createdAt;
+      return d && moment(d).isSame(today, 'day');
+    }).length;
 
     const recentOrdersDocs = await db.orders.find().sort('-createdAt').limit(5).exec();
     const menuItemDocs = await db.menuItems.find().exec();

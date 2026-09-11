@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import moment from 'moment';
 import { getDB } from '../../config/rxdb.js';
 import { createOrderSchema, updateOrderSchema, validate } from '../validation.js';
 import { formatOrder } from '../helpers/formatters.js';
@@ -64,7 +65,7 @@ export const orderResolvers = {
       tableNumber: v.data.tableNumber,
       paymentMethod: v.data.paymentMethod,
       status: 'pending',
-      createdAt: new Date().toISOString(),
+      createdAt: moment().toISOString(),
     });
     emitEvent('orders:changed');
     emitEvent('tables:changed');

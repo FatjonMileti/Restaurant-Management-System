@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import { render, screen, fireEvent } from '@testing-library/react';
 import OrderCard from '../OrderCard';
 import { Order } from '../../../api/queries';
@@ -10,7 +11,7 @@ const mockOrder = (overrides: Partial<Order> = {}): Order => ({
   totalAmount: 20,
   status: 'pending',
   tableNumber: 3,
-  createdAt: new Date('2024-01-01T12:00:00Z').toISOString(),
+  createdAt: moment('2024-01-01T12:00:00Z').toISOString(),
   ...overrides,
 });
 

@@ -30,7 +30,7 @@ function ReservationCard({
       <div className="flex justify-between">
         <div>
           <strong>
-            {moment(res.date).format('L')} at {res.time}
+            {moment(res.date).format('DD/MM/YYYY')} at {res.time}
           </strong>
           <p className="text-sm">
             {res.guests} guest(s) {res.tableNumber ? `| Table ${res.tableNumber}` : ''}
@@ -44,7 +44,7 @@ function ReservationCard({
             </p>
           )}
           <p className="text-gray-400 text-xs">
-            {moment(`${res.date} ${res.time}`, 'YYYY-MM-DD HH:mm').format('L LT')}
+            {moment(`${res.date} ${res.time}`, 'YYYY-MM-DD HH:mm').format('DD/MM/YYYY LT')}
           </p>
         </div>
         <div className="text-right">
