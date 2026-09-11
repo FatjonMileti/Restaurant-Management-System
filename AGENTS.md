@@ -92,7 +92,7 @@ GraphQL only at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). RES
 ## Auth & Roles
 
 - `protect` → JWT `Bearer` token → `req.user`; `admin` → `role==='admin'`; `staff` → `admin` or `staff`. Frontend `useAuth()` (`store/authStore.ts:93`) persists `user`+`token` in `localStorage`.
-- Role gates: Menu add/edit → `admin` only; Settings → `admin` only; Tables → `staff`/`admin`; Orders/Reservations filters and status changes respect role; verify both frontend hiding **and** backend `requireAdmin` checks.
+- Role gates: Menu add/edit → `admin` only; Settings → `admin` only; Tables → `staff`/`admin`; Users list query (`authUsers`) → `staff`/`admin` read-only (powers the orders/reservations user filter; user mutations stay `admin` only, passwords never returned); Orders/Reservations filters and status changes respect role; verify both frontend hiding **and** backend `requireAdmin` checks.
 - Seeded users: `admin@restaurant.com`, `staff@restaurant.com`, `john@example.com` (all `*123`).
 
 ## Domain Rules

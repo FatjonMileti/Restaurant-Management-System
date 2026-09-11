@@ -17,6 +17,10 @@ interface FilterBarProps {
   inputType?: 'text' | 'number';
   theme?: 'blue' | 'gray';
   useTableSelect?: boolean;
+  userOptions?: FilterOption[];
+  userValue?: string;
+  onUserChange?: (value: string) => void;
+  userLabel?: string;
 }
 
 export default function FilterBar({
@@ -30,6 +34,10 @@ export default function FilterBar({
   inputType = 'text',
   theme = 'gray',
   useTableSelect = false,
+  userOptions,
+  userValue,
+  onUserChange,
+  userLabel = 'All users',
 }: FilterBarProps) {
   const containerClass = theme === 'blue' ? 'filter-bar-blue' : 'filter-bar-gray';
   return (
@@ -66,11 +74,27 @@ export default function FilterBar({
             className="form-input-sm w-28 !mb-0"
           />
         ))}
-      {(value || inputValue) && (
+      {userOptions !== undefined && (
+        <select
+          aria-label="Filter by user"
+          value={userValue || ''}
+          onChange={(e) => onUserChange?.(e.target.value)}
+          className="form-input-sm w-36 !mb-0"
+        >
+          <option value="">{userLabel}</option>
+          {userOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      )}
+      {(value || inputValue || userValue) && (
         <button
           onClick={() => {
             onChange('');
             onInputChange?.('');
+            onUserChange?.('');
           }}
           className="btn-secondary text-xs"
         >

@@ -1,5 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { useOrders, useUpdateOrderStatus, useDeleteOrder, Order } from '../../api/queries';
+import {
+  useOrders,
+  useUpdateOrderStatus,
+  useDeleteOrder,
+  useUsers,
+  Order,
+} from '../../api/queries';
 import { useAuth } from '../../store/authStore';
 import FilterBar from '../FilterBar';
 import ConfirmDialog from '../ConfirmDialog';
@@ -12,6 +18,7 @@ interface Props {
 export default function OrderList({ onEditOrder }: Props) {
   const { user } = useAuth();
   const { data: orders = [], error: ordersError } = useOrders();
+  const { data: users = [] } = useUsers();
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
   const [actionError, setActionError] = useState('');
@@ -20,6 +27,9 @@ export default function OrderList({ onEditOrder }: Props) {
   });
   const [statusFilter, setStatusFilter] = useState('');
   const [tableFilter, setTableFilter] = useState('');
+  const [userFilter, setUserFilter] = useState('');
+
+  const isStaffView = user?.role !== 'customer';
 
   const handleUpdateStatus = useCallback(
     async (id: string, status: string) => {
@@ -56,10 +66,28 @@ export default function OrderList({ onEditOrder }: Props) {
         const matchesTable = tableFilter
           ? order.tableNumber && String(order.tableNumber) === tableFilter
           : true;
-        return matchesStatus && matchesTable;
+        const matchesUser = userFilter ? order.user?._id === userFilter : true;
+        return matchesStatus && matchesTable && matchesUser;
       }),
-    [orders, statusFilter, tableFilter],
+    [orders, statusFilter, tableFilter, userFilter],
   );
+
+  const userOptions = useMemo(() => {
+    // All users (staff-readable users query), sorted by name. Falls back to
+    // the users seen in the loaded orders if the list is unavailable.
+    if (users.length > 0) {
+      return [...users]
+        .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
+        .map((u) => ({ value: u._id, label: u.name || u.email }));
+    }
+    const seen = new Map<string, string>();
+    orders.forEach((order: Order) => {
+      if (order.user && !seen.has(order.user._id)) {
+        seen.set(order.user._id, order.user.name || order.user.email);
+      }
+    });
+    return Array.from(seen.entries()).map(([value, label]) => ({ value, label }));
+  }, [orders, users]);
 
   return (
     <>
@@ -81,6 +109,9 @@ export default function OrderList({ onEditOrder }: Props) {
         onInputChange={setTableFilter}
         inputType="number"
         useTableSelect
+        userOptions={isStaffView ? userOptions : undefined}
+        userValue={userFilter}
+        onUserChange={setUserFilter}
       />
 
       {error && <p className="error-text mt-3">{error}</p>}
@@ -95,7 +126,7 @@ export default function OrderList({ onEditOrder }: Props) {
         <OrderCard
           key={order._id}
           order={order}
-          isStaffView={user?.role !== 'customer'}
+          isStaffView={isStaffView}
           isOwner={order.user?._id === user?._id}
           onEdit={onEditOrder}
           onUpdateStatus={handleUpdateStatus}

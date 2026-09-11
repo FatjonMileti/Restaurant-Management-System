@@ -11,7 +11,7 @@ jest.mock('../../store/authStore', () => ({
   useAuthStore: { getState: () => ({ user: { token: 'test-token' } }) },
 }));
 
-import { useCategories, useMenu, useDashboardStats } from '../queries';
+import { useCategories, useMenu, useDashboardStats, useOrders, useReservations } from '../queries';
 
 const createWrapper = () => {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -69,6 +69,46 @@ describe('api queries', () => {
     const { result } = renderHook(() => useDashboardStats(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.recentOrders[0]._id).toBe('o1');
+  });
+
+  it('useOrders maps nested user.id to user._id', async () => {
+    (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({
+      orders: [
+        {
+          id: 'o1',
+          user: { id: 'u1', name: 'John', email: 'john@example.com' },
+          items: [],
+          totalAmount: 10,
+          status: 'pending',
+        },
+        { id: 'o2', user: null, items: [], totalAmount: 0, status: 'pending' },
+      ],
+    });
+    const { result } = renderHook(() => useOrders(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.[0]._id).toBe('o1');
+    expect(result.current.data?.[0].user?._id).toBe('u1');
+    expect(result.current.data?.[0].user?.name).toBe('John');
+    expect(result.current.data?.[1].user).toBeNull();
+  });
+
+  it('useReservations maps nested user.id to user._id', async () => {
+    (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({
+      reservations: [
+        {
+          id: 'r1',
+          user: { id: 'u2', name: 'Jane', email: 'jane@example.com' },
+          date: '2024-01-15',
+          time: '19:00',
+          guests: 2,
+          status: 'confirmed',
+        },
+      ],
+    });
+    const { result } = renderHook(() => useReservations(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.[0]._id).toBe('r1');
+    expect(result.current.data?.[0].user?._id).toBe('u2');
   });
 
   it('sends Authorization header when token present', async () => {

@@ -3,6 +3,7 @@ import {
   useReservations,
   useCancelReservation,
   useDeleteReservation,
+  useUsers,
   Reservation,
 } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
@@ -17,6 +18,7 @@ interface Props {
 export default function ReservationList({ onEditReservation }: Props) {
   const { user } = useAuth();
   const { data: reservations = [], error: fetchError, isLoading } = useReservations();
+  const { data: users = [] } = useUsers();
   const cancelReservation = useCancelReservation();
   const deleteReservation = useDeleteReservation();
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id?: string }>({
@@ -25,6 +27,7 @@ export default function ReservationList({ onEditReservation }: Props) {
   const [actionError, setActionError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [tableFilter, setTableFilter] = useState('');
+  const [userFilter, setUserFilter] = useState('');
 
   const isStaff = user?.role === 'admin' || user?.role === 'staff';
 
@@ -61,10 +64,28 @@ export default function ReservationList({ onEditReservation }: Props) {
         const matchesTable = tableFilter
           ? res.tableNumber && String(res.tableNumber) === tableFilter
           : true;
-        return matchesStatus && matchesTable;
+        const matchesUser = userFilter ? res.user?._id === userFilter : true;
+        return matchesStatus && matchesTable && matchesUser;
       }),
-    [reservations, statusFilter, tableFilter],
+    [reservations, statusFilter, tableFilter, userFilter],
   );
+
+  const userOptions = useMemo(() => {
+    // All users (staff-readable users query), sorted by name. Falls back to
+    // the users seen in the loaded reservations if the list is unavailable.
+    if (users.length > 0) {
+      return [...users]
+        .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
+        .map((u) => ({ value: u._id, label: u.name || u.email }));
+    }
+    const seen = new Map<string, string>();
+    reservations.forEach((res: Reservation) => {
+      if (res.user && !seen.has(res.user._id)) {
+        seen.set(res.user._id, res.user.name || res.user.email);
+      }
+    });
+    return Array.from(seen.entries()).map(([value, label]) => ({ value, label }));
+  }, [reservations, users]);
 
   return (
     <>
@@ -84,6 +105,9 @@ export default function ReservationList({ onEditReservation }: Props) {
         onInputChange={setTableFilter}
         inputType="number"
         useTableSelect
+        userOptions={isStaff ? userOptions : undefined}
+        userValue={userFilter}
+        onUserChange={setUserFilter}
       />
 
       {error && !isLoading && <p className="error-text">{error}</p>}

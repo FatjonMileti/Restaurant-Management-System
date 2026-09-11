@@ -18,3 +18,5 @@
 - [x] Update Jest tests to work with RxDB (mock RxDB where needed)
 
 ## To Do
+
+- [x] Add filter by user (staff) in orders and reservations lists. Use a select dropdown to filter by user.

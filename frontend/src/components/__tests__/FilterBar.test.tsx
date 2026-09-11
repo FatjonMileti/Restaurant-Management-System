@@ -92,4 +92,67 @@ describe('FilterBar', () => {
     );
     expect(container.firstChild).toHaveClass('filter-bar-blue');
   });
+
+  it('does not render user select when userOptions not provided', () => {
+    render(<FilterBar label="Filter" options={options} value="" onChange={jest.fn()} />);
+    expect(screen.queryByLabelText('Filter by user')).not.toBeInTheDocument();
+  });
+
+  it('renders user select with options when userOptions provided', () => {
+    render(
+      <FilterBar
+        label="Filter"
+        options={options}
+        value=""
+        onChange={jest.fn()}
+        userOptions={[
+          { value: 'u1', label: 'John' },
+          { value: 'u2', label: 'Jane' },
+        ]}
+        userValue=""
+        onUserChange={jest.fn()}
+      />,
+    );
+    const select = screen.getByLabelText('Filter by user');
+    expect(select).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'All users' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'John' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Jane' })).toBeInTheDocument();
+  });
+
+  it('calls onUserChange when user select changes', () => {
+    const onUserChange = jest.fn();
+    render(
+      <FilterBar
+        label="Filter"
+        options={options}
+        value=""
+        onChange={jest.fn()}
+        userOptions={[{ value: 'u1', label: 'John' }]}
+        userValue=""
+        onUserChange={onUserChange}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('Filter by user'), { target: { value: 'u1' } });
+    expect(onUserChange).toHaveBeenCalledWith('u1');
+  });
+
+  it('shows Clear when only userValue present and clears all filters', () => {
+    const onChange = jest.fn();
+    const onUserChange = jest.fn();
+    render(
+      <FilterBar
+        label="Filter"
+        options={options}
+        value=""
+        onChange={onChange}
+        userOptions={[{ value: 'u1', label: 'John' }]}
+        userValue="u1"
+        onUserChange={onUserChange}
+      />,
+    );
+    fireEvent.click(screen.getByText('Clear'));
+    expect(onChange).toHaveBeenCalledWith('');
+    expect(onUserChange).toHaveBeenCalledWith('');
+  });
 });

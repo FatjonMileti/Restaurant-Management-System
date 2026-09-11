@@ -11,7 +11,7 @@ import {
 } from '../validation.js';
 import { formatUser } from '../helpers/formatters.js';
 import { emitEvent } from '../../sse.js';
-import { requireAdmin } from '../helpers/auth.js';
+import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 
 const genId = () => crypto.randomUUID();
 
@@ -31,7 +31,10 @@ export const authResolvers = {
   },
 
   authUsers: async (_args: any, context?: any) => {
-    await requireAdmin(context);
+    // Staff-readable (not admin-only): staff need the full user list for the
+    // orders/reservations user filter. No password is returned (deleted
+    // before formatting); user mutations stay admin-only.
+    await requireStaffOrAdmin(context);
     const db = await getDB();
     const docs = await db.users.find().exec();
     const users = docs.map((doc: any) => {

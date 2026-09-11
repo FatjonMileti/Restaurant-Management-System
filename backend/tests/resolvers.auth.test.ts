@@ -70,4 +70,34 @@ describe('auth resolvers', () => {
     const res = await authResolvers.authMe({}, {});
     expect(res).toBeNull();
   });
+
+  it('authUsers allows staff and strips passwords', async () => {
+    mockUsers.findOne.mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ toJSON: () => ({ _id: 's1', role: 'staff' }) }),
+    });
+    mockUsers.find.mockReturnValue({
+      exec: jest
+        .fn()
+        .mockResolvedValue([
+          { toJSON: () => ({ _id: 'u1', name: 'John', email: 'j@x.com', password: 'hashed' }) },
+        ]),
+    });
+    const res: any = await authResolvers.authUsers({}, { userId: 's1' });
+    expect(res).toHaveLength(1);
+    expect(res[0].email).toBe('j@x.com');
+    expect(res[0].password).toBeUndefined();
+  });
+
+  it('authUsers rejects customers', async () => {
+    mockUsers.findOne.mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ toJSON: () => ({ _id: 'c1', role: 'customer' }) }),
+    });
+    await expect(authResolvers.authUsers({}, { userId: 'c1' })).rejects.toThrow(
+      'staff or admin only',
+    );
+  });
+
+  it('authUsers rejects unauthenticated callers', async () => {
+    await expect(authResolvers.authUsers({}, {})).rejects.toThrow('Not authenticated');
+  });
 });

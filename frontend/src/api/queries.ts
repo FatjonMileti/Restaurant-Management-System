@@ -56,6 +56,17 @@ const mapArray = <T extends { id?: string; [k: string]: any }>(
   });
 };
 
+// Nested `user` refs arrive as `{ id, ... }` — mapArray only converts the
+// top-level id, so normalize the nested ref too. Without this,
+// `order.user._id` is undefined and user-based filtering (and isOwner)
+// never matches.
+const mapUserRef = <T extends { user?: any }>(obj: T): T => {
+  const u = (obj as any)?.user;
+  if (!u || typeof u !== 'object') return obj;
+  const { id, _id, ...rest } = u;
+  return { ...(obj as any), user: { ...rest, _id: _id ?? id, id: undefined } };
+};
+
 export interface Category {
   _id: string;
   name: string;
@@ -235,7 +246,7 @@ export const useOrders = () =>
     queryKey: ['orders'],
     queryFn: async () => {
       const data = await request(endpoint, GET_ORDERS);
-      return mapArray<Order>((data as any)?.orders);
+      return mapArray<Order>((data as any)?.orders).map(mapUserRef);
     },
     staleTime: 30 * 1000,
   });
@@ -308,7 +319,7 @@ export const useReservations = () =>
     queryKey: ['reservations'],
     queryFn: async () => {
       const data = await request(endpoint, GET_RESERVATIONS);
-      return mapArray<Reservation>((data as any)?.reservations);
+      return mapArray<Reservation>((data as any)?.reservations).map(mapUserRef);
     },
     staleTime: 30 * 1000,
   });
@@ -500,7 +511,7 @@ export const useDashboardStats = () =>
       if (!raw) return null;
       return {
         ...raw,
-        recentOrders: mapArray<Order>(raw.recentOrders || []),
+        recentOrders: mapArray<Order>(raw.recentOrders || []).map(mapUserRef),
       } as DashboardStats;
     },
     staleTime: 30 * 1000,
