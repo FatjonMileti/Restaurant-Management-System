@@ -73,4 +73,22 @@ describe('authStore', () => {
     expect(stored.email).toBe('bob@example.com');
     expect(stored.role).toBe('staff');
   });
+
+  it('calls graphql-request with the resolved absolute endpoint', async () => {
+    const { resolveGraphQLEndpoint } = await import('../../graphql/queries');
+    const mockRequest = gqlRequest.request as unknown as jest.Mock;
+    mockRequest.mockResolvedValue({
+      login: {
+        token: 'tok',
+        user: { id: 'u1', name: 'John', email: 'john@example.com', role: 'customer' },
+      },
+    });
+    await useAuthStore.getState().login('john@example.com', 'secret123');
+    expect(mockRequest).toHaveBeenCalledWith(
+      resolveGraphQLEndpoint(),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(() => new URL(mockRequest.mock.calls[0][0] as string)).not.toThrow();
+  });
 });

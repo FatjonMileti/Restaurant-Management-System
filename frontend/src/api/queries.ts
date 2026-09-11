@@ -28,9 +28,10 @@ import {
   UPDATE_RESTAURANT_SETTINGS,
   GET_TABLES,
   GET_DASHBOARD_STATS,
+  resolveGraphQLEndpoint,
 } from '../graphql/queries';
 
-const endpoint = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql';
+const endpoint = resolveGraphQLEndpoint();
 
 const request = <T = any>(url: string, document: any, variables?: any) => {
   const token = useAuthStore.getState().user?.token;

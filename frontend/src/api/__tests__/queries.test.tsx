@@ -82,4 +82,27 @@ describe('api queries', () => {
       { Authorization: 'Bearer test-token' },
     );
   });
+
+  it('passes an absolute URL to graphql-request (relative /graphql breaks its new URL() call)', async () => {
+    const { resolveGraphQLEndpoint } = await import('../../graphql/queries');
+    const url = resolveGraphQLEndpoint('/graphql');
+    expect(url).toBe(`${window.location.origin}/graphql`);
+    expect(() => new URL(url)).not.toThrow();
+    expect(resolveGraphQLEndpoint('http://localhost:5000/graphql')).toBe(
+      'http://localhost:5000/graphql',
+    );
+  });
+
+  it('calls graphql-request with the resolved endpoint', async () => {
+    const { resolveGraphQLEndpoint } = await import('../../graphql/queries');
+    (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({ categories: [] });
+    const { result } = renderHook(() => useCategories(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(gqlRequest.request).toHaveBeenCalledWith(
+      resolveGraphQLEndpoint(),
+      expect.anything(),
+      undefined,
+      { Authorization: 'Bearer test-token' },
+    );
+  });
 });

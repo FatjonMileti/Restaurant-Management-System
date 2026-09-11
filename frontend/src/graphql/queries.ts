@@ -1,5 +1,12 @@
 import { gql } from '@apollo/client';
 
+export const resolveGraphQLEndpoint = (url?: string): string => {
+  const raw = url || process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql';
+  // graphql-request calls `new URL(url)` with no base, so resolve relative
+  // URLs (e.g. "/graphql" when served same-origin behind Caddy) against the page origin.
+  return new URL(raw, window.location.origin).toString();
+};
+
 export const GET_CATEGORIES = gql`
   query GetCategories {
     categories {

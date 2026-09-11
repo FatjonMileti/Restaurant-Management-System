@@ -1,6 +1,8 @@
-const EVENT_SOURCE_URL = process.env.REACT_APP_WS_URL
-  ? `${process.env.REACT_APP_WS_URL}/events`
-  : 'http://localhost:5000/events';
+const WS_BASE = process.env.REACT_APP_WS_URL;
+
+// Empty string means same-origin (e.g. REACT_APP_WS_URL= behind Caddy -> "/events").
+const EVENT_SOURCE_URL =
+  WS_BASE === undefined ? 'http://localhost:5000/events' : `${WS_BASE}/events`;
 
 let eventSource: EventSource | null = null;
 

@@ -74,9 +74,16 @@ GraphQL only at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). RES
 - Active API is **GraphQL** at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). REST routes have been removed.
 - Frontend GraphQL documents live in `frontend/src/graphql/queries.ts`; typed hooks in `frontend/src/api/queries.ts` (uses `graphql-request` + `useAuthStore` token header). `GET_*` → `useQuery`, mutations → `useMutation` with `qc.invalidateQueries`.
 - Schema helpers: `formatUser`, `formatRestaurantSettings`, `getOrCreateRestaurantSettings`, `requireAuth` / `requireAdmin` in `schema.ts`.
+- `graphql-request` v7 calls `new URL(url)` with no base — always resolve the endpoint via `resolveGraphQLEndpoint()` (`frontend/src/graphql/queries.ts`), which resolves relative `REACT_APP_GRAPHQL_URL=/graphql` against `window.location.origin`.
 - Restaurant settings: singleton in `db.settings` collection — `tableCount` drives `TableSelect` and `tables` query.
 - Tables: `tables: [TableStatus!]!` computed from busy orders (`pending`/`preparing`) and confirmed reservations; frontend `/tables` page is staff/admin only.
 - **Order items** store `menuItem` as a string ID — resolved via `buildMenuItemMap()` lookup in order resolvers (replaces Mongoose populate).
+
+## Deployment (Caddy)
+
+- Root `Caddyfile` (Caddy v2) is the single public entrypoint: `/graphql*`, `/events*`, `/api-docs*` → `{$BACKEND_UPSTREAM:localhost:5000}`; `/*` serves `frontend/build` mounted at `/srv/frontend` with SPA fallback. `/events` uses `flush_interval -1` (SSE must not be buffered).
+- Same-origin frontend build: `REACT_APP_GRAPHQL_URL=/graphql REACT_APP_WS_URL= npm run build` (`REACT_APP_WS_URL=` empty → `/events`, see `frontend/src/eventSource.ts`). Dev variant proxying to `{$FRONTEND_UPSTREAM:localhost:3000}` is commented in the Caddyfile.
+- After editing: `caddy fmt` check + `caddy validate --config Caddyfile --adapter caddyfile` (via `caddy:2` docker image if no local binary).
 
 ## Auth & Roles
 

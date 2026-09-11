@@ -1,0 +1,62 @@
+# Restaurant Management System — Caddy v2 configuration.
+#
+# What it does (single public entrypoint, same-origin — no CORS issues):
+#   /graphql*   -> backend (Express + express-graphql)
+#   /events*    -> backend (SSE stream in backend/sse.ts, unbuffered)
+#   /api-docs*  -> backend (Swagger UI)
+#   /*          -> frontend static build (frontend/build, SPA fallback to index.html)
+#
+# Usage — production (serve prebuilt frontend):
+#   cd frontend && REACT_APP_GRAPHQL_URL=/graphql REACT_APP_WS_URL= npm run build
+#   # copy frontend/build to /srv/frontend (or mount it), then:
+#   BACKEND_UPSTREAM=localhost:5000 DOMAIN=localhost caddy run --config Caddyfile --adapter caddyfile
+#
+# Usage — Docker (service names as upstreams):
+#   BACKEND_UPSTREAM=backend:5000 DOMAIN=restaurant.example.com caddy run ...
+#   (mount ./frontend/build -> /srv/frontend)
+#
+# Usage — local dev (CRA dev server with HMR instead of static files):
+#   comment out the `handle` static block below and uncomment the dev block,
+#   then: FRONTEND_UPSTREAM=localhost:3000 BACKEND_UPSTREAM=localhost:5000 caddy run
+#
+# Validate / format:
+#   caddy fmt --overwrite Caddyfile
+#   caddy validate --config Caddyfile --adapter caddyfile
+#
+# Notes:
+# - When DOMAIN is a real hostname, Caddy serves HTTPS automatically (port 443).
+# - `flush_interval -1` disables proxy buffering so SSE `/events` stream in real time.
+# - Frontend must use same-origin URLs behind Caddy: REACT_APP_GRAPHQL_URL=/graphql
+#   and REACT_APP_WS_URL= (empty -> same-origin /events, see frontend/src/eventSource.ts).
+
+{$DOMAIN:localhost} {
+	encode gzip
+
+	log
+
+	handle /graphql* {
+		reverse_proxy {$BACKEND_UPSTREAM:localhost:5000}
+	}
+
+	handle /events* {
+		reverse_proxy {$BACKEND_UPSTREAM:localhost:5000} {
+			flush_interval -1
+		}
+	}
+
+	handle /api-docs* {
+		reverse_proxy {$BACKEND_UPSTREAM:localhost:5000}
+	}
+
+	# Production: serve the frontend build output (frontend/build -> /srv/frontend).
+	handle {
+		root * /srv/frontend
+		try_files {path} /index.html
+		file_server
+	}
+
+	# --- Local dev alternative: proxy to the CRA dev server (uncomment to use) ---
+	#handle {
+	#	reverse_proxy {$FRONTEND_UPSTREAM:localhost:3000}
+	#}
+}

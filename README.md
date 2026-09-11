@@ -69,16 +69,16 @@ frontend/
 ### Prerequisites
 
 - Node.js 18+
-- MongoDB (local or Atlas)
+- No external database — data is stored locally via RxDB/SQLite
+  (`better-sqlite3`)
 
 ### Environment
 
 Create `backend/.env` from `backend/.env.example`:
 
 ```
-MONGO_URI=mongodb://localhost:27017/restaurant
-JWT_SECRET=your_jwt_secret
 PORT=5000
+JWT_SECRET=your_jwt_secret
 ```
 
 Frontend proxy is `http://localhost:5000` (`frontend/package.json:proxy`) or set `REACT_APP_GRAPHQL_URL=http://localhost:5000/graphql`.
@@ -107,6 +107,27 @@ npm start                        # node dist/server.js
 
 cd frontend && npm run build    # build/
 ```
+
+### Caddy (production reverse proxy)
+
+Root `Caddyfile` (Caddy v2, validated with `caddy validate`) exposes one public
+entrypoint: `/graphql*`, `/events*` (SSE, unbuffered via `flush_interval -1`)
+and `/api-docs*` proxy to the backend (`$BACKEND_UPSTREAM`, default
+`localhost:5000`); everything else serves the frontend `build/` output mounted
+at `/srv/frontend` with SPA fallback to `index.html`. Full HTTPS deployment
+guide (DNS, firewall, commands): [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+```bash
+# Build the frontend with same-origin API URLs, then serve via Caddy
+cd frontend && REACT_APP_GRAPHQL_URL=/graphql REACT_APP_WS_URL= npm run build
+# cp -r build /srv/frontend  (or mount ./frontend/build -> /srv/frontend)
+DOMAIN=restaurant.example.com BACKEND_UPSTREAM=localhost:5000 caddy run
+```
+
+`REACT_APP_WS_URL=` (empty) means same-origin `/events`
+(`frontend/src/eventSource.ts`); a local-dev variant proxying to the CRA dev
+server (`$FRONTEND_UPSTREAM`, default `localhost:3000`) is commented in the
+Caddyfile.
 
 ### Testing
 

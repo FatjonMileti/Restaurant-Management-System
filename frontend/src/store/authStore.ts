@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { request, gql } from 'graphql-request';
+import { resolveGraphQLEndpoint } from '../graphql/queries';
 
 export interface AuthUser {
   _id: string;
@@ -35,7 +36,7 @@ const persistUser = (user: AuthUser | null) => {
   }
 };
 
-const endpoint = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql';
+const endpoint = resolveGraphQLEndpoint();
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: readStoredUser(),
