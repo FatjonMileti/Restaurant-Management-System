@@ -3,14 +3,21 @@ import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { RxDBCleanupPlugin } from 'rxdb/plugins/cleanup';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
+import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema';
 
 addRxPlugin(RxDBLeaderElectionPlugin);
 addRxPlugin(RxDBCleanupPlugin);
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
+addRxPlugin(RxDBMigrationSchemaPlugin);
 
 type Collections = {
   users: any;
+  menuItems: any;
+  categories: any;
+  orders: any;
+  reservations: any;
+  settings: any;
 };
 
 let dbInstance: any = null;
@@ -45,7 +52,7 @@ export const getRxDB = async (): Promise<any> => {
     indexes: ['email'],
   };
 
-    // Define MenuItem collection schema
+  // Define MenuItem collection schema
   const menuItemSchema = {
     title: 'menuItem schema',
     version: 0,
@@ -81,15 +88,23 @@ export const getRxDB = async (): Promise<any> => {
   };
 
   // Define Order collection schema
+  // NOTE: `user` holds a users._id, so it declares `ref: 'users'` to document the
+  // FK. Do NOT call doc.populate() — it is broken with the @basepurpose/rxdb-sqlite
+  // adapter (returns docs with all fields emptied); resolvers rely on the findOne
+  // fallback in formatters instead.
+  // `items[].menuItem` intentionally has no ref (nested-array populate is unreliable
+  // with this stack) — order resolvers resolve it via buildMenuItemMap() instead.
+  // `menuItems.category` intentionally has no ref — it stores the category *name*,
+  // not the category _id, so a ref could never resolve.
   const orderSchema = {
     title: 'order schema',
-    version: 0,
+    version: 1,
     description: 'order collection',
     type: 'object',
     primaryKey: '_id',
     properties: {
       _id: { type: 'string', maxLength: 100 },
-      user: { type: 'string' },
+      user: { type: 'string', ref: 'users' },
       items: { type: 'array', items: { type: 'object' } },
       totalAmount: { type: 'number' },
       tableNumber: { type: 'number' },
@@ -102,15 +117,17 @@ export const getRxDB = async (): Promise<any> => {
   };
 
   // Define Reservation collection schema
+  // NOTE: `user` declares `ref: 'users'` to document the FK (see order schema
+  // note on why populate() must not be called).
   const reservationSchema = {
     title: 'reservation schema',
-    version: 0,
+    version: 1,
     description: 'reservation collection',
     type: 'object',
     primaryKey: '_id',
     properties: {
       _id: { type: 'string', maxLength: 100 },
-      user: { type: 'string' },
+      user: { type: 'string', ref: 'users' },
       date: { type: 'string' },
       time: { type: 'string' },
       guests: { type: 'number' },
@@ -143,15 +160,24 @@ export const getRxDB = async (): Promise<any> => {
     indexes: [],
   };
 
+  // Identity migrations: v0 -> v1 only adds `ref` metadata (no stored data changes).
+  // Convention: whenever a collection schema changes, bump its `version` and add a
+  // migration strategy here — otherwise RxDB throws a schema-mismatch error on
+  // startup for anyone with an existing SQLite file.
+  const identityMigration = (doc: any) => doc;
+
   await dbInstance.addCollections({
     users: { schema: userSchema },
     menuItems: { schema: menuItemSchema },
     categories: { schema: categorySchema },
-    orders: { schema: orderSchema },
-    reservations: { schema: reservationSchema },
+    orders: { schema: orderSchema, migrationStrategies: { 1: identityMigration } },
+    reservations: { schema: reservationSchema, migrationStrategies: { 1: identityMigration } },
     settings: { schema: settingsSchema },
   });
+
+  return dbInstance;
 };
-export const getDB = () => dbInstance;
-
-
+export const getDB = () => {
+  if (!dbInstance) throw new Error('Database not initialized. Call getRxDB() first.');
+  return dbInstance;
+};

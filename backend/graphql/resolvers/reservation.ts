@@ -15,7 +15,10 @@ export const reservationResolvers = {
     if (tableNumber !== undefined) filter.tableNumber = tableNumber;
     const db = await getDB();
     const docs = await db.reservations.find(filter).sort('-date').exec();
-    return docs.map((doc: any) => formatReservation(doc.toJSON()));
+    // NOTE: doc.populate() is broken with the @basepurpose/rxdb-sqlite adapter
+    // (it returns docs with all fields emptied), so user ids are resolved via
+    // the findOne fallback inside formatReservation instead.
+    return Promise.all(docs.map((doc: any) => formatReservation(doc.toJSON())));
   },
   reservation: async ({ id }: any, context?: any) => {
     await requireStaffOrAdmin(context);
@@ -40,8 +43,7 @@ export const reservationResolvers = {
     });
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
-    const res = resDoc.toJSON();
-    return { ...res, id: res._id };
+    return formatReservation(resDoc.toJSON());
   },
   updateReservation: async ({ id, ...rest }: any, context?: any) => {
     await requireStaffOrAdmin(context);
@@ -54,7 +56,7 @@ export const reservationResolvers = {
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
     const updated = await db.reservations.findOne(id).exec();
-    return formatReservation(updated?.toJSON() || doc.toJSON());
+    return formatReservation((updated || doc).toJSON());
   },
   deleteReservation: async ({ id }: any, context?: any) => {
     await requireStaffOrAdmin(context);
@@ -76,7 +78,6 @@ export const reservationResolvers = {
     emitEvent('reservations:changed');
     emitEvent('tables:changed');
     const updated = await db.reservations.findOne(id).exec();
-    const res = updated?.toJSON() || doc.toJSON();
-    return { ...res, id: res._id };
+    return formatReservation((updated || doc).toJSON());
   },
 };

@@ -13,6 +13,13 @@ describe('order resolvers', () => {
 
   it('orders returns empty list when none exist', async () => {
     (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: {
+        findOne: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue({
+            toJSON: () => ({ _id: 'staff1', role: 'staff' }),
+          }),
+        }),
+      },
       orders: {
         find: jest.fn().mockReturnValue({
           sort: jest.fn().mockReturnValue({
@@ -26,8 +33,52 @@ describe('order resolvers', () => {
         }),
       },
     });
-    const res = await orderResolvers.orders({});
+    const res = await orderResolvers.orders({}, { userId: 'staff1' });
     expect(res).toEqual([]);
+  });
+
+  it('orders resolves user id to formatted user', async () => {
+    const orderJson = {
+      _id: 'o1',
+      user: 'u1',
+      items: [],
+      totalAmount: 0,
+      status: 'pending',
+      tableNumber: 2,
+    };
+    const orderDoc: any = { toJSON: () => orderJson };
+    const findOneImpl = (id: string) => ({
+      exec: jest.fn().mockResolvedValue(
+        id === 'u1'
+          ? {
+              toJSON: () => ({
+                _id: 'u1',
+                name: 'John',
+                email: 'john@example.com',
+                role: 'customer',
+              }),
+            }
+          : { toJSON: () => ({ _id: 'staff1', role: 'staff' }) },
+      ),
+    });
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: { findOne: jest.fn().mockImplementation(findOneImpl) },
+      orders: {
+        find: jest.fn().mockReturnValue({
+          sort: jest.fn().mockReturnValue({
+            exec: jest.fn().mockResolvedValue([orderDoc]),
+          }),
+        }),
+      },
+      menuItems: {
+        find: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue([]),
+        }),
+      },
+    });
+    const res: any = await Promise.all(await orderResolvers.orders({}, { userId: 'staff1' }));
+    expect(res[0].user.id).toBe('u1');
+    expect(res[0].user.name).toBe('John');
   });
 
   it('createOrder inserts and returns formatted order', async () => {

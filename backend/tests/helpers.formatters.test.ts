@@ -84,7 +84,19 @@ describe('formatCategory', () => {
 });
 
 describe('formatOrder', () => {
-  it('formats order with populated menuItem', () => {
+  beforeEach(() => {
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: {
+        findOne: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue({
+            toJSON: () => ({ _id: 'user9', name: 'Fetched', email: 'f@x.com', role: 'staff' }),
+          }),
+        }),
+      },
+    });
+  });
+
+  it('formats order with populated menuItem', async () => {
     const order: any = {
       _id: 'order1',
       user: { _id: 'user1', name: 'John', email: 'john@example.com', role: 'customer' },
@@ -103,22 +115,54 @@ describe('formatOrder', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    const res: any = formatOrder(order);
+    const res: any = await formatOrder(order);
     expect(res.id).toBe('order1');
     expect(res.items[0].menuItem.id).toBe('menu1');
     expect(res.user.id).toBe('user1');
     expect(res.totalAmount).toBe(20);
   });
-  it('handles lean order without populated user', () => {
+  it('resolves user id via lookup when not populated', async () => {
+    const order: any = {
+      _id: 'order3',
+      user: 'user9',
+      items: [],
+      totalAmount: 0,
+      status: 'pending',
+    };
+    const res: any = await formatOrder(order);
+    expect(res.user.id).toBe('user9');
+    expect(res.user.name).toBe('Fetched');
+  });
+  it('handles lean order without user', async () => {
     const order: any = { _id: 'order2', items: [], totalAmount: 0, status: 'pending' };
-    const res: any = formatOrder(order);
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: { findOne: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(null) }) },
+    });
+    const res: any = await formatOrder(order);
     expect(res.id).toBe('order2');
     expect(res.user).toBeNull();
   });
 });
 
 describe('formatReservation', () => {
-  it('formats date with moment', () => {
+  beforeEach(() => {
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: {
+        findOne: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue({
+            toJSON: () => ({
+              _id: 'user1',
+              name: 'Jane',
+              email: 'jane@example.com',
+              role: 'customer',
+            }),
+          }),
+        }),
+      },
+    });
+  });
+
+  it('formats date with moment', async () => {
     const doc: any = {
       _id: 'res1',
       user: { _id: 'user1', name: 'Jane', email: 'jane@example.com', role: 'customer' },
@@ -127,10 +171,23 @@ describe('formatReservation', () => {
       guests: 2,
       status: 'confirmed',
     };
-    const res: any = formatReservation(doc);
+    const res: any = await formatReservation(doc);
     expect(res.id).toBe('res1');
     expect(res.date).toBe('2025-06-15');
     expect(res.user.id).toBe('user1');
+  });
+  it('resolves user id via lookup when not populated', async () => {
+    const doc: any = {
+      _id: 'res2',
+      user: 'user1',
+      date: '2025-06-16',
+      time: '20:00',
+      guests: 4,
+      status: 'confirmed',
+    };
+    const res: any = await formatReservation(doc);
+    expect(res.user.id).toBe('user1');
+    expect(res.user.name).toBe('Jane');
   });
 });
 

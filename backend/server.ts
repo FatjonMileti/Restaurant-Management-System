@@ -11,7 +11,6 @@ import jwt from 'jsonwebtoken';
 import { initSSE } from './sse.js';
 
 dotenv.config();
-connectDB();
 
 const app = express();
 
@@ -56,4 +55,12 @@ app.get('/', (_req, res) => {
 initSSE(app);
 
 const PORT = process.env.PORT || 5000;
-const httpServer = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Wait for the database before accepting requests — resolvers throw a clear
+// "Database not initialized" error otherwise, and early requests would fail.
+const start = async () => {
+  await connectDB();
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+};
+
+start();

@@ -1,10 +1,8 @@
 import { getRxDB } from './rxdb.js';
 
-let dbInstance: any = null;
-
 export const connectDB = async (): Promise<void> => {
   try {
-    dbInstance = await getRxDB();
+    await getRxDB();
     console.log('RxDB Connected');
   } catch (error) {
     if (error instanceof Error) {
@@ -15,4 +13,3 @@ export const connectDB = async (): Promise<void> => {
 };
 
 export default connectDB;
-

@@ -7,9 +7,11 @@ jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 import { getDB } from '../config/rxdb';
 import { dashboardResolvers } from '../graphql/resolvers/dashboard';
 
+const mockDoc = (d: any) => ({ toJSON: () => d });
+
 const mockFind = (data: any[]) =>
   jest.fn().mockReturnValue({
-    exec: jest.fn().mockResolvedValue(data.map((d) => ({ toJSON: () => d }))),
+    exec: jest.fn().mockResolvedValue(data.map((d) => mockDoc(d))),
     sort: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
   });
@@ -17,7 +19,7 @@ const mockFind = (data: any[]) =>
 const mockCollection = (data: any[]) => ({
   find: mockFind(data),
   findOne: jest.fn().mockReturnValue({
-    exec: jest.fn().mockResolvedValue(data.length > 0 ? { toJSON: () => data[0] } : null),
+    exec: jest.fn().mockResolvedValue(data.length > 0 ? mockDoc(data[0]) : null),
   }),
 });
 

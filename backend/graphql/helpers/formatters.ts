@@ -63,7 +63,10 @@ export const getOrCreateRestaurantSettings = async () => {
 
 export const formatOrder = async (o: any, menuItemMap?: Map<string, any>) => {
   const db = await getDB();
-  const user = await db.users.findOne(o.user).exec();
+  // Prefer an already-populated user object (see order resolvers using
+  // doc.populate('user')); fall back to a lookup when only the id is present.
+  const user =
+    o.user && typeof o.user === 'object' ? o.user : await db.users.findOne(o.user).exec();
   const userObj = formatUser(user);
   const itemsArr = (o.items || []).map((item: any) => {
     let menuItemObj: any = null;
@@ -112,9 +115,19 @@ export const formatOrder = async (o: any, menuItemMap?: Map<string, any>) => {
   };
 };
 
-export const formatReservation = (doc: any) => {
+export const formatReservation = async (doc: any) => {
   const d = unwrapDoc(doc);
-  const userObj = formatUser(d.user);
+  // Accept an already-populated user object; otherwise resolve the stored user id.
+  // (Previously a raw id string was passed straight to formatUser, which always
+  // produced an empty user object.)
+  let userDoc: any = null;
+  if (d.user && typeof d.user === 'object') {
+    userDoc = d.user;
+  } else if (d.user) {
+    const db = await getDB();
+    userDoc = await db.users.findOne(d.user).exec();
+  }
+  const userObj = formatUser(userDoc);
   return {
     ...d,
     id: d._id ? d._id.toString() : d.id || null,

@@ -20,12 +20,16 @@ Two independent packages under one root: `backend/` and `frontend/`. Always `cd`
 **Real-time layer (SSE, not socket.io):** Server-Sent Events at `GET /events` (`backend/sse.ts`). `initSSE(app)` registers the route; `emitEvent(event, data)` broadcasts to all connected clients. Resolvers call `emitEvent('<entity>:changed')` after mutations. Frontend `getEventSource()` in `frontend/src/eventSource.ts` opens an `EventSource` to `/events`; `useEventSource()` maps events to React Query cache invalidations.
 
 **RxDB quirks:**
+
 - `findOne()` only works reliably with the primary key (`_id`). For non-primary fields (e.g. `email`, `status`), use `find().exec()` + JS `.find()` / `.filter()`.
 - `doc.update()` does not refresh the in-memory document — re-fetch after update if returning the result.
 - `$in` operator not supported — use separate queries or JS `.filter()`.
 - Required plugins registered in `config/rxdb.ts`: `RxDBQueryBuilderPlugin`, `RxDBUpdatePlugin`.
 - All documents require explicit `_id` field (use `crypto.randomUUID()`).
 - Formatters use `unwrapDoc()` which prefers `toJSON()` over `toObject()` for RxDB docs.
+- FK refs: `orders.user` and `reservations.user` declare `ref: 'users'` to document the FK — but never call `doc.populate()`: it is broken with the `@basepurpose/rxdb-sqlite` adapter (returns docs with all fields emptied, verified live). Resolvers pass raw docs to formatters, which accept an already-populated user object and otherwise resolve raw ids via `findOne`. Do NOT add a `categories` ref (`menuItem.category` stores the name, not `_id`) or a nested `items[].menuItem` ref — order items keep using `buildMenuItemMap()`.
+- Schema changes: bump the collection `version` and add a `migrationStrategies` entry in `config/rxdb.ts` (even identity `(doc) => doc`), or RxDB throws a schema-mismatch error on existing SQLite files.
+- `getDB()` throws `Database not initialized` if `getRxDB()` hasn't run — `server.ts` awaits `connectDB()` before `app.listen()`.
 
 **Auth middleware** (`middleware/auth.ts`):
 
