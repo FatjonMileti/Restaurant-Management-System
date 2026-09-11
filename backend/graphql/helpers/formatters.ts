@@ -61,8 +61,10 @@ export const getOrCreateRestaurantSettings = async () => {
   return settings.toJSON();
 };
 
-export const formatOrder = (o: any, menuItemMap?: Map<string, any>) => {
-  const userObj = formatUser(o.user);
+export const formatOrder = async (o: any, menuItemMap?: Map<string, any>) => {
+  const db = await getDB();
+  const user = await db.users.findOne(o.user).exec();
+  const userObj = formatUser(user);
   const itemsArr = (o.items || []).map((item: any) => {
     let menuItemObj: any = null;
     if (item.menuItem && typeof item.menuItem === 'object' && item.menuItem._id) {
