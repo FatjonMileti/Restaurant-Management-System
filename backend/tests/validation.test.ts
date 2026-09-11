@@ -99,6 +99,21 @@ describe('validation schemas', () => {
         }).success,
       ).toBe(true);
     });
+    it('rejects create order without tableNumber', () => {
+      const r = validate(createOrderSchema, {
+        items: [{ menuItem: 'abc', name: 'Pizza', quantity: 1, price: 10 }],
+      });
+      expect(r.success).toBe(false);
+      if (!r.success) expect(r.errors.join(' ')).toMatch(/Table number is required/);
+    });
+    it('rejects create order with non-positive tableNumber', () => {
+      expect(
+        validate(createOrderSchema, {
+          items: [{ menuItem: 'abc', name: 'Pizza', quantity: 1, price: 10 }],
+          tableNumber: 0,
+        }).success,
+      ).toBe(false);
+    });
     it('rejects invalid paymentMethod', () => {
       expect(
         validate(updateOrderSchema, {

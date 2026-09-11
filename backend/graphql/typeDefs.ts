@@ -160,7 +160,7 @@ export const typeDefs = `
     updateMenuItem(id: ID!, name: String, description: String, price: Float, category: String, image: String, available: Boolean): MenuItem
     deleteMenuItem(id: ID!): String
 
-    createOrder(items: [OrderItemInput!]!, tableNumber: Int, paymentMethod: String): Order
+    createOrder(items: [OrderItemInput!]!, tableNumber: Int!, paymentMethod: String): Order
     updateOrder(id: ID!, items: [OrderItemInput!], tableNumber: Int, paymentMethod: String, status: String, totalAmount: Float): Order
     deleteOrder(id: ID!): String
     updateOrderStatus(id: ID!, status: String!): Order

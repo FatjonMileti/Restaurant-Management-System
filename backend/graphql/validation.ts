@@ -29,7 +29,10 @@ export const orderItemSchema = z.object({
 
 export const createOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1, 'Order must have at least one item'),
-  tableNumber: z.number().int().positive().optional(),
+  tableNumber: z
+    .number({ error: 'Table number is required' })
+    .int()
+    .positive('Table number is required'),
   paymentMethod: z.enum(['cash', 'card']).optional(),
 });
 

@@ -47,17 +47,14 @@ export const orderResolvers = {
     const v = validate(createOrderSchema, { items, tableNumber, paymentMethod });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
-    if (v.data.tableNumber) {
-      const allOrders = await db.orders.find().exec();
-      const busy = allOrders.some((d: any) => {
-        const o = d.toJSON();
-        return (
-          o.tableNumber === v.data.tableNumber &&
-          ['pending', 'preparing', 'ready'].includes(o.status)
-        );
-      });
-      if (busy) throw new Error('Table is busy');
-    }
+    const allOrders = await db.orders.find().exec();
+    const busy = allOrders.some((d: any) => {
+      const o = d.toJSON();
+      return (
+        o.tableNumber === v.data.tableNumber && ['pending', 'preparing', 'ready'].includes(o.status)
+      );
+    });
+    if (busy) throw new Error('Table is busy');
     const totalAmount = v.data.items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
     const orderDoc = await db.orders.insert({
       _id: genId(),

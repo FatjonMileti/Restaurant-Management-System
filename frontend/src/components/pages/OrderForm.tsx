@@ -45,7 +45,14 @@ export default function OrderFormComponent({
   const menuItems = menu.filter((i) => i.available);
 
   const [actionError, setActionError] = useState('');
-  const { register, handleSubmit, reset, watch, setValue } = useForm<OrderFormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<OrderFormData>({
     resolver: zodResolver(orderFormSchema),
     defaultValues: {
       tableNumber: editingOrder?.tableNumber ? String(editingOrder.tableNumber) : '',
@@ -89,7 +96,7 @@ export default function OrderFormComponent({
               price: c.price,
               quantity: c.quantity,
             })),
-            tableNumber: Number(data.tableNumber) || undefined,
+            tableNumber: Number(data.tableNumber),
             status: 'pending',
           },
         });
@@ -102,7 +109,7 @@ export default function OrderFormComponent({
             price: c.price,
             quantity: c.quantity,
           })),
-          tableNumber: Number(data.tableNumber) || undefined,
+          tableNumber: Number(data.tableNumber),
         });
         setShowCreate(false);
       }
@@ -155,11 +162,14 @@ export default function OrderFormComponent({
           <div className="flex gap-2.5 mt-3 items-center flex-wrap">
             <TableSelect
               value={tableValue}
-              onChange={(v) => setValue('tableNumber', v)}
-              placeholder="Table number"
+              onChange={(v) => setValue('tableNumber', v, { shouldValidate: true })}
+              placeholder="Select table (required)"
               className="p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#e94560] w-36"
               showBusyLabel
             />
+            {errors.tableNumber && (
+              <p className="error-text w-full">{errors.tableNumber.message}</p>
+            )}
             <button
               type="submit"
               disabled={editingOrder ? updateOrder.isPending : createOrder.isPending}

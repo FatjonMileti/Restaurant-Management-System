@@ -60,4 +60,14 @@ describe('order resolvers', () => {
     expect(res.status).toBe('pending');
     expect(mockInsert).toHaveBeenCalled();
   });
+
+  it('createOrder rejects missing tableNumber', async () => {
+    await expect(
+      orderResolvers.createOrder(
+        { items: [{ menuItem: 'menu1', name: 'Pizza', quantity: 1, price: 20 }] },
+        { userId: 'u1' },
+      ),
+    ).rejects.toThrow(/Table number is required/);
+    expect(emitEvent).not.toHaveBeenCalled();
+  });
 });

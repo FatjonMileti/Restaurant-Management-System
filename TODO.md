@@ -16,6 +16,6 @@
 - [x] Modify GraphQL resolvers to query RxDB collections
 - [x] Adjust seed script to populate RxDB data
 - [x] Update Jest tests to work with RxDB (mock RxDB where needed)
+- [x] Make table number required when creating a new order (frontend and backend)
 
 ## To Do
-

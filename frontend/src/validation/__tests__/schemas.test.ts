@@ -73,8 +73,23 @@ describe('frontend validation schemas', () => {
   });
 
   describe('orderFormSchema', () => {
-    it('allows empty tableNumber', () => {
-      expect(orderFormSchema.safeParse({ tableNumber: '' }).success).toBe(true);
+    it('rejects empty tableNumber', () => {
+      const result = orderFormSchema.safeParse({ tableNumber: '' });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toMatch(/Table number is required/);
+      }
+    });
+    it('rejects missing tableNumber', () => {
+      expect(orderFormSchema.safeParse({}).success).toBe(false);
+    });
+    it('rejects non-positive tableNumber', () => {
+      expect(orderFormSchema.safeParse({ tableNumber: '0' }).success).toBe(false);
+      expect(orderFormSchema.safeParse({ tableNumber: '-2' }).success).toBe(false);
+      expect(orderFormSchema.safeParse({ tableNumber: 'abc' }).success).toBe(false);
+    });
+    it('accepts a valid tableNumber', () => {
+      expect(orderFormSchema.safeParse({ tableNumber: '5' }).success).toBe(true);
     });
   });
 });

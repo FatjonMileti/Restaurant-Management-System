@@ -137,7 +137,7 @@ export const GET_ORDERS = gql`
   }
 `;
 export const CREATE_ORDER = gql`
-  mutation CreateOrder($items: [OrderItemInput!]!, $tableNumber: Int, $paymentMethod: String) {
+  mutation CreateOrder($items: [OrderItemInput!]!, $tableNumber: Int!, $paymentMethod: String) {
     createOrder(items: $items, tableNumber: $tableNumber, paymentMethod: $paymentMethod) {
       id
       totalAmount

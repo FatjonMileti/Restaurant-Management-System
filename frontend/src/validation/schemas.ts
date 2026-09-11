@@ -21,7 +21,12 @@ export const menuItemSchema = z.object({
 });
 
 export const orderFormSchema = z.object({
-  tableNumber: z.string().optional(),
+  tableNumber: z
+    .string()
+    .min(1, 'Table number is required')
+    .refine((v) => Number.isInteger(Number(v)) && Number(v) > 0, {
+      message: 'Table number is required',
+    }),
 });
 
 export const reservationSchema = z.object({

@@ -96,7 +96,7 @@ export interface Order {
 
 export interface NewOrderPayload {
   items: { menuItem: string; name: string; price: number; quantity: number }[];
-  tableNumber?: number;
+  tableNumber: number;
 }
 
 export interface ReservationUser {
