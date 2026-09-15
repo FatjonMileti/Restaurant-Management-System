@@ -108,7 +108,7 @@ GraphQL only at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). RES
 
 - State: `zustand` (`authStore`, `cartStore`), `react-hook-form` for forms, `@tanstack/react-query` for server state. `App.tsx` global overlay via `useIsFetching`/`useIsMutating`.
 - Forms: use `TableSelect` for table numbers (not raw number inputs). Invalidate `['tables']` after order/reservation mutations and `['restaurantSettings']` after settings update.
-- Error handling: unwrap `ClientError` → `err.response.errors[0].message`; handle `Failed to fetch`/`NetworkError` as `Network error: backend is unavailable`.
+- Error handling: backend throws coded `AppError`s (`backend/graphql/errors.ts`: `UNAUTHENTICATED`/`FORBIDDEN`/`VALIDATION_FAILED`/`NOT_FOUND`/`CONFLICT`, surfaced as `extensions.code` via `customFormatErrorFn`); frontend uses only the shared `getGraphQLErrorMessage(err, fallback)` (`frontend/src/utils/graphqlErrors.ts`), which maps `FORBIDDEN` → permission text and expired-session `UNAUTHENTICATED` → re-login text, and treats `Failed to fetch`/`NetworkError` as `Network error: backend is unavailable`. Never add local copies.
 
 ## Code Style & Quality
 

@@ -43,8 +43,11 @@ export const conflictError = (message: string): AppError =>
 
 /**
  * express-graphql error formatter (use as `customFormatErrorFn`).
- * Surfaces `{ message, code }` — unknown failures default to INTERNAL so
- * clients can distinguish expected domain errors from generic ones.
+ * Surfaces `{ message, extensions: { code } }` — the code must live under
+ * `extensions`: graphql-js only serializes message/locations/path/extensions,
+ * anything else is dropped from the wire response. Unknown failures default
+ * to INTERNAL so clients can distinguish expected domain errors from generic
+ * ones.
  */
 export const formatGraphQLError = (err: any) => {
   const original = (err as any)?.originalError as { code?: unknown } | undefined;
@@ -52,8 +55,8 @@ export const formatGraphQLError = (err: any) => {
     typeof original?.code === 'string' ? (original.code as string) : ErrorCodes.INTERNAL;
   return {
     message: (err as any)?.message || 'Unknown error',
-    code,
     path: (err as any)?.path,
     locations: (err as any)?.locations,
+    extensions: { code },
   };
 };

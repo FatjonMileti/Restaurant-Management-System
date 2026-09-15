@@ -43,7 +43,7 @@ describe('coded errors', () => {
 });
 
 describe('formatGraphQLError', () => {
-  it('surfaces the original error code', () => {
+  it('surfaces the original error code under extensions', () => {
     const err = {
       message: 'Table is busy',
       path: ['createOrder'],
@@ -52,25 +52,25 @@ describe('formatGraphQLError', () => {
     };
     expect(formatGraphQLError(err)).toEqual({
       message: 'Table is busy',
-      code: 'CONFLICT',
       path: ['createOrder'],
       locations: [{ line: 1, column: 1 }],
+      extensions: { code: 'CONFLICT' },
     });
   });
 
   it('defaults to INTERNAL for plain errors', () => {
     expect(formatGraphQLError({ message: 'boom', originalError: new Error('boom') })).toEqual({
       message: 'boom',
-      code: ErrorCodes.INTERNAL,
       path: undefined,
       locations: undefined,
+      extensions: { code: ErrorCodes.INTERNAL },
     });
   });
 
   it('falls back to Unknown error without a message', () => {
     expect(formatGraphQLError({})).toMatchObject({
       message: 'Unknown error',
-      code: ErrorCodes.INTERNAL,
+      extensions: { code: ErrorCodes.INTERNAL },
     });
   });
 });

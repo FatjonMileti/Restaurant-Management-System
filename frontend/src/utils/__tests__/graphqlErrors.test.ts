@@ -1,13 +1,21 @@
 import { ClientError } from 'graphql-request';
 import { getGraphQLErrorMessage } from '../graphqlErrors';
 
-const clientError = (errors?: Array<{ message?: string }>) =>
+let mockSessionUser: any = null;
+jest.mock('../../store/authStore', () => ({
+  useAuthStore: { getState: () => ({ user: mockSessionUser }) },
+}));
+
+const clientError = (errors?: Array<{ message?: string; extensions?: any }>) =>
   new ClientError(
     { errors, data: undefined, extensions: undefined, headers: undefined, status: 200 } as any,
     { query: '', variables: {} } as any,
   );
 
 describe('getGraphQLErrorMessage', () => {
+  beforeEach(() => {
+    mockSessionUser = null;
+  });
   it('extracts the first GraphQL error message', () => {
     expect(
       getGraphQLErrorMessage(clientError([{ message: 'Table is busy' }])),
@@ -43,5 +51,41 @@ describe('getGraphQLErrorMessage', () => {
   it('returns the fallback for unknown values', () => {
     expect(getGraphQLErrorMessage('nope')).toBe('Request failed');
     expect(getGraphQLErrorMessage(undefined, 'Custom')).toBe('Custom');
+  });
+
+  it('maps FORBIDDEN to a permission message', () => {
+    mockSessionUser = { token: 't' };
+    expect(
+      getGraphQLErrorMessage(
+        clientError([{ message: 'Not authorized, admin only', extensions: { code: 'FORBIDDEN' } }]),
+      ),
+    ).toBe("You don't have permission to perform this action.");
+  });
+
+  it('also reads a top-level code for robustness', () => {
+    expect(
+      getGraphQLErrorMessage(clientError([{ message: 'x', code: 'FORBIDDEN' } as any])),
+    ).toBe("You don't have permission to perform this action.");
+  });
+
+  it('maps UNAUTHENTICATED to session-expired only with a stored session', () => {
+    mockSessionUser = { token: 't' };
+    expect(
+      getGraphQLErrorMessage(
+        clientError([
+          { message: 'Not authenticated', extensions: { code: 'UNAUTHENTICATED' } },
+        ]),
+      ),
+    ).toBe('Your session has expired. Please log in again.');
+    // Login form itself: no session yet, server message passes through.
+    mockSessionUser = null;
+    expect(
+      getGraphQLErrorMessage(
+        clientError([
+          { message: 'Invalid email or password', extensions: { code: 'UNAUTHENTICATED' } },
+        ]),
+        'Login failed',
+      ),
+    ).toBe('Invalid email or password');
   });
 });

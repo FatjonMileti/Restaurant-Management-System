@@ -7,6 +7,7 @@ import {
   Order,
 } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import FilterBar from '../FilterBar';
 import ConfirmDialog from '../ConfirmDialog';
 import OrderCard from './OrderCard';
@@ -42,7 +43,7 @@ export default function OrderList({ onEditOrder }: Props) {
       try {
         await updateStatus.mutateAsync({ id, status });
       } catch (err) {
-        setActionError(err instanceof Error ? err.message : 'Failed to update order status');
+        setActionError(getGraphQLErrorMessage(err, 'Failed to update order status'));
       }
     },
     [updateStatus],
@@ -53,7 +54,7 @@ export default function OrderList({ onEditOrder }: Props) {
       try {
         await deleteOrder.mutateAsync(deleteConfirm.id);
       } catch (err) {
-        setActionError(err instanceof Error ? err.message : 'Failed to delete order');
+        setActionError(getGraphQLErrorMessage(err, 'Failed to delete order'));
       }
     }
     setDeleteConfirm({ open: false });
@@ -63,7 +64,9 @@ export default function OrderList({ onEditOrder }: Props) {
     setDeleteConfirm({ open: true, id });
   }, []);
 
-  const error = ordersError instanceof Error ? ordersError.message : actionError;
+  const error = ordersError
+    ? getGraphQLErrorMessage(ordersError, 'Failed to load orders')
+    : actionError;
 
   const filteredOrders = useMemo(
     () =>

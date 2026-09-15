@@ -7,6 +7,7 @@ import {
   Reservation,
 } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import FilterBar from '../FilterBar';
 import ConfirmDialog from '../ConfirmDialog';
 import ReservationCard from './ReservationCard';
@@ -36,7 +37,7 @@ export default function ReservationList({ onEditReservation }: Props) {
       try {
         await cancelReservation.mutateAsync(id);
       } catch (err) {
-        setActionError(err instanceof Error ? err.message : 'Failed to cancel reservation');
+        setActionError(getGraphQLErrorMessage(err, 'Failed to cancel reservation'));
       }
     },
     [cancelReservation],
@@ -47,7 +48,7 @@ export default function ReservationList({ onEditReservation }: Props) {
       try {
         await deleteReservation.mutateAsync(deleteConfirm.id);
       } catch (err) {
-        setActionError(err instanceof Error ? err.message : 'Failed to delete reservation');
+        setActionError(getGraphQLErrorMessage(err, 'Failed to delete reservation'));
       }
     }
     setDeleteConfirm({ open: false });
@@ -55,7 +56,9 @@ export default function ReservationList({ onEditReservation }: Props) {
 
   const handleDeleteClick = useCallback((id: string) => setDeleteConfirm({ open: true, id }), []);
 
-  const error = fetchError instanceof Error ? fetchError.message : actionError;
+  const error = fetchError
+    ? getGraphQLErrorMessage(fetchError, 'Failed to load reservations')
+    : actionError;
 
   const filteredReservations = useMemo(
     () =>
