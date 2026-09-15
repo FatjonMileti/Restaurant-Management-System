@@ -40,7 +40,7 @@ const request = <T = any>(url: string, document: any, variables?: any) => {
   return gqlRequest<T>(url, document, variables, headers);
 };
 
-const mapId = <T extends { id?: string; [k: string]: any }>(obj: T | null): T | null => {
+export const mapId = <T extends { id?: string; [k: string]: any }>(obj: T | null): T | null => {
   if (!obj) return null;
   const { id, ...rest } = obj as any;
   return { ...rest, _id: id, id: undefined } as T;
@@ -60,7 +60,7 @@ const mapArray = <T extends { id?: string; [k: string]: any }>(
 // top-level id, so normalize the nested ref too. Without this,
 // `order.user._id` is undefined and user-based filtering (and isOwner)
 // never matches.
-const mapUserRef = <T extends { user?: any }>(obj: T): T => {
+export const mapUserRef = <T extends { user?: any }>(obj: T): T => {
   const u = (obj as any)?.user;
   if (!u || typeof u !== 'object') return obj;
   const { id, _id, ...rest } = u;

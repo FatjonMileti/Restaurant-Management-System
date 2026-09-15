@@ -74,7 +74,10 @@ describe('reservation resolvers', () => {
     // mock insert returns user 'u1', resolved via lookup
     expect(res.user.id).toBe('u1');
     expect(res.user.name).toBe('John');
-    expect(emitEvent).toHaveBeenCalledWith('reservations:changed');
+    expect(emitEvent).toHaveBeenCalledWith(
+      'reservations:changed',
+      expect.objectContaining({ reservation: expect.objectContaining({ id: 'r2' }) }),
+    );
   });
 
   it('createReservation rejects invalid data', async () => {

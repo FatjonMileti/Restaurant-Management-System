@@ -100,10 +100,11 @@ export const authResolvers = {
       phone: v.data.phone,
       role: userRole,
     });
-    emitEvent('users:changed');
     const user = userDoc.toJSON();
     delete user.password;
-    return formatUser(user);
+    const formattedUser = formatUser(user);
+    emitEvent('users:changed', { user: formattedUser });
+    return formattedUser;
   },
 
   updateUserRole: async ({ id, role }: any, context: any) => {
@@ -114,11 +115,12 @@ export const authResolvers = {
     const userDoc = await db.users.findOne(id).exec();
     if (!userDoc) throw new Error('User not found');
     await userDoc.update({ $set: { role: v.data.role } });
-    emitEvent('users:changed');
     const updated = await db.users.findOne(id).exec();
     const user = updated?.toJSON() || userDoc.toJSON();
     delete user.password;
-    return formatUser(user);
+    const formattedUser = formatUser(user);
+    emitEvent('users:changed', { user: formattedUser });
+    return formattedUser;
   },
 
   deleteUser: async ({ id }: any, context: any) => {
@@ -130,7 +132,7 @@ export const authResolvers = {
     if (user.role === 'admin') throw new Error('Cannot delete admin user');
     await userDoc.remove();
     await db.users.cleanup(0);
-    emitEvent('users:changed');
+    emitEvent('users:changed', { user: { id, deleted: true } });
     return 'User removed';
   },
 };

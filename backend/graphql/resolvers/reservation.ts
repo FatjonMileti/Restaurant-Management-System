@@ -43,9 +43,10 @@ export const reservationResolvers = {
       createdAt: moment().toISOString(),
       ...v.data,
     });
-    emitEvent('reservations:changed');
+    const reservation = await formatReservation(resDoc.toJSON());
+    emitEvent('reservations:changed', { reservation });
     emitEvent('tables:changed');
-    return formatReservation(resDoc.toJSON());
+    return reservation;
   },
   updateReservation: async ({ id, ...rest }: any, context?: any) => {
     await requireStaffOrAdmin(context);
@@ -55,10 +56,11 @@ export const reservationResolvers = {
     const doc = await db.reservations.findOne(id).exec();
     if (!doc) throw new Error('Reservation not found');
     await doc.update({ $set: v.data });
-    emitEvent('reservations:changed');
-    emitEvent('tables:changed');
     const updated = await db.reservations.findOne(id).exec();
-    return formatReservation((updated || doc).toJSON());
+    const reservation = await formatReservation((updated || doc).toJSON());
+    emitEvent('reservations:changed', { reservation });
+    emitEvent('tables:changed');
+    return reservation;
   },
   deleteReservation: async ({ id }: any, context?: any) => {
     await requireStaffOrAdmin(context);
@@ -67,7 +69,7 @@ export const reservationResolvers = {
     if (!doc) throw new Error('Reservation not found');
     await doc.remove();
     await db.reservations.cleanup(0);
-    emitEvent('reservations:changed');
+    emitEvent('reservations:changed', { reservation: { id, deleted: true } });
     return 'Reservation removed';
   },
   cancelReservation: async ({ id }: any, context?: any) => {
@@ -76,9 +78,10 @@ export const reservationResolvers = {
     const doc = await db.reservations.findOne(id).exec();
     if (!doc) throw new Error('Reservation not found');
     await doc.update({ $set: { status: 'cancelled' } });
-    emitEvent('reservations:changed');
-    emitEvent('tables:changed');
     const updated = await db.reservations.findOne(id).exec();
-    return formatReservation((updated || doc).toJSON());
+    const reservation = await formatReservation((updated || doc).toJSON());
+    emitEvent('reservations:changed', { reservation });
+    emitEvent('tables:changed');
+    return reservation;
   },
 };

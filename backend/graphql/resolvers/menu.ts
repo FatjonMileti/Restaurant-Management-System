@@ -31,8 +31,9 @@ export const menuResolvers = {
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
     const item = await db.menuItems.insert({ _id: genId(), available: true, ...v.data });
-    emitEvent('menu:changed');
-    return formatMenuItem(item);
+    const menuItem = formatMenuItem(item);
+    emitEvent('menu:changed', { menuItem });
+    return menuItem;
   },
 
   updateMenuItem: async ({ id, ...rest }: any, context?: any) => {
@@ -43,9 +44,10 @@ export const menuResolvers = {
     const existing = await db.menuItems.findOne(id).exec();
     if (!existing) throw new Error('Menu item not found');
     await existing.update({ $set: v.data });
-    emitEvent('menu:changed');
     const updated = await db.menuItems.findOne(id).exec();
-    return formatMenuItem(updated?.toJSON() || existing.toJSON());
+    const menuItem = formatMenuItem(updated?.toJSON() || existing.toJSON());
+    emitEvent('menu:changed', { menuItem });
+    return menuItem;
   },
 
   deleteMenuItem: async ({ id }: any, context?: any) => {
@@ -55,7 +57,7 @@ export const menuResolvers = {
     if (!item) throw new Error('Menu item not found');
     await item.remove();
     await db.menuItems.cleanup(0);
-    emitEvent('menu:changed');
+    emitEvent('menu:changed', { menuItem: { id, deleted: true } });
     return 'Menu item removed';
   },
 };

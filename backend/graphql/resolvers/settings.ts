@@ -33,9 +33,10 @@ export const settingsResolvers = {
       updates.tableCount = v.data.tableCount;
     }
     await doc.update({ $set: updates });
-    emitEvent('settings:changed');
-    emitEvent('tables:changed');
     const updated = await db.settings.findOne().exec();
-    return formatRestaurantSettings(updated?.toJSON() || doc.toJSON());
+    const settings = formatRestaurantSettings(updated?.toJSON() || doc.toJSON());
+    emitEvent('settings:changed', { settings });
+    emitEvent('tables:changed');
+    return settings;
   },
 };

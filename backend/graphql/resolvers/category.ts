@@ -26,8 +26,9 @@ export const categoryResolvers = {
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
     const catDoc = await db.categories.insert({ _id: genId(), ...v.data });
-    emitEvent('categories:changed');
-    return formatCategory(catDoc.toJSON());
+    const category = formatCategory(catDoc.toJSON());
+    emitEvent('categories:changed', { category });
+    return category;
   },
   updateCategory: async ({ id, name }: any, context?: any) => {
     await requireAdmin(context);
@@ -37,9 +38,10 @@ export const categoryResolvers = {
     const doc = await db.categories.findOne(id).exec();
     if (!doc) throw new Error('Category not found');
     await doc.update({ $set: v.data });
-    emitEvent('categories:changed');
     const updated = await db.categories.findOne(id).exec();
-    return formatCategory(updated?.toJSON() || doc.toJSON());
+    const category = formatCategory(updated?.toJSON() || doc.toJSON());
+    emitEvent('categories:changed', { category });
+    return category;
   },
   deleteCategory: async ({ id }: any, context?: any) => {
     await requireAdmin(context);
@@ -48,7 +50,7 @@ export const categoryResolvers = {
     if (!doc) throw new Error('Category not found');
     await doc.remove();
     await db.categories.cleanup(0);
-    emitEvent('categories:changed');
+    emitEvent('categories:changed', { category: { id, deleted: true } });
     return 'Category removed';
   },
 };
