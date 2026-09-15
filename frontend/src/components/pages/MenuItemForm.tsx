@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateMenuItem, useUpdateMenuItem, MenuItem } from '../../api/queries';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import { menuItemSchema, MenuItemFormData } from '../../validation/schemas';
 
 interface Props {
@@ -64,16 +65,9 @@ export default function MenuItemForm({ categories, item, onSuccess, onCancel }: 
       reset();
       onSuccess();
     } catch (err) {
-      const msg =
-        err instanceof TypeError &&
-        (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))
-          ? 'Network error: backend is unavailable'
-          : err instanceof Error
-            ? err.message
-            : isEdit
-              ? 'Failed to update item'
-              : 'Failed to create item';
-      alert(msg);
+      alert(
+        getGraphQLErrorMessage(err, isEdit ? 'Failed to update item' : 'Failed to create item'),
+      );
     }
   };
 

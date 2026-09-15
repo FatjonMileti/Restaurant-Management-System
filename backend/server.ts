@@ -9,6 +9,7 @@ import swaggerSpec from './swagger.js';
 import connectDB from './config/db.js';
 import jwt from 'jsonwebtoken';
 import { initSSE } from './sse.js';
+import { formatGraphQLError } from './graphql/errors.js';
 
 dotenv.config();
 
@@ -39,11 +40,7 @@ app.use(
       rootValue: root,
       context: { userId },
       graphiql: true,
-      formatError: (err: any) => ({
-        message: err.message || 'Unknown error',
-        path: err.path,
-        locations: err.locations,
-      }),
+      customFormatErrorFn: formatGraphQLError,
     };
   }),
 );

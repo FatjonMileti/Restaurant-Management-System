@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRestaurantSettings, useUpdateRestaurantSettings } from '../../api/queries';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import SectionCard from '../SectionCard';
 import { restaurantSettingsSchema, RestaurantSettingsFormData } from '../../validation/schemas';
 
@@ -49,7 +50,7 @@ export default function RestaurantSection() {
       setSuccess('Restaurant details updated');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update settings');
+      setError(getGraphQLErrorMessage(err, 'Failed to update settings'));
     }
   };
 

@@ -4,24 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
 import { Box, Typography, TextField, Button, Paper } from '@mui/material';
-import { ClientError } from 'graphql-request';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import { loginSchema, LoginFormData } from '../../validation/schemas';
-
-const getGraphQLErrorMessage = (err: unknown): string => {
-  if (err instanceof ClientError) {
-    return err.response.errors?.[0]?.message || err.message || 'Login failed';
-  }
-  if (
-    err instanceof TypeError &&
-    (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))
-  ) {
-    return 'Network error: backend is unavailable';
-  }
-  if (err instanceof Error) {
-    return err.message || 'Login failed';
-  }
-  return 'Login failed';
-};
 
 export default function LoginFormComponent() {
   const {
@@ -40,7 +24,7 @@ export default function LoginFormComponent() {
       await login(data.email, data.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(getGraphQLErrorMessage(err));
+      setError(getGraphQLErrorMessage(err, 'Login failed'));
     }
   };
 

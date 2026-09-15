@@ -7,6 +7,7 @@ import {
   useDeleteCategory,
   Category,
 } from '../../api/queries';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import SectionCard from '../SectionCard';
 import ConfirmDialog from '../ConfirmDialog';
 
@@ -28,7 +29,7 @@ export default function CategorySection() {
       await createCategory.mutateAsync({ name: newCategoryName.trim() });
       setNewCategoryName('');
     } catch (err) {
-      alert((err as Error)?.message || 'Failed to create category');
+      alert(getGraphQLErrorMessage(err, 'Failed to create category'));
     }
   };
 
@@ -39,7 +40,7 @@ export default function CategorySection() {
       setEditCategoryId(null);
       setEditCategoryName('');
     } catch (err) {
-      alert((err as Error)?.message || 'Failed to update category');
+      alert(getGraphQLErrorMessage(err, 'Failed to update category'));
     }
   };
 
@@ -48,7 +49,7 @@ export default function CategorySection() {
       try {
         await deleteCategory.mutateAsync(deleteConfirm.id);
       } catch (err) {
-        alert((err as Error)?.message || 'Failed to delete category');
+        alert(getGraphQLErrorMessage(err, 'Failed to delete category'));
       }
     }
     setDeleteConfirm({ open: false });

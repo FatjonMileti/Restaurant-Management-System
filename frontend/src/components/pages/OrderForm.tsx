@@ -3,26 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
-import { ClientError } from 'graphql-request';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import { useCreateOrder, useMenu, useUpdateOrder, Order } from '../../api/queries';
 import TableSelect from '../TableSelect';
 import { orderFormSchema, OrderFormData } from '../../validation/schemas';
-
-const getGraphQLErrorMessage = (err: unknown, fallback = 'Request failed'): string => {
-  if (err instanceof ClientError) {
-    return err.response.errors?.[0]?.message || err.message || fallback;
-  }
-  if (
-    err instanceof TypeError &&
-    (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))
-  ) {
-    return 'Network error: backend is unavailable';
-  }
-  if (err instanceof Error) {
-    return err.message || fallback;
-  }
-  return fallback;
-};
 
 interface Props {
   showCreate: boolean;

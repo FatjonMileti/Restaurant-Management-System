@@ -1,23 +1,11 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ClientError } from 'graphql-request';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import { useCreateUser } from '../../api/queries';
 import { userFormSchema, UserFormData } from '../../validation/schemas';
 
 const ROLES = ['customer', 'staff', 'admin'] as const;
-
-const getGraphQLErrorMessage = (err: unknown): string => {
-  if (err instanceof ClientError)
-    return err.response.errors?.[0]?.message || err.message || 'Operation failed';
-  if (
-    err instanceof TypeError &&
-    (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))
-  )
-    return 'Network error: backend is unavailable';
-  if (err instanceof Error) return err.message || 'Operation failed';
-  return 'Operation failed';
-};
 
 interface Props {
   onSuccess: () => void;
@@ -42,7 +30,7 @@ export default function UserForm({ onSuccess, onCancel }: Props) {
       reset();
       onSuccess();
     } catch (err) {
-      alert(getGraphQLErrorMessage(err) || 'Create failed');
+      alert(getGraphQLErrorMessage(err, 'Operation failed'));
     }
   };
 

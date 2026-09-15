@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import moment from 'moment';
 import { getDB } from '../../config/rxdb.js';
 import { createOrderSchema, updateOrderSchema, validate } from '../validation.js';
+import { authError, conflictError, notFoundError, validationError } from '../errors.js';
 import { formatOrder } from '../helpers/formatters.js';
 import { emitEvent } from '../../sse.js';
 import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
@@ -44,9 +45,9 @@ export const orderResolvers = {
   },
 
   createOrder: async ({ items, tableNumber, paymentMethod }: any, context?: any) => {
-    if (!context?.userId) throw new Error('Not authenticated');
+    if (!context?.userId) throw authError();
     const v = validate(createOrderSchema, { items, tableNumber, paymentMethod });
-    if (!v.success) throw new Error(v.errors.join(', '));
+    if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const allOrders = await db.orders.find().exec();
     const busy = allOrders.some((d: any) => {
@@ -55,7 +56,7 @@ export const orderResolvers = {
         o.tableNumber === v.data.tableNumber && ['pending', 'preparing', 'ready'].includes(o.status)
       );
     });
-    if (busy) throw new Error('Table is busy');
+    if (busy) throw conflictError('Table is busy');
     const totalAmount = v.data.items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
     const orderDoc = await db.orders.insert({
       _id: genId(),
@@ -81,7 +82,7 @@ export const orderResolvers = {
   updateOrder: async ({ id, ...rest }: any, context?: any) => {
     await requireStaffOrAdmin(context);
     const v = validate(updateOrderSchema, rest);
-    if (!v.success) throw new Error(v.errors.join(', '));
+    if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const updates: any = { ...v.data };
     if (v.data.items) {
@@ -100,7 +101,7 @@ export const orderResolvers = {
           ['pending', 'preparing'].includes(o.status)
         );
       });
-      if (busy) throw new Error('Table is busy');
+      if (busy) throw conflictError('Table is busy');
     }
     const doc = await db.orders.findOne(id).exec();
     if (!doc) return null;
@@ -117,7 +118,7 @@ export const orderResolvers = {
     await requireAdmin(context);
     const db = await getDB();
     const doc = await db.orders.findOne(id).exec();
-    if (!doc) throw new Error('Order not found');
+    if (!doc) throw notFoundError('Order not found');
     await doc.remove();
     await db.orders.cleanup(0);
     emitEvent('orders:changed', { order: { id, deleted: true } });

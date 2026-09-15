@@ -1,23 +1,24 @@
 import { getDB } from '../../config/rxdb.js';
+import { authError, forbiddenError } from '../errors.js';
 
 export const requireAuth = async (context: any) => {
-  if (!context?.userId) throw new Error('Not authenticated');
+  if (!context?.userId) throw authError();
   const db = await getDB();
   const userDoc = await db.users.findOne(context.userId).exec();
-  if (!userDoc) throw new Error('Not authenticated');
+  if (!userDoc) throw authError();
   return userDoc.toJSON();
 };
 
 export const requireAdmin = async (context: any) => {
   const user = await requireAuth(context);
-  if (user.role !== 'admin') throw new Error('Not authorized, admin only');
+  if (user.role !== 'admin') throw forbiddenError('Not authorized, admin only');
   return user;
 };
 
 export const requireStaffOrAdmin = async (context: any) => {
   const user = await requireAuth(context);
   if (user.role !== 'admin' && user.role !== 'staff')
-    throw new Error('Not authorized, staff or admin only');
+    throw forbiddenError('Not authorized, staff or admin only');
   return user;
 };
 

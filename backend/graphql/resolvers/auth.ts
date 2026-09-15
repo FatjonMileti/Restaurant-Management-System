@@ -10,6 +10,13 @@ import {
   validate,
 } from '../validation.js';
 import { formatUser } from '../helpers/formatters.js';
+import {
+  authError,
+  conflictError,
+  forbiddenError,
+  notFoundError,
+  validationError,
+} from '../errors.js';
 import { emitEvent } from '../../sse.js';
 import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 
@@ -47,10 +54,10 @@ export const authResolvers = {
 
   register: async ({ name, email, password, phone }: any) => {
     const v = validate(registerSchema, { name, email, password, phone });
-    if (!v.success) throw new Error(v.errors.join(', '));
+    if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const existing = await db.users.findOne({ email }).exec();
-    if (existing?.toJSON()) throw new Error('User already exists');
+    if (existing?.toJSON()) throw conflictError('User already exists');
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
     const userDoc = await db.users.insert({
@@ -69,13 +76,13 @@ export const authResolvers = {
 
   login: async ({ email, password }: any) => {
     const v = validate(loginSchema, { email, password });
-    if (!v.success) throw new Error(v.errors.join(', '));
+    if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const userDoc = await db.users.findOne({ selector: { email } }).exec();
-    if (!userDoc || userDoc.length === 0) throw new Error('Invalid email or password');
+    if (!userDoc || userDoc.length === 0) throw authError('Invalid email or password');
     const user = userDoc?.toJSON();
     const match = await bcrypt.compare(password, user.password);
-    if (!match) throw new Error('Invalid email or password');
+    if (!match) throw authError('Invalid email or password');
     const token = generateToken(user._id as string);
     delete user.password;
     return { token, user: formatUser(user) };
@@ -84,10 +91,10 @@ export const authResolvers = {
   createUserByAdmin: async ({ name, email, password, phone, role }: any, context: any) => {
     await requireAdmin(context);
     const v = validate(createUserSchema, { name, email, password, phone, role });
-    if (!v.success) throw new Error(v.errors.join(', '));
+    if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const existing = await db.users.findOne({ selector: { email } }).exec();
-    if (existing?.toJSON()) throw new Error('User already exists');
+    if (existing?.toJSON()) throw conflictError('User already exists');
     const validRoles = ['customer', 'staff', 'admin'];
     const userRole = validRoles.includes(v.data.role || '') ? v.data.role : 'customer';
     const salt = await bcrypt.genSalt(10);
@@ -110,10 +117,10 @@ export const authResolvers = {
   updateUserRole: async ({ id, role }: any, context: any) => {
     await requireAdmin(context);
     const v = validate(updateUserRoleSchema, { role });
-    if (!v.success) throw new Error(v.errors.join(', '));
+    if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const userDoc = await db.users.findOne(id).exec();
-    if (!userDoc) throw new Error('User not found');
+    if (!userDoc) throw notFoundError('User not found');
     await userDoc.update({ $set: { role: v.data.role } });
     const updated = await db.users.findOne(id).exec();
     const user = updated?.toJSON() || userDoc.toJSON();
@@ -127,9 +134,9 @@ export const authResolvers = {
     await requireAdmin(context);
     const db = await getDB();
     const userDoc = await db.users.findOne(id).exec();
-    if (!userDoc) throw new Error('User not found');
+    if (!userDoc) throw notFoundError('User not found');
     const user = userDoc.toJSON();
-    if (user.role === 'admin') throw new Error('Cannot delete admin user');
+    if (user.role === 'admin') throw forbiddenError('Cannot delete admin user');
     await userDoc.remove();
     await db.users.cleanup(0);
     emitEvent('users:changed', { user: { id, deleted: true } });

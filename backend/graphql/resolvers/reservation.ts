@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import moment from 'moment';
 import { getDB } from '../../config/rxdb.js';
 import { reservationSchema, validate } from '../validation.js';
+import { notFoundError, validationError } from '../errors.js';
 import { formatReservation } from '../helpers/formatters.js';
 import { emitEvent } from '../../sse.js';
 import { requireStaffOrAdmin } from '../helpers/auth.js';
@@ -43,7 +44,7 @@ export const reservationResolvers = {
       clientPhone,
       clientEmail,
     });
-    if (!v.success) throw new Error(v.errors.join(', '));
+    if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const resDoc = await db.reservations.insert({
       _id: genId(),
@@ -60,10 +61,10 @@ export const reservationResolvers = {
   updateReservation: async ({ id, ...rest }: any, context?: any) => {
     await requireStaffOrAdmin(context);
     const v = validate(reservationSchema.partial(), rest);
-    if (!v.success) throw new Error(v.errors.join(', '));
+    if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const doc = await db.reservations.findOne(id).exec();
-    if (!doc) throw new Error('Reservation not found');
+    if (!doc) throw notFoundError('Reservation not found');
     await doc.update({ $set: v.data });
     const updated = await db.reservations.findOne(id).exec();
     const reservation = await formatReservation((updated || doc).toJSON());
@@ -75,7 +76,7 @@ export const reservationResolvers = {
     await requireStaffOrAdmin(context);
     const db = await getDB();
     const doc = await db.reservations.findOne(id).exec();
-    if (!doc) throw new Error('Reservation not found');
+    if (!doc) throw notFoundError('Reservation not found');
     await doc.remove();
     await db.reservations.cleanup(0);
     emitEvent('reservations:changed', { reservation: { id, deleted: true } });
@@ -85,7 +86,7 @@ export const reservationResolvers = {
     await requireStaffOrAdmin(context);
     const db = await getDB();
     const doc = await db.reservations.findOne(id).exec();
-    if (!doc) throw new Error('Reservation not found');
+    if (!doc) throw notFoundError('Reservation not found');
     await doc.update({ $set: { status: 'cancelled' } });
     const updated = await db.reservations.findOne(id).exec();
     const reservation = await formatReservation((updated || doc).toJSON());

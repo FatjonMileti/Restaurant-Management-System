@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../store/authStore';
 import { useCreateReservation, useUpdateReservation, Reservation } from '../../api/queries';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import TableSelect from '../TableSelect';
 import { reservationSchema, ReservationFormData } from '../../validation/schemas';
 
@@ -106,11 +107,10 @@ export default function ReservationFormComponent({
       reset();
     } catch (err) {
       setActionError(
-        err instanceof Error
-          ? err.message
-          : editingReservation
-            ? 'Failed to edit reservation'
-            : 'Failed to create reservation',
+        getGraphQLErrorMessage(
+          err,
+          editingReservation ? 'Failed to edit reservation' : 'Failed to create reservation',
+        ),
       );
     }
   };

@@ -1,5 +1,6 @@
 import { getDB } from '../../config/rxdb.js';
 import { restaurantSettingsSchema, validate } from '../validation.js';
+import { notFoundError, validationError } from '../errors.js';
 import { formatRestaurantSettings, getOrCreateRestaurantSettings } from '../helpers/formatters.js';
 import { requireAdmin } from '../helpers/auth.js';
 import { emitEvent } from '../../sse.js';
@@ -8,7 +9,7 @@ export const settingsResolvers = {
   restaurantSettings: async (context: any) => {
     const db = await getDB();
     const doc = await db.settings.findOne().exec();
-    if (!doc) throw new Error('Settings not found');
+    if (!doc) throw notFoundError('Settings not found');
     return formatRestaurantSettings(doc.toJSON());
   },
 
@@ -18,10 +19,10 @@ export const settingsResolvers = {
   ) => {
     await requireAdmin(context);
     const v = validate(restaurantSettingsSchema, { name, logo, address, phone, email, tableCount });
-    if (!v.success) throw new Error(v.errors.join(', '));
+    if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const doc = await db.settings.findOne().exec();
-    if (!doc) throw new Error('Settings not found');
+    if (!doc) throw notFoundError('Settings not found');
     const updates: any = {};
     if (v.data.name !== undefined) updates.name = v.data.name;
     if (v.data.logo !== undefined) updates.logo = v.data.logo;
@@ -29,7 +30,7 @@ export const settingsResolvers = {
     if (v.data.phone !== undefined) updates.phone = v.data.phone;
     if (v.data.email !== undefined) updates.email = v.data.email;
     if (v.data.tableCount !== undefined) {
-      if (v.data.tableCount < 1) throw new Error('tableCount must be at least 1');
+      if (v.data.tableCount < 1) throw validationError('tableCount must be at least 1');
       updates.tableCount = v.data.tableCount;
     }
     await doc.update({ $set: updates });

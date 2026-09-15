@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '../../store/authStore';
 import { useDeleteUser, useUpdateUserRole, useUsers } from '../../api/queries';
-import { ClientError } from 'graphql-request';
+import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import ConfirmDialog from '../ConfirmDialog';
 
 const ROLES = ['customer', 'staff', 'admin'] as const;
@@ -9,18 +9,6 @@ const roleColors: Record<string, string> = {
   admin: 'bg-red-500',
   staff: 'bg-blue-500',
   customer: 'bg-green-600',
-};
-
-const getGraphQLErrorMessage = (err: unknown): string => {
-  if (err instanceof ClientError)
-    return err.response.errors?.[0]?.message || err.message || 'Operation failed';
-  if (
-    err instanceof TypeError &&
-    (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))
-  )
-    return 'Network error: backend is unavailable';
-  if (err instanceof Error) return err.message || 'Operation failed';
-  return 'Operation failed';
 };
 
 function UserRow({
@@ -94,7 +82,7 @@ export default function UserTable() {
       try {
         await deleteUser.mutateAsync(deleteConfirm.id);
       } catch (err) {
-        alert(getGraphQLErrorMessage(err) || 'Delete failed');
+        alert(getGraphQLErrorMessage(err, 'Operation failed'));
       }
     }
     setDeleteConfirm({ open: false });
@@ -106,7 +94,7 @@ export default function UserTable() {
         await updateUserRole.mutateAsync({ id, role });
         setEditingRole(null);
       } catch (err) {
-        alert(getGraphQLErrorMessage(err) || 'Role update failed');
+        alert(getGraphQLErrorMessage(err, 'Operation failed'));
       }
     },
     [updateUserRole],
