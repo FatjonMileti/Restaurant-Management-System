@@ -174,7 +174,11 @@ export const useCreateCategory = () => {
     mutationFn: (payload: { name: string }) => request(endpoint, CREATE_CATEGORY, payload),
     onSuccess: (newCategory) => {
       qc.setQueryData(['categories'], (oldData: any) => {
-        return [...oldData, { ...newCategory.createCategory, _id: newCategory.createCategory.id }];
+        const list = oldData ?? [];
+        const id = newCategory.createCategory.id;
+        // The SSE upsert can land before the mutation response — skip dupes.
+        if (list.some((c: any) => c && (c._id === id || c.id === id))) return list;
+        return [...list, { ...newCategory.createCategory, _id: id }];
       });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
@@ -229,7 +233,11 @@ export const useCreateMenuItem = () => {
       request(endpoint, CREATE_MENU_ITEM, payload),
     onSuccess: (newItem) => {
       qc.setQueryData(['menu'], (oldData: any) => {
-        return [...oldData, { ...newItem.createMenuItem, _id: newItem.createMenuItem.id }];
+        const list = oldData ?? [];
+        const id = newItem.createMenuItem.id;
+        // The SSE upsert can land before the mutation response — skip dupes.
+        if (list.some((m: any) => m && (m._id === id || m.id === id))) return list;
+        return [...list, { ...newItem.createMenuItem, _id: id }];
       });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
@@ -300,7 +308,20 @@ export const useCreateOrder = () => {
             ? { _id: authUser._id, name: authUser.name, email: authUser.email }
             : newOrder.user,
         };
-        qc.setQueryData(['orders'], (oldData: any) => [orderWithUser, ...(oldData ?? [])]);
+        qc.setQueryData(['orders'], (oldData: any) => {
+          const list = oldData ?? [];
+          // The orders:changed SSE event can land before the mutation
+          // response — skip when the order is already cached.
+          if (
+            list.some(
+              (o: Order) =>
+                o && (o._id === orderWithUser._id || (o as any).id === orderWithUser._id),
+            )
+          ) {
+            return list;
+          }
+          return [orderWithUser, ...list];
+        });
       } else {
         qc.invalidateQueries({ queryKey: ['orders'] });
       }
@@ -476,7 +497,11 @@ export const useCreateUser = () => {
     mutationFn: (payload: NewUserPayload) => request(endpoint, CREATE_USER, payload),
     onSuccess: (newUser) => {
       qc.setQueryData(['users'], (oldData: any) => {
-        return [...oldData, { ...newUser.createUserByAdmin, _id: newUser.createUserByAdmin.id }];
+        const list = oldData ?? [];
+        const id = newUser.createUserByAdmin.id;
+        // The SSE upsert can land before the mutation response — skip dupes.
+        if (list.some((u: any) => u && (u._id === id || u.id === id))) return list;
+        return [...list, { ...newUser.createUserByAdmin, _id: id }];
       });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },

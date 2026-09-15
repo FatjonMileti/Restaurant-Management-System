@@ -27,6 +27,7 @@ import {
   useOrders,
   useReservations,
   useCreateOrder,
+  useCreateCategory,
   useUpdateOrder,
   useUpdateOrderStatus,
 } from '../queries';
@@ -166,6 +167,63 @@ describe('api queries', () => {
     expect(cached[0]._id).toBe('new1');
     expect(cached[0].user?._id).toBe('u1');
     expect(cached[1]._id).toBe('old1');
+  });
+
+  it('useCreateOrder does not duplicate when the SSE upsert landed first', async () => {
+    (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({
+      createOrder: {
+        id: 'new1',
+        items: [],
+        totalAmount: 10,
+        status: 'pending',
+        tableNumber: 3,
+        createdAt: '2024-02-01T12:00:00.000Z',
+      },
+    });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    // As stored by the useEventSource upsert: normalized, top of the list.
+    qc.setQueryData(['orders'], [
+      {
+        _id: 'new1',
+        user: { _id: 'u1', name: 'John', email: 'john@example.com' },
+        items: [],
+        totalAmount: 10,
+        status: 'pending',
+        tableNumber: 3,
+        createdAt: '2024-02-01T12:00:00.000Z',
+      },
+    ]);
+    const wrapper = ({ children }: any) => (
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useCreateOrder(), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({
+        items: [{ menuItem: 'm1', name: 'Pizza', price: 10, quantity: 1 }],
+        tableNumber: 3,
+      });
+    });
+    const cached = qc.getQueryData(['orders']) as any[];
+    expect(cached).toHaveLength(1);
+    expect(cached[0]._id).toBe('new1');
+  });
+
+  it('useCreateCategory does not duplicate when the SSE upsert landed first', async () => {
+    (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({
+      createCategory: { id: 'c9', name: 'Drinks' },
+    });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    qc.setQueryData(['categories'], [{ _id: 'c9', name: 'Drinks', id: undefined }]);
+    const wrapper = ({ children }: any) => (
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useCreateCategory(), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({ name: 'Drinks' });
+    });
+    const cached = qc.getQueryData(['categories']) as any[];
+    expect(cached).toHaveLength(1);
+    expect(cached[0]._id).toBe('c9');
   });
 
   it('sends Authorization header when token present', async () => {
