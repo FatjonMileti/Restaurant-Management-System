@@ -89,4 +89,52 @@ describe('reservation resolvers', () => {
     ).rejects.toThrow();
     expect(emitEvent).not.toHaveBeenCalled();
   });
+
+  it('createReservation persists client contact fields', async () => {
+    const insert = jest.fn().mockResolvedValue(
+      mockDoc({
+        _id: 'r3',
+        user: 'u1',
+        date: '2025-06-17',
+        time: '19:00',
+        guests: 2,
+        status: 'confirmed',
+        clientName: 'Jane',
+        clientPhone: '123456',
+        clientEmail: 'jane@example.com',
+      }),
+    );
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: mockUsersById({
+        staff1: { _id: 'staff1', role: 'staff' },
+        u1: { _id: 'u1', name: 'John', email: 'john@example.com', role: 'customer' },
+      }),
+      reservations: { insert },
+    });
+    const res: any = await reservationResolvers.createReservation(
+      {
+        date: '2025-06-17',
+        time: '19:00',
+        guests: 2,
+        clientName: 'Jane',
+        clientPhone: '123456',
+        clientEmail: 'jane@example.com',
+      },
+      { userId: 'staff1' },
+    );
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientName: 'Jane',
+        clientPhone: '123456',
+        clientEmail: 'jane@example.com',
+      }),
+    );
+    expect(res.clientName).toBe('Jane');
+    expect(emitEvent).toHaveBeenCalledWith(
+      'reservations:changed',
+      expect.objectContaining({
+        reservation: expect.objectContaining({ clientName: 'Jane' }),
+      }),
+    );
+  });
 });

@@ -84,8 +84,10 @@ const seed = async (): Promise<void> => {
       },
     ];
 
+    const createdUsers: any[] = [];
     for (const userData of usersData) {
-      await db.users.insert(userData);
+      const userDoc = await db.users.insert(userData);
+      createdUsers.push(userDoc.toJSON());
     }
     console.log(`Created ${usersData.length} users`);
 
@@ -227,6 +229,58 @@ const seed = async (): Promise<void> => {
     // Insert default restaurant settings
     await db.settings.insert({ _id: genId(), tableCount: 10 });
     console.log('Inserted default restaurant settings');
+
+    // Insert sample reservations, including walk-in client contact details
+    const today = new Date();
+    const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    const userIdByEmail = (email: string) => createdUsers.find((u: any) => u.email === email)?._id;
+    const reservationsData = [
+      {
+        _id: genId(),
+        user: userIdByEmail('bob@example.com'),
+        date: isoDate(tomorrow),
+        time: '19:00',
+        guests: 4,
+        tableNumber: 3,
+        status: 'confirmed',
+        specialRequests: 'Window seat if possible',
+        clientName: 'Bob Johnson',
+        clientPhone: '555-0104',
+        clientEmail: 'bob@example.com',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        _id: genId(),
+        user: userIdByEmail('john@example.com'),
+        date: isoDate(today),
+        time: '20:00',
+        guests: 2,
+        tableNumber: 5,
+        status: 'confirmed',
+        specialRequests: '',
+        clientName: 'John Doe',
+        clientPhone: '555-0102',
+        clientEmail: 'john@example.com',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        _id: genId(),
+        user: userIdByEmail('jane@example.com'),
+        date: '2024-01-15',
+        time: '18:30',
+        guests: 3,
+        tableNumber: 2,
+        status: 'completed',
+        specialRequests: '',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+
+    for (const reservationData of reservationsData) {
+      await db.reservations.insert(reservationData);
+    }
+    console.log(`Created ${reservationsData.length} reservations`);
   } catch (error) {
     console.error('Seeding error:', error);
     process.exit(1);

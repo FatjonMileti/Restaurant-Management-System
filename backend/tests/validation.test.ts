@@ -134,6 +134,27 @@ describe('validation schemas', () => {
         validate(reservationSchema, { date: '2025-01-01', time: '18:00', guests: 0 }).success,
       ).toBe(false);
     });
+    it('accepts optional client contact fields', () => {
+      const r = validate(reservationSchema, {
+        date: '2025-01-01',
+        time: '18:00',
+        guests: 2,
+        clientName: 'Jane',
+        clientPhone: '123456',
+        clientEmail: 'jane@example.com',
+      });
+      expect(r.success).toBe(true);
+    });
+    it('rejects invalid client email', () => {
+      expect(
+        validate(reservationSchema, {
+          date: '2025-01-01',
+          time: '18:00',
+          guests: 2,
+          clientEmail: 'not-an-email',
+        }).success,
+      ).toBe(false);
+    });
   });
 
   describe('categorySchema', () => {

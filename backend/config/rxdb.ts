@@ -121,7 +121,7 @@ export const getRxDB = async (): Promise<any> => {
   // note on why populate() must not be called).
   const reservationSchema = {
     title: 'reservation schema',
-    version: 1,
+    version: 2,
     description: 'reservation collection',
     type: 'object',
     primaryKey: '_id',
@@ -133,6 +133,9 @@ export const getRxDB = async (): Promise<any> => {
       guests: { type: 'number' },
       tableNumber: { type: 'number' },
       specialRequests: { type: 'string' },
+      clientName: { type: 'string' },
+      clientPhone: { type: 'string' },
+      clientEmail: { type: 'string' },
       status: { type: 'string' },
       createdAt: { type: 'string' },
     },
@@ -171,7 +174,10 @@ export const getRxDB = async (): Promise<any> => {
     menuItems: { schema: menuItemSchema },
     categories: { schema: categorySchema },
     orders: { schema: orderSchema, migrationStrategies: { 1: identityMigration } },
-    reservations: { schema: reservationSchema, migrationStrategies: { 1: identityMigration } },
+    reservations: {
+      schema: reservationSchema,
+      migrationStrategies: { 0: identityMigration, 1: identityMigration, 2: identityMigration },
+    },
     settings: { schema: settingsSchema },
   });
 

@@ -50,6 +50,9 @@ export const reservationSchema = z.object({
   guests: z.number().int().positive('Guests must be at least 1'),
   tableNumber: z.number().int().positive().optional(),
   specialRequests: z.string().optional(),
+  clientName: z.string().optional(),
+  clientPhone: z.string().optional(),
+  clientEmail: z.string().email('Invalid email').optional().or(z.literal('')),
   status: z.enum(['confirmed', 'completed', 'cancelled']).optional(),
 });
 

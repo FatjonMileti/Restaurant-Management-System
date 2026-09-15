@@ -56,6 +56,9 @@ export const typeDefs = `
     tableNumber: Int
     status: String!
     specialRequests: String
+    clientName: String
+    clientPhone: String
+    clientEmail: String
     createdAt: String
     updatedAt: String
   }
@@ -78,6 +81,9 @@ export const typeDefs = `
     guests: Int!
     tableNumber: Int
     specialRequests: String
+    clientName: String
+    clientPhone: String
+    clientEmail: String
   }
 
   type RestaurantSettings {
@@ -165,8 +171,8 @@ export const typeDefs = `
     deleteOrder(id: ID!): String
     updateOrderStatus(id: ID!, status: String!): Order
 
-    createReservation(date: String!, time: String!, guests: Int!, tableNumber: Int, specialRequests: String): Reservation
-    updateReservation(id: ID!, date: String, time: String, guests: Int, tableNumber: Int, status: String, specialRequests: String): Reservation
+    createReservation(date: String!, time: String!, guests: Int!, tableNumber: Int, specialRequests: String, clientName: String, clientPhone: String, clientEmail: String): Reservation
+    updateReservation(id: ID!, date: String, time: String, guests: Int, tableNumber: Int, status: String, specialRequests: String, clientName: String, clientPhone: String, clientEmail: String): Reservation
     deleteReservation(id: ID!): String
     cancelReservation(id: ID!): Reservation
 

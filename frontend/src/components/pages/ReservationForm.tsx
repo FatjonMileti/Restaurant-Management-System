@@ -41,6 +41,9 @@ export default function ReservationFormComponent({
           guests: editingReservation.guests || 2,
           tableNumber: editingReservation.tableNumber || undefined,
           specialRequests: editingReservation.specialRequests || '',
+          clientName: editingReservation.clientName || '',
+          clientPhone: editingReservation.clientPhone || '',
+          clientEmail: editingReservation.clientEmail || '',
           status: (editingReservation.status as ReservationFormData['status']) || 'confirmed',
         }
       : {
@@ -49,6 +52,9 @@ export default function ReservationFormComponent({
           guests: 2,
           tableNumber: undefined,
           specialRequests: '',
+          clientName: '',
+          clientPhone: '',
+          clientEmail: '',
           status: 'confirmed',
         },
   });
@@ -63,6 +69,9 @@ export default function ReservationFormComponent({
         guests: editingReservation.guests || 2,
         tableNumber: editingReservation.tableNumber || undefined,
         specialRequests: editingReservation.specialRequests || '',
+        clientName: editingReservation.clientName || '',
+        clientPhone: editingReservation.clientPhone || '',
+        clientEmail: editingReservation.clientEmail || '',
         status: (editingReservation.status as ReservationFormData['status']) || 'confirmed',
       });
     } else {
@@ -72,6 +81,9 @@ export default function ReservationFormComponent({
         guests: 2,
         tableNumber: undefined,
         specialRequests: '',
+        clientName: '',
+        clientPhone: '',
+        clientEmail: '',
         status: 'confirmed',
       });
     }
@@ -140,6 +152,30 @@ export default function ReservationFormComponent({
         {...register('specialRequests')}
         className="form-input-sm"
       />
+      <label className="form-label">Client Name</label>
+      <input
+        type="text"
+        placeholder="Client name"
+        {...register('clientName')}
+        className="form-input-sm"
+      />
+      {errors.clientName && <p className="error-text text-sm">{errors.clientName.message}</p>}
+      <label className="form-label">Client Phone</label>
+      <input
+        type="tel"
+        placeholder="Client phone"
+        {...register('clientPhone')}
+        className="form-input-sm"
+      />
+      {errors.clientPhone && <p className="error-text text-sm">{errors.clientPhone.message}</p>}
+      <label className="form-label">Client Email</label>
+      <input
+        type="email"
+        placeholder="Client email"
+        {...register('clientEmail')}
+        className="form-input-sm"
+      />
+      {errors.clientEmail && <p className="error-text text-sm">{errors.clientEmail.message}</p>}
       {isStaff && editingReservation && (
         <>
           <label className="form-label">Status</label>

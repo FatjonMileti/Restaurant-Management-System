@@ -209,6 +209,9 @@ export const GET_RESERVATIONS = gql`
       tableNumber
       status
       specialRequests
+      clientName
+      clientPhone
+      clientEmail
       createdAt
     }
   }
@@ -220,6 +223,9 @@ export const CREATE_RESERVATION = gql`
     $guests: Int!
     $tableNumber: Int
     $specialRequests: String
+    $clientName: String
+    $clientPhone: String
+    $clientEmail: String
   ) {
     createReservation(
       date: $date
@@ -227,6 +233,9 @@ export const CREATE_RESERVATION = gql`
       guests: $guests
       tableNumber: $tableNumber
       specialRequests: $specialRequests
+      clientName: $clientName
+      clientPhone: $clientPhone
+      clientEmail: $clientEmail
     ) {
       id
       status
@@ -242,6 +251,9 @@ export const UPDATE_RESERVATION = gql`
     $tableNumber: Int
     $status: String
     $specialRequests: String
+    $clientName: String
+    $clientPhone: String
+    $clientEmail: String
   ) {
     updateReservation(
       id: $id
@@ -251,6 +263,9 @@ export const UPDATE_RESERVATION = gql`
       tableNumber: $tableNumber
       status: $status
       specialRequests: $specialRequests
+      clientName: $clientName
+      clientPhone: $clientPhone
+      clientEmail: $clientEmail
     ) {
       id
       status

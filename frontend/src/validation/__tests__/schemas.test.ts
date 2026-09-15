@@ -46,6 +46,28 @@ describe('frontend validation schemas', () => {
         reservationSchema.safeParse({ date: '2025-01-01', time: '18:00', guests: 2 }).success,
       ).toBe(true);
     });
+    it('accepts optional client contact fields', () => {
+      expect(
+        reservationSchema.safeParse({
+          date: '2025-01-01',
+          time: '18:00',
+          guests: 2,
+          clientName: 'Jane',
+          clientPhone: '123456',
+          clientEmail: 'jane@example.com',
+        }).success,
+      ).toBe(true);
+    });
+    it('rejects invalid client email', () => {
+      expect(
+        reservationSchema.safeParse({
+          date: '2025-01-01',
+          time: '18:00',
+          guests: 2,
+          clientEmail: 'not-an-email',
+        }).success,
+      ).toBe(false);
+    });
   });
 
   describe('restaurantSettingsSchema', () => {

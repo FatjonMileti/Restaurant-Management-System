@@ -1,19 +1,25 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import { useMenu, MenuItem, useCategories, Category } from '../api/queries';
+import { useMenu, MenuItem, useCategories, Category, useDeleteMenuItem } from '../api/queries';
 import { useAuth } from '../store/authStore';
 import MenuItemForm from '../components/pages/MenuItemForm';
 import MenuItemCard from '../components/pages/MenuItemCard';
 import MenuCategoryFilter from '../components/pages/MenuCategoryFilter';
 import PageHeader from '../components/PageHeader';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 function Menu() {
   const { data: items = [], error, isLoading } = useMenu();
   const { data: categoriesData = [] } = useCategories();
   const { user } = useAuth();
+  const deleteItem = useDeleteMenuItem();
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id?: string }>({
+    open: false,
+  });
+  const [deleteError, setDeleteError] = useState('');
 
   const categories = useMemo(() => categoriesData.map((c: Category) => c.name), [categoriesData]);
   const isAdmin = user?.role === 'admin';
@@ -32,6 +38,24 @@ function Menu() {
       items.filter((item: MenuItem) => (categoryFilter ? item.category === categoryFilter : true)),
     [items, categoryFilter],
   );
+
+  const handleDeleteClick = useCallback((id: string) => {
+    setDeleteError('');
+    setDeleteConfirm({ open: true, id });
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteConfirm.id) {
+      setDeleteConfirm({ open: false });
+      return;
+    }
+    try {
+      await deleteItem.mutateAsync(deleteConfirm.id);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete item');
+    }
+    setDeleteConfirm({ open: false });
+  }, [deleteConfirm.id, deleteItem]);
 
   return (
     <Box>
@@ -83,9 +107,19 @@ function Menu() {
       )}
       <Box className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-2">
         {filteredItems.map((item: MenuItem) => (
-          <MenuItemCard key={item._id} item={item} onEdit={handleEdit} />
+          <MenuItemCard key={item._id} item={item} onEdit={handleEdit} onDelete={handleDeleteClick} />
         ))}
       </Box>
+      {deleteError && (
+        <Typography className="text-red-600 mt-2">{deleteError}</Typography>
+      )}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title="Delete Menu Item"
+        message="Are you sure you want to delete this menu item?"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteConfirm({ open: false })}
+      />
     </Box>
   );
 }

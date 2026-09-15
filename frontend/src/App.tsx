@@ -18,8 +18,8 @@ const Tables = React.lazy(() => import('./pages/Tables'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 
 function App() {
-  const isFetching = useIsFetching();
-  const isMutating = useIsMutating();
+  const isFetching = useIsFetching({ predicate: (query) => !query.meta?.silent });
+  const isMutating = useIsMutating({ predicate: (mutation) => !mutation.meta?.silent });
   useEventSource();
 
   return (

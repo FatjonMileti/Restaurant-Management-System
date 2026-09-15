@@ -29,11 +29,20 @@ export const reservationResolvers = {
     return formatReservation(doc.toJSON());
   },
   createReservation: async (
-    { date, time, guests, tableNumber, specialRequests }: any,
+    { date, time, guests, tableNumber, specialRequests, clientName, clientPhone, clientEmail }: any,
     context?: any,
   ) => {
     await requireStaffOrAdmin(context);
-    const v = validate(reservationSchema, { date, time, guests, tableNumber, specialRequests });
+    const v = validate(reservationSchema, {
+      date,
+      time,
+      guests,
+      tableNumber,
+      specialRequests,
+      clientName,
+      clientPhone,
+      clientEmail,
+    });
     if (!v.success) throw new Error(v.errors.join(', '));
     const db = await getDB();
     const resDoc = await db.reservations.insert({

@@ -43,6 +43,13 @@ function ReservationCard({
               By: {res.user.name} ({res.user.email})
             </p>
           )}
+          {isStaff && (res.clientName || res.clientPhone || res.clientEmail) && (
+            <p className="text-gray-400 text-xs">
+              Client:{res.clientName ? ` ${res.clientName}` : ''}
+              {res.clientPhone ? ` · ${res.clientPhone}` : ''}
+              {res.clientEmail ? ` (${res.clientEmail})` : ''}
+            </p>
+          )}
           <p className="text-gray-400 text-xs">
             {moment(`${res.date} ${res.time}`, 'YYYY-MM-DD HH:mm').format('DD/MM/YYYY LT')}
           </p>

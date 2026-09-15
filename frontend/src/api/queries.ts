@@ -125,6 +125,9 @@ export interface Reservation {
   tableNumber?: number;
   status: string;
   specialRequests?: string;
+  clientName?: string;
+  clientPhone?: string;
+  clientEmail?: string;
   createdAt: string;
 }
 
@@ -134,6 +137,9 @@ export interface NewReservationPayload {
   guests: number;
   tableNumber?: number;
   specialRequests?: string;
+  clientName?: string;
+  clientPhone?: string;
+  clientEmail?: string;
 }
 
 export interface AdminUser {
@@ -566,6 +572,7 @@ export const useTables = () =>
       const data = await request(endpoint, GET_TABLES);
       return ((data as any)?.tables || []) as TableStatus[];
     },
+    meta: { silent: true },
     staleTime: 30 * 1000,
   });
 
@@ -606,6 +613,7 @@ export const useDashboardStats = () =>
         recentOrders: mapArray<Order>(raw.recentOrders || []).map(mapUserRef),
       } as DashboardStats;
     },
+    meta: { silent: true },
     staleTime: 30 * 1000,
     // refetchInterval: 60 * 1000,
   });

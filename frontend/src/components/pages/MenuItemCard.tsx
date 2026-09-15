@@ -1,24 +1,19 @@
 import React from 'react';
 import { MenuItem } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
-import { useDeleteMenuItem } from '../../api/queries';
 
 interface Props {
   item: MenuItem;
   onEdit: (item: MenuItem) => void;
+  onDelete: (id: string) => void;
 }
 
-const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit }: Props) {
+const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit, onDelete }: Props) {
   const { user } = useAuth();
-  const deleteItem = useDeleteMenuItem();
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      await deleteItem.mutateAsync(item._id);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete item');
-    }
+    onDelete(item._id);
   };
 
   const isAdmin = user?.role === 'admin';

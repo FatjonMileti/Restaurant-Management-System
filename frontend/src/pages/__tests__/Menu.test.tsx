@@ -8,17 +8,22 @@ jest.mock('../../store/authStore', () => ({
 }));
 
 jest.mock('../../components/pages/MenuItemCard', () => (props: any) => (
-  <div data-testid="card">{props.item.name}</div>
+  <div data-testid="card">
+    {props.item.name}
+    <button onClick={() => props.onDelete(props.item._id)}>Delete {props.item.name}</button>
+  </div>
 ));
 jest.mock('../../components/pages/MenuItemForm', () => () => <div>Form</div>);
 
 const mockUseMenu = jest.spyOn(queries, 'useMenu');
 const mockUseCategories = jest.spyOn(queries, 'useCategories');
+const mockUseDeleteMenuItem = jest.spyOn(queries, 'useDeleteMenuItem');
 
 describe('Menu page', () => {
   beforeEach(() => {
     mockUseMenu.mockReturnValue({ data: [], error: null, isLoading: false } as any);
     mockUseCategories.mockReturnValue({ data: [] } as any);
+    mockUseDeleteMenuItem.mockReturnValue({ mutateAsync: jest.fn() } as any);
   });
   afterEach(() => jest.clearAllMocks());
 
@@ -59,5 +64,36 @@ describe('Menu page', () => {
     } as any);
     render(<Menu />);
     expect(screen.getByText(/Network error/)).toBeInTheDocument();
+  });
+
+  it('asks for confirmation before deleting a menu item', async () => {
+    const mutateAsync = jest.fn().mockResolvedValue('Menu item removed');
+    mockUseDeleteMenuItem.mockReturnValue({ mutateAsync } as any);
+    mockUseMenu.mockReturnValue({
+      data: [{ _id: '1', name: 'Pizza', category: 'Food', price: 10, available: true }],
+      error: null,
+      isLoading: false,
+    } as any);
+    render(<Menu />);
+    fireEvent.click(screen.getByText('Delete Pizza'));
+    // Confirm dialog appears; nothing deleted yet.
+    expect(screen.getByText('Delete Menu Item')).toBeInTheDocument();
+    expect(mutateAsync).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('Confirm'));
+    expect(mutateAsync).toHaveBeenCalledWith('1');
+  });
+
+  it('does not delete when the confirmation is cancelled', () => {
+    const mutateAsync = jest.fn();
+    mockUseDeleteMenuItem.mockReturnValue({ mutateAsync } as any);
+    mockUseMenu.mockReturnValue({
+      data: [{ _id: '1', name: 'Pizza', category: 'Food', price: 10, available: true }],
+      error: null,
+      isLoading: false,
+    } as any);
+    render(<Menu />);
+    fireEvent.click(screen.getByText('Delete Pizza'));
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(mutateAsync).not.toHaveBeenCalled();
   });
 });
