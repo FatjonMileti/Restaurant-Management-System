@@ -15,6 +15,12 @@ interface Props {
   onEditOrder: (order: Order) => void;
 }
 
+const timeOf = (value?: string) => {
+  if (!value) return 0;
+  const t = new Date(value).getTime();
+  return Number.isNaN(t) ? 0 : t;
+};
+
 export default function OrderList({ onEditOrder }: Props) {
   const { user } = useAuth();
   const { data: orders = [], error: ordersError } = useOrders();
@@ -61,14 +67,17 @@ export default function OrderList({ onEditOrder }: Props) {
 
   const filteredOrders = useMemo(
     () =>
-      orders.filter((order: Order) => {
-        const matchesStatus = statusFilter ? order.status === statusFilter : true;
-        const matchesTable = tableFilter
-          ? order.tableNumber && String(order.tableNumber) === tableFilter
-          : true;
-        const matchesUser = userFilter ? order.user?._id === userFilter : true;
-        return matchesStatus && matchesTable && matchesUser;
-      }),
+      orders
+        .filter((order: Order) => {
+          const matchesStatus = statusFilter ? order.status === statusFilter : true;
+          const matchesTable = tableFilter
+            ? order.tableNumber && String(order.tableNumber) === tableFilter
+            : true;
+          const matchesUser = userFilter ? order.user?._id === userFilter : true;
+          return matchesStatus && matchesTable && matchesUser;
+        })
+        // Newest first, so freshly created orders sit at the top of the list.
+        .sort((a: Order, b: Order) => timeOf(b.createdAt) - timeOf(a.createdAt)),
     [orders, statusFilter, tableFilter, userFilter],
   );
 

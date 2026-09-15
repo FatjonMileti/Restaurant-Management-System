@@ -142,6 +142,18 @@ export const CREATE_ORDER = gql`
       id
       totalAmount
       status
+      items {
+        menuItem {
+          id
+          name
+        }
+        name
+        quantity
+        price
+      }
+      tableNumber
+      paymentMethod
+      createdAt
     }
   }
 `;

@@ -85,13 +85,45 @@ describe('order resolvers', () => {
     const mockInsert = jest.fn().mockResolvedValue({
       toJSON: () => ({
         _id: 'oid',
+        user: 'u1',
         totalAmount: 20,
         status: 'pending',
-        items: [{ name: 'Pizza', quantity: 1, price: 20 }],
+        tableNumber: 5,
+        paymentMethod: 'cash',
+        items: [{ menuItem: 'menu1', name: 'Pizza', quantity: 1, price: 20 }],
       }),
       _id: 'oid',
     });
     (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: {
+        findOne: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue({
+            toJSON: () => ({
+              _id: 'u1',
+              name: 'John',
+              email: 'john@example.com',
+              role: 'customer',
+            }),
+          }),
+        }),
+      },
+      menuItems: {
+        find: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue([
+            {
+              toJSON: () => ({
+                _id: 'menu1',
+                name: 'Pizza',
+                description: 'Cheesy',
+                price: 20,
+                category: 'Mains',
+                image: '',
+                available: true,
+              }),
+            },
+          ]),
+        }),
+      },
       orders: {
         insert: mockInsert,
         find: jest.fn().mockReturnValue({
@@ -110,6 +142,11 @@ describe('order resolvers', () => {
     const res: any = await orderResolvers.createOrder(orderInput, { userId: 'u1' });
     expect(res.status).toBe('pending');
     expect(mockInsert).toHaveBeenCalled();
+    // Regression: menuItem id string must resolve to a MenuItem object,
+    // otherwise GraphQL throws "Cannot return null for non-nullable field MenuItem.id".
+    expect(res.items[0].menuItem.id).toBe('menu1');
+    expect(res.items[0].menuItem.name).toBe('Pizza');
+    expect(res.user.id).toBe('u1');
   });
 
   it('createOrder rejects missing tableNumber', async () => {

@@ -117,4 +117,26 @@ describe('OrderList user filter', () => {
     const select = screen.getByLabelText('Filter by user');
     expect(within(select).getAllByRole('option')).toHaveLength(3);
   });
+
+  it('shows newest orders first regardless of input order', () => {
+    setup([
+      mockOrder({
+        _id: 'order-old',
+        tableNumber: 1,
+        createdAt: moment('2024-01-01T12:00:00Z').toISOString(),
+      }),
+      mockOrder({
+        _id: 'order-new',
+        user: { _id: 'u2', name: 'Jane', email: 'jane@example.com' },
+        tableNumber: 2,
+        status: 'completed',
+        createdAt: moment('2024-03-01T12:00:00Z').toISOString(),
+      }),
+    ]);
+    render(<OrderList onEditOrder={jest.fn()} />);
+    const byLines = screen.getAllByText(/By:/).map((el) => el.textContent);
+    expect(byLines).toHaveLength(2);
+    expect(byLines[0]).toMatch(/Jane/);
+    expect(byLines[1]).toMatch(/John/);
+  });
 });

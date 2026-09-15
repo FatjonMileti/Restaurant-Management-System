@@ -29,7 +29,7 @@ export const orderResolvers = {
       db.orders.find(filter).sort({ createdAt: -1 }).exec(),
       buildMenuItemMap(db),
     ]);
-    return docs.map((doc: any) => formatOrder(doc.toJSON(), menuItemMap));
+    return Promise.all(docs.map((doc: any) => formatOrder(doc.toJSON(), menuItemMap)));
   },
 
   order: async ({ id }: any, context?: any) => {
@@ -63,14 +63,18 @@ export const orderResolvers = {
       items: v.data.items,
       totalAmount,
       tableNumber: v.data.tableNumber,
-      paymentMethod: v.data.paymentMethod,
+      paymentMethod: v.data.paymentMethod ?? 'cash',
       status: 'pending',
       createdAt: moment().toISOString(),
     });
     emitEvent('orders:changed');
     emitEvent('tables:changed');
-    const order = orderDoc.toJSON();
-    return { ...order, id: order._id };
+    // Return the formatted order (populated user + menuItem objects), not the
+    // raw doc: items store menuItem as a plain id string, which cannot resolve
+    // the `menuItem { id }` selection ("Cannot return null for non-nullable
+    // field MenuItem.id").
+    const menuItemMap = await buildMenuItemMap(db);
+    return formatOrder(orderDoc.toJSON(), menuItemMap);
   },
 
   updateOrder: async ({ id, ...rest }: any, context?: any) => {
@@ -114,8 +118,6 @@ export const orderResolvers = {
     if (!doc) throw new Error('Order not found');
     await doc.remove();
     await db.orders.cleanup(0);
-    emitEvent('orders:changed');
-    emitEvent('tables:changed');
     return 'Order removed';
   },
 

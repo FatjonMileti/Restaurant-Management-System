@@ -68,7 +68,6 @@ export const reservationResolvers = {
     await doc.remove();
     await db.reservations.cleanup(0);
     emitEvent('reservations:changed');
-    emitEvent('tables:changed');
     return 'Reservation removed';
   },
   cancelReservation: async ({ id }: any, context?: any) => {

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { request as gqlRequest, gql } from 'graphql-request';
-import { useAuthStore } from '../store/authStore';
+import { useAuth, useAuthStore } from '../store/authStore';
 import {
   GET_CATEGORIES,
   CREATE_CATEGORY,
@@ -106,7 +106,7 @@ export interface Order {
 }
 
 export interface NewOrderPayload {
-  items: { menuItem: string; name: string; price: number; quantity: number }[];
+  items: OrderItem[];
   tableNumber: number;
 }
 
@@ -166,8 +166,10 @@ export const useCreateCategory = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: { name: string }) => request(endpoint, CREATE_CATEGORY, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['categories'] });
+    onSuccess: (newCategory) => {
+      qc.setQueryData(['categories'], (oldData: any) => {
+        return [...oldData, { ...newCategory.createCategory, _id: newCategory.createCategory.id }];
+      });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
@@ -178,8 +180,14 @@ export const useUpdateCategory = () => {
   return useMutation({
     mutationFn: (payload: { id: string; name: string }) =>
       request(endpoint, UPDATE_CATEGORY, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['categories'] });
+    onSuccess: (updatedCategory) => {
+      qc.setQueryData(['categories'], (oldData: any) => {
+        return oldData.map((category: any) =>
+          category._id === updatedCategory.updateCategory.id
+            ? { ...category, name: updatedCategory.updateCategory.name }
+            : category
+        );
+      });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
@@ -189,8 +197,10 @@ export const useDeleteCategory = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_CATEGORY, { id }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['categories'] });
+    onSuccess: (_, id) => {
+      qc.setQueryData(['categories'], (oldData: any) => {
+        return oldData.filter((category: Category) => category._id !== id);
+      });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
@@ -211,8 +221,10 @@ export const useCreateMenuItem = () => {
   return useMutation({
     mutationFn: (payload: Omit<MenuItem, '_id' | 'available'>) =>
       request(endpoint, CREATE_MENU_ITEM, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['menu'] });
+    onSuccess: (newItem) => {
+      qc.setQueryData(['menu'], (oldData: any) => {
+        return [...oldData, { ...newItem.createMenuItem, _id: newItem.createMenuItem.id }];
+      });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
@@ -223,9 +235,12 @@ export const useUpdateMenuItem = () => {
   return useMutation({
     mutationFn: (payload: { id: string; data: Partial<MenuItem> }) =>
       request(endpoint, UPDATE_MENU_ITEM, { id: payload.id, ...payload.data }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['menu'] });
-      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    onSuccess: (updatedItem) => {
+      qc.setQueryData(['menu'], (oldData: any) => {
+        return oldData?.map((item: any) =>
+          item._id === updatedItem.updateMenuItem.id ? { ...updatedItem.updateMenuItem, _id: updatedItem.updateMenuItem.id } : item
+        );
+      });
     },
   });
 };
@@ -234,9 +249,12 @@ export const useDeleteMenuItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_MENU_ITEM, { id }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['menu'] });
+    onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+      // Remove item from cache
+      qc.setQueryData(['menu'], (oldData: any) => {
+        return oldData?.filter((item: any) => item._id !== id);
+      });
     },
   });
 };
@@ -253,23 +271,33 @@ export const useOrders = () =>
 
 export const useCreateOrder = () => {
   const qc = useQueryClient();
+  const { user: authUser } = useAuth();
   return useMutation({
     mutationFn: async (payload: NewOrderPayload) => {
       const variables = {
-        items: payload.items.map((i: any) => ({
-          menuItem: i.menuItem,
-          name: i.name || i.menuItem,
-          quantity: i.quantity,
-          price: i.price || 0,
-        })),
+        items: payload.items,
         tableNumber: payload.tableNumber,
         paymentMethod: 'cash',
       };
       const data = await request(endpoint, CREATE_ORDER, variables);
       return mapId<Order>((data as any)?.createOrder);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['orders'] });
+    onSuccess: (newOrder) => {
+      // The mutation result carries `id` (not `_id`) and a server-populated
+      // user; normalize to the cached Order shape (OrderUser with `_id`) so
+      // user filtering/isOwner keeps working. Prepend: the list is ordered
+      // newest-first, so the new order belongs at the top.
+      if (newOrder) {
+        const orderWithUser: Order = {
+          ...newOrder,
+          user: authUser
+            ? { _id: authUser._id, name: authUser.name, email: authUser.email }
+            : newOrder.user,
+        };
+        qc.setQueryData(['orders'], (oldData: any) => [orderWithUser, ...(oldData ?? [])]);
+      } else {
+        qc.invalidateQueries({ queryKey: ['orders'] });
+      }
       qc.invalidateQueries({ queryKey: ['tables'] });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
@@ -281,9 +309,45 @@ export const useUpdateOrder = () => {
   return useMutation({
     mutationFn: (payload: { id: string; data: Partial<Order> }) =>
       request(endpoint, UPDATE_ORDER, { id: payload.id, ...payload.data }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['orders'] });
-      qc.invalidateQueries({ queryKey: ['tables'] });
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: ['orders'] });
+      const previousOrders = qc.getQueryData<Order[]>(['orders']);
+      // UPDATE_ORDER returns only scalar fields, so the edited values must
+      // come from the variables. totalAmount is recomputed like the backend
+      // does when items change without an explicit total. Raw form items
+      // carry `menuItem` as an id string (cached orders hold objects) — this
+      // is render-safe (OrderCard/OrderForm handle both) and the settled
+      // refetch restores the server shape.
+      qc.setQueryData(['orders'], (oldData: any) =>
+        (oldData ?? []).map((order: Order) =>
+          order._id === payload.id
+            ? {
+                ...order,
+                ...payload.data,
+                totalAmount:
+                  payload.data.totalAmount ??
+                  (payload.data.items
+                    ? payload.data.items.reduce((sum, i) => sum + i.price * i.quantity, 0)
+                    : order.totalAmount),
+              }
+            : order,
+        ),
+      );
+      return { previousOrders };
+    },
+    onError: (_err, _payload, context) => {
+      if (context?.previousOrders) qc.setQueryData(['orders'], context.previousOrders);
+    },
+    onSettled: (_data, _err, payload, context) => {
+      // Table occupancy derives from orders' table numbers — skip the tables
+      // refetch when the table didn't change. Unknown previous state stays
+      // safe by invalidating.
+      const prevTable = context?.previousOrders?.find((o) => o._id === payload.id)?.tableNumber;
+      const tableChanged =
+        payload.data.tableNumber === undefined
+          ? false
+          : prevTable === undefined || payload.data.tableNumber !== prevTable;
+      if (tableChanged) qc.invalidateQueries({ queryKey: ['tables'] });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
@@ -293,8 +357,10 @@ export const useDeleteOrder = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_ORDER, { id }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['orders'] });
+    onSuccess: (_, id) => {
+      qc.setQueryData(['orders'], (oldData: any) => {
+        return oldData?.filter((item: any) => item._id !== id);
+      });
       qc.invalidateQueries({ queryKey: ['tables'] });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
@@ -306,8 +372,22 @@ export const useUpdateOrderStatus = () => {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       request(endpoint, UPDATE_ORDER_STATUS, { id, status }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['orders'] });
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: ['orders'] });
+      const previousOrders = qc.getQueryData<Order[]>(['orders']);
+      qc.setQueryData(['orders'], (oldData: any) =>
+        (oldData ?? []).map((order: Order) =>
+          order._id === payload.id
+            ? { ...order, status: payload.status as Order['status'] }
+            : order,
+        ),
+      );
+      return { previousOrders };
+    },
+    onError: (_err, _payload, context) => {
+      if (context?.previousOrders) qc.setQueryData(['orders'], context.previousOrders);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['tables'] });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
@@ -353,9 +433,10 @@ export const useDeleteReservation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_RESERVATION, { id }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['reservations'] });
-      qc.invalidateQueries({ queryKey: ['tables'] });
+    onSuccess: (_, id) => {
+      qc.setQueryData(['reservations'], (oldData: any) => {
+        return oldData?.filter((reservation: Reservation) => reservation._id !== id);
+      });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
@@ -387,8 +468,10 @@ export const useCreateUser = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: NewUserPayload) => request(endpoint, CREATE_USER, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['users'] });
+    onSuccess: (newUser) => {
+      qc.setQueryData(['users'], (oldData: any) => {
+        return [...oldData, { ...newUser.createUserByAdmin, _id: newUser.createUserByAdmin.id }];
+      });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
@@ -398,8 +481,10 @@ export const useDeleteUser = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => request(endpoint, DELETE_USER, { id }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['users'] });
+    onSuccess: (_, id) => {
+      qc.setQueryData(['users'], (oldData: any) => {
+        return oldData?.filter((user: AdminUser) => user._id !== id);
+      });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
@@ -410,8 +495,15 @@ export const useUpdateUserRole = () => {
   return useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) =>
       request(endpoint, UPDATE_USER_ROLE, { id, role }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['users'] });
+    onSuccess: (_, { id, role }) => {
+      qc.setQueryData(['users'], (oldData: any) => {
+        return oldData?.map((user: AdminUser) => {
+          if (user._id === id) {
+            return { ...user, role };
+          }
+          return user;
+        });
+      });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });
@@ -459,7 +551,7 @@ export const useUpdateRestaurantSettings = () => {
       if (payload.tableCount !== undefined) vars.tableCount = Number(payload.tableCount);
       return request(endpoint, UPDATE_RESTAURANT_SETTINGS, vars);
     },
-    onSuccess: () => {
+    onSuccess: (_, payload) => {
       qc.invalidateQueries({ queryKey: ['restaurantSettings'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
@@ -515,5 +607,5 @@ export const useDashboardStats = () =>
       } as DashboardStats;
     },
     staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    // refetchInterval: 60 * 1000,
   });
