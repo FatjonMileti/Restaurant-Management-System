@@ -33,6 +33,9 @@ export const settingsResolvers = {
       if (v.data.tableCount < 1) throw validationError('tableCount must be at least 1');
       updates.tableCount = v.data.tableCount;
     }
+    // Bump updatedAt so clients caching the logo (or other settings) by
+    // version know the entity changed and refetch.
+    updates.updatedAt = new Date().toISOString();
     await doc.update({ $set: updates });
     const updated = await db.settings.findOne().exec();
     const settings = formatRestaurantSettings(updated?.toJSON() || doc.toJSON());

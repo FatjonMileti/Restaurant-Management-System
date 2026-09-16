@@ -55,6 +55,7 @@ export const getOrCreateRestaurantSettings = async () => {
       phone: '',
       email: '',
       tableCount: 10,
+      updatedAt: new Date().toISOString(),
     });
     return doc.toJSON();
   }

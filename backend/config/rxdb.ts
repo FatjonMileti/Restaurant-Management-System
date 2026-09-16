@@ -55,7 +55,7 @@ export const getRxDB = async (): Promise<any> => {
   // Define MenuItem collection schema
   const menuItemSchema = {
     title: 'menuItem schema',
-    version: 0,
+    version: 1,
     description: 'menuItem collection',
     type: 'object',
     primaryKey: '_id',
@@ -67,6 +67,7 @@ export const getRxDB = async (): Promise<any> => {
       category: { type: 'string' },
       image: { type: 'string' },
       available: { type: 'boolean' },
+      updatedAt: { type: 'string' },
     },
     required: ['name', 'price'],
     indexes: ['category'],
@@ -146,7 +147,7 @@ export const getRxDB = async (): Promise<any> => {
   // Define RestaurantSettings collection schema
   const settingsSchema = {
     title: 'settings schema',
-    version: 0,
+    version: 1,
     description: 'restaurant settings collection',
     type: 'object',
     primaryKey: '_id',
@@ -158,6 +159,7 @@ export const getRxDB = async (): Promise<any> => {
       phone: { type: 'string' },
       email: { type: 'string' },
       tableCount: { type: 'number' },
+      updatedAt: { type: 'string' },
     },
     required: ['tableCount'],
     indexes: [],
@@ -171,14 +173,14 @@ export const getRxDB = async (): Promise<any> => {
 
   await dbInstance.addCollections({
     users: { schema: userSchema },
-    menuItems: { schema: menuItemSchema },
+    menuItems: { schema: menuItemSchema, migrationStrategies: { 1: identityMigration } },
     categories: { schema: categorySchema },
     orders: { schema: orderSchema, migrationStrategies: { 1: identityMigration } },
     reservations: {
       schema: reservationSchema,
       migrationStrategies: { 0: identityMigration, 1: identityMigration, 2: identityMigration },
     },
-    settings: { schema: settingsSchema },
+    settings: { schema: settingsSchema, migrationStrategies: { 1: identityMigration } },
   });
 
   return dbInstance;

@@ -38,6 +38,17 @@ describe('frontend validation schemas', () => {
         false,
       );
     });
+    it('accepts filenames, relative paths, and urls as image', () => {
+      for (const image of [
+        'restaurant.jpeg',
+        '/images/x.jpg',
+        'http://localhost:5000/images/x.jpg',
+      ]) {
+        expect(
+          menuItemSchema.safeParse({ name: 'Pizza', price: 10, category: 'Food', image }).success,
+        ).toBe(true);
+      }
+    });
   });
 
   describe('reservationSchema', () => {

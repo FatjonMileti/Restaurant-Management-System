@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+// Menu photos and the restaurant logo are stored as bare filenames
+// (`restaurant.jpeg`, resolved against REACT_APP_API_URL + /images on the
+// client), backend-relative paths (`/images/x.jpg`), or absolute URLs.
+export const imageRefSchema = z
+  .string()
+  .max(500, 'Image reference is too long')
+  .optional()
+  .or(z.literal(''));
+
 export const registerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email address'),
@@ -17,7 +26,7 @@ export const menuItemSchema = z.object({
   description: z.string().optional(),
   price: z.number().positive('Price must be positive'),
   category: z.string().min(1, 'Category is required'),
-  image: z.string().url('Invalid URL').optional().or(z.literal('')),
+  image: imageRefSchema,
 });
 
 export const orderItemSchema = z.object({
@@ -62,7 +71,7 @@ export const categorySchema = z.object({
 
 export const restaurantSettingsSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
-  logo: z.string().url('Invalid URL').optional().or(z.literal('')),
+  logo: imageRefSchema,
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email('Invalid email').optional().or(z.literal('')),

@@ -80,6 +80,7 @@ export interface MenuItem {
   category: string;
   image?: string;
   available: boolean;
+  updatedAt?: string;
 }
 
 export interface OrderItem {
@@ -195,7 +196,7 @@ export const useUpdateCategory = () => {
         return oldData.map((category: any) =>
           category._id === updatedCategory.updateCategory.id
             ? { ...category, name: updatedCategory.updateCategory.name }
-            : category
+            : category,
         );
       });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
@@ -252,7 +253,9 @@ export const useUpdateMenuItem = () => {
     onSuccess: (updatedItem) => {
       qc.setQueryData(['menu'], (oldData: any) => {
         return oldData?.map((item: any) =>
-          item._id === updatedItem.updateMenuItem.id ? { ...updatedItem.updateMenuItem, _id: updatedItem.updateMenuItem.id } : item
+          item._id === updatedItem.updateMenuItem.id
+            ? { ...updatedItem.updateMenuItem, _id: updatedItem.updateMenuItem.id }
+            : item,
         );
       });
     },
@@ -548,6 +551,7 @@ export interface RestaurantSettings {
   phone: string;
   email: string;
   tableCount: number;
+  updatedAt?: string;
 }
 
 export interface TableStatus {

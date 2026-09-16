@@ -1,6 +1,7 @@
 import React from 'react';
 import { MenuItem } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
+import { useCachedImage } from '../../hooks/useCachedImage';
 
 interface Props {
   item: MenuItem;
@@ -17,6 +18,7 @@ const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit, onDelete }
   };
 
   const isAdmin = user?.role === 'admin';
+  const imgSrc = useCachedImage(item.image, '/images/empty.jpg', item.updatedAt);
   return (
     <div
       className={`card-grid ${isAdmin ? 'cursor-pointer' : ''}`}
@@ -24,7 +26,7 @@ const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit, onDelete }
     >
       <div className="w-full h-32 rounded-md overflow-hidden mb-3 bg-gray-100">
         <img
-          src={item.image || '/images/empty.jpg'}
+          src={imgSrc || '/images/empty.jpg'}
           alt={item.name}
           className="w-full h-full object-cover"
           loading="lazy"

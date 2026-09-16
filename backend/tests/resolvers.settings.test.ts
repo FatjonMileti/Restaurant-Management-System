@@ -59,4 +59,27 @@ describe('settings resolvers', () => {
       settingsResolvers.updateRestaurantSettings({ tableCount: 0 }, { userId: '1' }),
     ).rejects.toThrow();
   });
+
+  it('updateRestaurantSettings stamps updatedAt', async () => {
+    (requireAdmin as unknown as jest.Mock).mockResolvedValue({ role: 'admin' });
+    const update = jest.fn().mockResolvedValue(true);
+    const fakeSettings = {
+      _id: 'id',
+      name: 'Old',
+      tableCount: 10,
+      update,
+      toJSON: () => ({ _id: 'id', name: 'Old', tableCount: 10 }),
+    };
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      settings: {
+        findOne: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue(fakeSettings),
+        }),
+      },
+    });
+    await settingsResolvers.updateRestaurantSettings({ name: 'New' }, { userId: '1' });
+    expect(update).toHaveBeenCalledWith({
+      $set: expect.objectContaining({ name: 'New', updatedAt: expect.any(String) }),
+    });
+  });
 });

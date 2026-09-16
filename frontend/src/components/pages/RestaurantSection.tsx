@@ -3,12 +3,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRestaurantSettings, useUpdateRestaurantSettings } from '../../api/queries';
 import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
+import { useCachedImage } from '../../hooks/useCachedImage';
 import SectionCard from '../SectionCard';
 import { restaurantSettingsSchema, RestaurantSettingsFormData } from '../../validation/schemas';
 
 export default function RestaurantSection() {
   const { data: settings } = useRestaurantSettings();
   const update = useUpdateRestaurantSettings();
+  const logoPreviewSrc = useCachedImage(settings?.logo, '', settings?.updatedAt);
   const [success, setSuccess] = React.useState('');
   const [error, setError] = React.useState('');
 
@@ -63,19 +65,19 @@ export default function RestaurantSection() {
 
         <label className="form-label">Logo URL</label>
         <input
-          placeholder="https://... or /images/logo.png"
+          placeholder="restaurant.jpeg or https://..."
           {...register('logo')}
           className="form-input-sm"
         />
         {errors.logo && <p className="error-text text-sm">{errors.logo.message}</p>}
-        {settings?.logo && (
+        {logoPreviewSrc ? (
           <img
-            src={settings.logo}
+            src={logoPreviewSrc}
             alt="logo preview"
             className="h-12 w-12 object-cover rounded mt-1"
             onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
           />
-        )}
+        ) : null}
 
         <label className="form-label">Address</label>
         <input placeholder="123 Main St, City" {...register('address')} className="form-input-sm" />

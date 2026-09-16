@@ -85,7 +85,11 @@ GraphQL only at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). RES
 
 ## Deployment (Caddy)
 
-- Root `Caddyfile` (Caddy v2) is the single public entrypoint: `/graphql*`, `/events*`, `/api-docs*` → `{$BACKEND_UPSTREAM:localhost:5000}`; `/*` serves `frontend/build` mounted at `/srv/frontend` with SPA fallback. `/events` uses `flush_interval -1` (SSE must not be buffered).
+- Root `Caddyfile` (Caddy v2) is the single public entrypoint: `/graphql*`, `/events*`, `/api-docs*`, `/images*` → `{$BACKEND_UPSTREAM:localhost:5000}`; `/*` serves `frontend/build` mounted at `/srv/frontend` with SPA fallback. `/events` uses `flush_interval -1` (SSE must not be buffered).
+- Backend serves uploaded images at `GET /images/*` from `backend/public/images` (`server.ts`, resolves for both `tsx` dev and compiled `dist/`). Store menu photos / logos as bare filenames (`restaurant.jpeg`), backend-relative paths (`/images/<file>`), or absolute URLs — never hardcode the host in the DB.
+- Frontend resolves image refs via `getImageApiBase()` (`frontend/src/hooks/useCachedImage.ts`): `REACT_APP_API_URL` prefix (e.g. `http://localhost:5000` in dev; empty = same-origin via CRA `proxy` / Caddy `/images*`). Bare filenames become `<api-base>/images/<file>`. Set `REACT_APP_API_URL=` (empty) for same-origin production builds.
+- Frontend `useCachedImage(src, fallback)` (`frontend/src/hooks/useCachedImage.ts`) fetches backend images once and caches them in `localStorage` (`rms-img:` prefix) as data URLs; use it for all menu-item images and the restaurant logo instead of raw `src={...}`. Helpers: `resolveImageUrl`, `getCachedImageSrc`, `fetchAndCacheImage`, `prefetchImages`, `clearImageCache`.
+- Image cache is versioned by the entity's `updatedAt`: `menuItems`/`settings` RxDB schemas store `updatedAt` (stamped on every create/update/seed), the frontend queries it, and callers pass it as the 3rd arg (`useCachedImage(src, fallback, updatedAt)`). A logo/image edit bumps `updatedAt` → new cache key → refetch; stale version keys are evicted on write. SSE payloads already carry `updatedAt` via the formatters, so live edits invalidate automatically.
 - Same-origin frontend build: `REACT_APP_GRAPHQL_URL=/graphql REACT_APP_WS_URL= npm run build` (`REACT_APP_WS_URL=` empty → `/events`, see `frontend/src/eventSource.ts`). Dev variant proxying to `{$FRONTEND_UPSTREAM:localhost:3000}` is commented in the Caddyfile.
 - After editing: `caddy fmt` check + `caddy validate --config Caddyfile --adapter caddyfile` (via `caddy:2` docker image if no local binary).
 

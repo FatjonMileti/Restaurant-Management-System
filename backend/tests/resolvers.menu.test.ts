@@ -108,8 +108,26 @@ describe('menu resolvers (RxDB)', () => {
       };
       mockMenuItems.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(doc) });
       const res: any = await menuResolvers.updateMenuItem({ id: '5', price: 12 }, {});
-      expect(doc.update).toHaveBeenCalledWith({ $set: { price: 12 } });
+      expect(doc.update).toHaveBeenCalledWith({
+        $set: { price: 12, updatedAt: expect.any(String) },
+      });
       expect(res.id).toBe('5');
+    });
+
+    it('stamps updatedAt on create', async () => {
+      mockRequireAdmin.mockResolvedValue({ role: 'admin' });
+      const created = {
+        _id: '7',
+        name: 'Salad',
+        price: 8,
+        category: 'Food',
+        toJSON: () => ({ _id: '7', name: 'Salad', price: 8, category: 'Food' }),
+      };
+      mockMenuItems.insert.mockResolvedValue(created);
+      await menuResolvers.createMenuItem({ name: 'Salad', price: 8, category: 'Food' }, {});
+      expect(mockMenuItems.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ updatedAt: expect.any(String) }),
+      );
     });
   });
 

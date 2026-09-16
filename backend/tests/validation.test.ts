@@ -60,12 +60,27 @@ describe('validation schemas', () => {
       const r = validate(menuItemSchema, { name: 'Pizza', price: 10, category: 'Food', image: '' });
       expect(r.success).toBe(true);
     });
-    it('rejects invalid image url', () => {
+    it('accepts bare filenames and urls as image', () => {
+      for (const image of [
+        'restaurant.jpeg',
+        '/images/x.jpg',
+        'http://localhost:5000/images/x.jpg',
+      ]) {
+        const r = validate(menuItemSchema, {
+          name: 'Pizza',
+          price: 10,
+          category: 'Food',
+          image,
+        });
+        expect(r.success).toBe(true);
+      }
+    });
+    it('rejects over-long image references', () => {
       const r = validate(menuItemSchema, {
         name: 'Pizza',
         price: 10,
         category: 'Food',
-        image: 'not-url',
+        image: 'x'.repeat(501),
       });
       expect(r.success).toBe(false);
     });

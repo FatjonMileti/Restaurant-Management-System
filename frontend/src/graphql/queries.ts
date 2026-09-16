@@ -47,6 +47,7 @@ export const GET_MENU_ITEMS = gql`
       category
       image
       available
+      updatedAt
     }
   }
 `;
@@ -72,6 +73,7 @@ export const CREATE_MENU_ITEM = gql`
       category
       image
       available
+      updatedAt
     }
   }
 `;
@@ -101,6 +103,7 @@ export const UPDATE_MENU_ITEM = gql`
       category
       image
       available
+      updatedAt
     }
   }
 `;
@@ -337,6 +340,7 @@ export const GET_RESTAURANT_SETTINGS = gql`
       phone
       email
       tableCount
+      updatedAt
     }
   }
 `;
@@ -364,6 +368,7 @@ export const UPDATE_RESTAURANT_SETTINGS = gql`
       phone
       email
       tableCount
+      updatedAt
     }
   }
 `;

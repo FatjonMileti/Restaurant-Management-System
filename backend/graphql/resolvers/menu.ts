@@ -31,7 +31,12 @@ export const menuResolvers = {
     const v = validate(menuItemSchema, { name, description, price, category, image });
     if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
-    const item = await db.menuItems.insert({ _id: genId(), available: true, ...v.data });
+    const item = await db.menuItems.insert({
+      _id: genId(),
+      available: true,
+      ...v.data,
+      updatedAt: new Date().toISOString(),
+    });
     const menuItem = formatMenuItem(item);
     emitEvent('menu:changed', { menuItem });
     return menuItem;
@@ -44,7 +49,7 @@ export const menuResolvers = {
     const db = await getDB();
     const existing = await db.menuItems.findOne(id).exec();
     if (!existing) throw notFoundError('Menu item not found');
-    await existing.update({ $set: v.data });
+    await existing.update({ $set: { ...v.data, updatedAt: new Date().toISOString() } });
     const updated = await db.menuItems.findOne(id).exec();
     const menuItem = formatMenuItem(updated?.toJSON() || existing.toJSON());
     emitEvent('menu:changed', { menuItem });

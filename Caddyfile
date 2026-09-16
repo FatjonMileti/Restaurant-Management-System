@@ -4,6 +4,7 @@
 #   /graphql*   -> backend (Express + express-graphql)
 #   /events*    -> backend (SSE stream in backend/sse.ts, unbuffered)
 #   /api-docs*  -> backend (Swagger UI)
+#   /images*    -> backend (static menu photos / logos in backend/public/images)
 #   /*          -> frontend static build (frontend/build, SPA fallback to index.html)
 #
 # Usage — production (serve prebuilt frontend):
@@ -45,6 +46,10 @@
 	}
 
 	handle /api-docs* {
+		reverse_proxy {$BACKEND_UPSTREAM:localhost:5000}
+	}
+
+	handle /images* {
 		reverse_proxy {$BACKEND_UPSTREAM:localhost:5000}
 	}
 

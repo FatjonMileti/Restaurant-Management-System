@@ -92,7 +92,11 @@ export default function MenuItemForm({ categories, item, onSuccess, onCancel }: 
         ))}
       </select>
       {errors.category && <p className="error-text text-sm">{errors.category.message}</p>}
-      <input placeholder="Image URL" {...register('image')} className="form-input-sm" />
+      <input
+        placeholder="restaurant.jpeg or https://..."
+        {...register('image')}
+        className="form-input-sm"
+      />
       {errors.image && <p className="error-text text-sm">{errors.image.message}</p>}
       <div className="flex gap-2 mt-2">
         <button

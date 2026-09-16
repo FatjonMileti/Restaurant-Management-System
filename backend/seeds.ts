@@ -222,12 +222,16 @@ const seed = async (): Promise<void> => {
     ];
 
     for (const itemData of menuItemsData) {
-      await db.menuItems.insert(itemData);
+      await db.menuItems.insert({ ...itemData, updatedAt: new Date().toISOString() });
     }
     console.log(`Created ${menuItemsData.length} menu items`);
 
     // Insert default restaurant settings
-    await db.settings.insert({ _id: genId(), tableCount: 10 });
+    await db.settings.insert({
+      _id: genId(),
+      tableCount: 10,
+      updatedAt: new Date().toISOString(),
+    });
     console.log('Inserted default restaurant settings');
 
     // Insert sample reservations, including walk-in client contact details

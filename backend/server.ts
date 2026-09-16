@@ -10,6 +10,8 @@ import connectDB from './config/db.js';
 import jwt from 'jsonwebtoken';
 import { initSSE } from './sse.js';
 import { formatGraphQLError } from './graphql/errors.js';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -20,6 +22,16 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
+
+// Serve backend images (menu photos, restaurant logo). The folder resolves
+// differently under tsx (backend/) vs compiled output (backend/dist/),
+// so pick the first candidate that exists.
+const imagesDirCandidates = [
+  path.join(__dirname, 'public', 'images'),
+  path.join(__dirname, '..', 'public', 'images'),
+];
+const imagesDir = imagesDirCandidates.find((dir) => fs.existsSync(dir)) ?? imagesDirCandidates[0];
+app.use('/images', express.static(imagesDir));
 
 app.use(
   '/graphql',
