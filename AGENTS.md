@@ -1,147 +1,56 @@
 # AGENTS.md
 
-## Repo structure
+Two packages under one root: `backend/` and `frontend/`. Always `cd` into the subdirectory before running npm commands.
 
-Two independent packages under one root: `backend/` and `frontend/`. Always `cd` into the subdirectory before running package commands.
+## Backend (Express + RxDB + TS)
 
-## Backend (Express + RxDB + TypeScript)
+- `tsconfig` uses `moduleResolution: "node16"` — all relative imports **must use `.js`** (e.g. `from './config/db.js'`). Dev uses `tsx` (not ts-node) for this reason.
+- Commands: `npm run dev` (`nodemon --exec tsx server.ts`), `npm run build` (`tsc` → `dist/`), `npm start` (`node dist/server.js`), `npm run seed` (`tsx seeds.ts`).
+- Data: RxDB v17 + `@basepurpose/rxdb-sqlite` (`better-sqlite3`). Access via `getDB()` (`config/rxdb.ts`). Collections: `users`, `menuItems`, `categories`, `orders`, `reservations`, `settings`. `server.ts` awaits `connectDB()` before `listen()`; `getDB()` throws otherwise.
+- RxDB quirks: `findOne()` only reliable for `_id` — else `find().exec()` + JS `.find()/.filter()`; no `$in` (use JS filter); `doc.update()` doesn't refresh — re-fetch before returning; explicit `_id` via `crypto.randomUUID()`; plugins `RxDBQueryBuilderPlugin` + `RxDBUpdatePlugin`; formatters use `unwrapDoc()` (`toJSON()` first); schema change → bump `version` + add `migrationStrategies` entry (even identity) or existing SQLite files throw.
+- No `populate()` (broken on this adapter — empties docs). `orders.user` / `reservations.user` keep `ref: 'users'` as documentation only; formatters resolve raw ids via `findOne`. No `categories` ref (`menuItem.category` is a name) and no `items[].menuItem` ref — order items (`menuItem` = string ID) resolve via `buildMenuItemMap()`.
+- Auth (`middleware/auth.ts`, type via `types/express.d.ts`): `protect` (JWT Bearer → `req.user`), `admin` (`role==='admin'`), `staff` (`admin`/`staff`).
+- Env: `backend/.env` gitignored; copy `.env.example`, fill `JWT_SECRET`. Never commit secrets or log JWTs/passwords.
 
-**Important TS quirk:** `tsconfig.json` uses `moduleResolution: "node16"`. All relative imports in `.ts` files **must use `.js` extension** (e.g. `from './config/db.js'`). This is required for `tsc` to compile correctly.
+## API: GraphQL only
 
-| Command         | What it does                                                                                                               |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`   | `nodemon --exec tsx server.ts` — uses **tsx** (not ts-node) because tsx handles `.js` extensions for `.ts` files correctly |
-| `npm run build` | `tsc` — compiles to `dist/`                                                                                                |
-| `npm start`     | `node dist/server.js` — runs compiled output                                                                               |
-| `npm run seed`  | `tsx seeds.ts` — populates DB with sample data                                                                             |
+- Endpoint `/graphql` (`backend/graphql/schema.ts`, `express-graphql`); REST removed. Helpers in `schema.ts`: `formatUser`, `formatRestaurantSettings`, `getOrCreateRestaurantSettings`, `requireAuth`/`requireAdmin`.
+- Frontend: docs in `frontend/src/graphql/queries.ts`, typed hooks in `frontend/src/api/queries.ts` (`graphql-request` + `useAuthStore` token). `GET_*` → `useQuery`, mutations → `useMutation` + `invalidateQueries`. Must resolve endpoint via `resolveGraphQLEndpoint()` (v7 `new URL()` has no base).
+- Errors: backend `AppError` codes (`backend/graphql/errors.ts`: `UNAUTHENTICATED`/`FORBIDDEN`/`VALIDATION_FAILED`/`NOT_FOUND`/`CONFLICT` via `extensions.code`); frontend uses only `getGraphQLErrorMessage(err, fallback)` (`utils/graphqlErrors.ts`). Never duplicate it.
 
-**Data layer:** RxDB (`rxdb` v17) with `@basepurpose/rxdb-sqlite` adapter (SQLite via `better-sqlite3`). All resolvers and helpers use `getDB()` from `config/rxdb.ts` which returns the RxDB instance. Collections: `users`, `menuItems`, `categories`, `orders`, `reservations`, `settings`.
+## Real-time (SSE, not socket.io)
 
-**Real-time layer (SSE, not socket.io):** Server-Sent Events at `GET /events` (`backend/sse.ts`). `initSSE(app)` registers the route; `emitEvent(event, data)` broadcasts to all connected clients. Resolvers call `emitEvent('<entity>:changed', { <entity>: formatted })` after mutations (upsert the formatted object returned to GraphQL), and `emitEvent('<entity>:changed', { <entity>: { id, deleted: true } })` on deletes. Frontend `getEventSource()` in `frontend/src/eventSource.ts` opens an `EventSource` to `/events`; `useEventSource()` (`frontend/src/hooks/useEventSource.ts`) applies payloads to the React Query cache (normalize via exported `mapId`/`mapUserRef` from `frontend/src/api/queries.ts`, upsert new at top / merge in place / remove on `deleted: true`) and falls back to `invalidateQueries` when an event carries no usable payload. `tables:changed` carries no entity (tables are computed) — always invalidated; deletes emit no `tables:changed`, so the frontend invalidates `['tables']` from the removed payload when it held a `tableNumber`.
+- `GET /events` (`backend/sse.ts`: `initSSE(app)`, `emitEvent(event, data)`). Mutations emit `emitEvent('<entity>:changed', { <entity>: formatted })`; deletes emit `{ <entity>: { id, deleted: true } }`.
+- Frontend: `getEventSource()` (`src/eventSource.ts`) + `useEventSource()` (`src/hooks/useEventSource.ts`) patches React Query cache (normalize via `mapId`/`mapUserRef` from `src/api/queries.ts`; upsert-new-at-top / merge / remove on `deleted:true`), else `invalidateQueries`. `tables:changed` has no entity — always invalidate; deletes emit no `tables:changed`, so frontend invalidates `['tables']` when a removed payload held `tableNumber`.
 
-**RxDB quirks:**
+## Frontend (CRA 5 + TS)
 
-- `findOne()` only works reliably with the primary key (`_id`). For non-primary fields (e.g. `email`, `status`), use `find().exec()` + JS `.find()` / `.filter()`.
-- `doc.update()` does not refresh the in-memory document — re-fetch after update if returning the result.
-- `$in` operator not supported — use separate queries or JS `.filter()`.
-- Required plugins registered in `config/rxdb.ts`: `RxDBQueryBuilderPlugin`, `RxDBUpdatePlugin`.
-- All documents require explicit `_id` field (use `crypto.randomUUID()`).
-- Formatters use `unwrapDoc()` which prefers `toJSON()` over `toObject()` for RxDB docs.
-- FK refs: `orders.user` and `reservations.user` declare `ref: 'users'` to document the FK — but never call `doc.populate()`: it is broken with the `@basepurpose/rxdb-sqlite` adapter (returns docs with all fields emptied, verified live). Resolvers pass raw docs to formatters, which accept an already-populated user object and otherwise resolve raw ids via `findOne`. Do NOT add a `categories` ref (`menuItem.category` stores the name, not `_id`) or a nested `items[].menuItem` ref — order items keep using `buildMenuItemMap()`.
-- Schema changes: bump the collection `version` and add a `migrationStrategies` entry in `config/rxdb.ts` (even identity `(doc) => doc`), or RxDB throws a schema-mismatch error on existing SQLite files.
-- `getDB()` throws `Database not initialized` if `getRxDB()` hasn't run — `server.ts` awaits `connectDB()` before `app.listen()`.
+- `proxy` → `http://localhost:5000`. `npm start` (dev), `npm run build` (→ `build/`).
+- State: `zustand` (`authStore`, `cartStore`; `useAuth()` persists `user`+`token` in `localStorage`), `react-hook-form`, `@tanstack/react-query`. `App.tsx` global `LoadingSpinner` via `useIsFetching`/`useIsMutating`.
+- Layout: `src/pages/` routes, `src/components/pages/` sections (MenuItemCard/Form/Header, OrderForm/List, ReservationForm/List, User/Category/RestaurantSection, Login/RegisterForm). Reuse `SectionCard`, `FilterBar`, `StatusBadge`, `ConfirmDialog`, `LoadingSpinner`, `ActionRow`, `TableSelect` (always for table numbers, never raw inputs). Small typed props; prefer editing existing files.
+- Data rules: invalidate `['tables']` after order/reservation mutations, `['restaurantSettings']` after settings update.
 
-**Auth middleware** (`middleware/auth.ts`):
+## Auth, roles, domain rules
 
-- `protect` — requires valid JWT `Bearer` token, attaches `req.user`
-- `admin` — requires `req.user.role === 'admin'`
-- `staff` — requires role `admin` or `staff`
-- `req.user` type is augmented globally via `types/express.d.ts`
-
-**Env:** `backend/.env` is gitignored. Copy `backend/.env.example` and fill in `JWT_SECRET`.
-
-## Frontend (Create React App + TypeScript)
-
-CRA 5 with TypeScript — no custom webpack. `proxy` in `package.json` forwards API requests to `http://localhost:5000`.
-
-| Command         | What it does                 |
-| --------------- | ---------------------------- |
-| `npm start`     | CRA dev server               |
-| `npm run build` | Production build to `build/` |
-
-## API entrypoints
-
-GraphQL only at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). REST routes have been removed.
-
-## Seeded credentials
-
-| Role     | Email                | Password    |
-| -------- | -------------------- | ----------- |
-| Admin    | admin@restaurant.com | admin123    |
-| Staff    | staff@restaurant.com | staff123    |
-| Customer | john@example.com     | customer123 |
-
-- `frontend/src/components/pages/` — split page components (MenuItemCard, MenuItemForm, MenuHeader, OrderForm, OrderList, ReservationForm, ReservationList, UserSection, CategorySection, RestaurantSection, LoginForm, RegisterForm)
-- Reusable UI: `FilterBar`, `StatusBadge`, `SectionCard`, `LoadingSpinner`, `ActionRow`, `TableSelect`
-- MUI (`@mui/material`) used across Navbar, forms, pages, cards — styled via Tailwind `className`
-- `frontend/src/App.tsx` mounts global `LoadingSpinner` using `useIsFetching` + `useIsMutating`
+- Seeds (`*123`): `admin@restaurant.com` / `staff@restaurant.com` / `john@example.com`.
+- Gates (enforce frontend hiding **and** backend `requireAdmin`): Menu add/edit → `admin`; Settings → `admin`; Tables (`/tables`) → `staff`/`admin`; `authUsers` list → `staff`/`admin` read-only (user mutations stay `admin`-only, passwords never returned); Orders/Reservations filters + status changes respect role.
+- Categories from admin `/settings` (`CategorySection`); no hardcoded enum. Menu edit = click card (fields: `name`, `description`, `price`, `category`, `image`).
+- Orders: `pending` editable, `completed`/`cancelled` deletable. Reservations: `confirmed` editable, `completed`/`cancelled` deletable.
+- Filtering: Menu by category; Orders/Reservations by status + `TableSelect`.
+- Tables: `tables` query computed from busy orders (`pending`/`preparing`) + confirmed reservations; singleton `db.settings.tableCount` (validate `>= 1` server-side) drives all selects. Busy tables labeled but selectable; backend rejects orders with `Table is busy`.
+- Defaults: `MenuItem.available=true`, `Reservation.status='confirmed'`.
 
 ## Styling
 
-- **Use Tailwind CSS for styling MUI components** — prefer `className` with Tailwind utilities over `sx` or custom CSS (e.g. `<Button className="!bg-[#e94560] hover:!bg-[#d63d54]">` instead of `sx={{ bgcolor: ... }}`). Only use `sx` for MUI-specific layout props that Tailwind cannot handle.
-- Tailwind config is at root (`tailwind.config.js`, `postcss.config.js`); utility classes are defined in `frontend/src/index.css` (`@layer components`).
-- Keep styling consistent with existing patterns: `section-card`, `card`/`card-grid`, `form-panel`/`form-input-sm`/`form-label`, `table-card`, `filter-bar`, `nav-link`, `spinner`/`loading-wrapper`, `page-heading`/`section-heading`, `btn-primary`/`btn-secondary`/`btn-danger`/`btn-blue-sm`, `error-text`.
-- Never add inline `style=` or new CSS files — extend `@layer components` in `frontend/src/index.css`.
+Tailwind `className` on MUI components (e.g. `<Button className="!bg-[#e94560]...">`); `sx` only for what Tailwind can't do. Patterns in `frontend/src/index.css` `@layer components`: `section-card`, `card`/`card-grid`, `form-panel`/`form-input-sm`/`form-label`, `table-card`, `filter-bar`, `nav-link`, `spinner`/`loading-wrapper`, `page-heading`/`section-heading`, `btn-primary`/`btn-secondary`/`btn-danger`/`btn-blue-sm`, `error-text`. No inline `style=` or new CSS files.
 
-## API / GraphQL
+## Images + Caddy
 
-- Active API is **GraphQL** at `/graphql` (`backend/graphql/schema.ts`, `express-graphql`). REST routes have been removed.
-- Frontend GraphQL documents live in `frontend/src/graphql/queries.ts`; typed hooks in `frontend/src/api/queries.ts` (uses `graphql-request` + `useAuthStore` token header). `GET_*` → `useQuery`, mutations → `useMutation` with `qc.invalidateQueries`.
-- Schema helpers: `formatUser`, `formatRestaurantSettings`, `getOrCreateRestaurantSettings`, `requireAuth` / `requireAdmin` in `schema.ts`.
-- `graphql-request` v7 calls `new URL(url)` with no base — always resolve the endpoint via `resolveGraphQLEndpoint()` (`frontend/src/graphql/queries.ts`), which resolves relative `REACT_APP_GRAPHQL_URL=/graphql` against `window.location.origin`.
-- Restaurant settings: singleton in `db.settings` collection — `tableCount` drives `TableSelect` and `tables` query.
-- Tables: `tables: [TableStatus!]!` computed from busy orders (`pending`/`preparing`) and confirmed reservations; frontend `/tables` page is staff/admin only.
-- **Order items** store `menuItem` as a string ID — resolved via `buildMenuItemMap()` lookup in order resolvers (replaces Mongoose populate).
+- Images: backend `GET /images/*` from `backend/public/images`. Store bare filenames, `/images/<file>`, or absolute URLs — never hardcode host. Frontend `useCachedImage(src, fallback, updatedAt)` (`src/hooks/useCachedImage.ts`) caches backend images in `localStorage` (`rms-img:`) as data URLs — use for all menu images + logo, never raw `src`. Base via `getImageApiBase()` (`REACT_APP_API_URL`; empty = same-origin via proxy/Caddy). Cache keyed by `updatedAt` (queried; in SSE payloads via formatters) — edits bump it and evict stale keys. Sanitize on render (`onError` hide).
+- Caddy v2 (single entrypoint): `/graphql*`, `/events*` (`flush_interval -1`), `/api-docs*`, `/images*` → `{$BACKEND_UPSTREAM:localhost:5000}`; `/*` → `frontend/build` at `/srv/frontend` + SPA fallback. Same-origin build: `REACT_APP_GRAPHQL_URL=/graphql REACT_APP_WS_URL= npm run build` (empty `WS_URL` → `/events`). After edits: `caddy fmt` + `caddy validate --config Caddyfile --adapter caddyfile` (use `caddy:2` image if no binary).
 
-## Deployment (Caddy)
+## Quality & workflow
 
-- Root `Caddyfile` (Caddy v2) is the single public entrypoint: `/graphql*`, `/events*`, `/api-docs*`, `/images*` → `{$BACKEND_UPSTREAM:localhost:5000}`; `/*` serves `frontend/build` mounted at `/srv/frontend` with SPA fallback. `/events` uses `flush_interval -1` (SSE must not be buffered).
-- Backend serves uploaded images at `GET /images/*` from `backend/public/images` (`server.ts`, resolves for both `tsx` dev and compiled `dist/`). Store menu photos / logos as bare filenames (`restaurant.jpeg`), backend-relative paths (`/images/<file>`), or absolute URLs — never hardcode the host in the DB.
-- Frontend resolves image refs via `getImageApiBase()` (`frontend/src/hooks/useCachedImage.ts`): `REACT_APP_API_URL` prefix (e.g. `http://localhost:5000` in dev; empty = same-origin via CRA `proxy` / Caddy `/images*`). Bare filenames become `<api-base>/images/<file>`. Set `REACT_APP_API_URL=` (empty) for same-origin production builds.
-- Frontend `useCachedImage(src, fallback)` (`frontend/src/hooks/useCachedImage.ts`) fetches backend images once and caches them in `localStorage` (`rms-img:` prefix) as data URLs; use it for all menu-item images and the restaurant logo instead of raw `src={...}`. Helpers: `resolveImageUrl`, `getCachedImageSrc`, `fetchAndCacheImage`, `prefetchImages`, `clearImageCache`.
-- Image cache is versioned by the entity's `updatedAt`: `menuItems`/`settings` RxDB schemas store `updatedAt` (stamped on every create/update/seed), the frontend queries it, and callers pass it as the 3rd arg (`useCachedImage(src, fallback, updatedAt)`). A logo/image edit bumps `updatedAt` → new cache key → refetch; stale version keys are evicted on write. SSE payloads already carry `updatedAt` via the formatters, so live edits invalidate automatically.
-- Same-origin frontend build: `REACT_APP_GRAPHQL_URL=/graphql REACT_APP_WS_URL= npm run build` (`REACT_APP_WS_URL=` empty → `/events`, see `frontend/src/eventSource.ts`). Dev variant proxying to `{$FRONTEND_UPSTREAM:localhost:3000}` is commented in the Caddyfile.
-- After editing: `caddy fmt` check + `caddy validate --config Caddyfile --adapter caddyfile` (via `caddy:2` docker image if no local binary).
-
-## Auth & Roles
-
-- `protect` → JWT `Bearer` token → `req.user`; `admin` → `role==='admin'`; `staff` → `admin` or `staff`. Frontend `useAuth()` (`store/authStore.ts:93`) persists `user`+`token` in `localStorage`.
-- Role gates: Menu add/edit → `admin` only; Settings → `admin` only; Tables → `staff`/`admin`; Users list query (`authUsers`) → `staff`/`admin` read-only (powers the orders/reservations user filter; user mutations stay `admin` only, passwords never returned); Orders/Reservations filters and status changes respect role; verify both frontend hiding **and** backend `requireAdmin` checks.
-- Seeded users: `admin@restaurant.com`, `staff@restaurant.com`, `john@example.com` (all `*123`).
-
-## Domain Rules
-
-- Categories managed from admin `/settings` (`CategorySection`) via GraphQL; MenuItem `category` references DB categories (no hardcoded enum).
-- Menu item edit: click card opens edit form with DB default data (`name`, `description`, `price`, `category`, `image`).
-- Order edit: `pending` editable; `completed`/`cancelled` deletable. Reservation edit/delete: `confirmed` editable; `completed`/`cancelled` deletable.
-- Filtering: Menu (category dropdown), Orders/Reservations (status + table `TableSelect` dropdown).
-- Tables: `tableCount` in restaurant settings determines selectable tables everywhere; busy tables are labeled but selectable — backend returns `Table is busy` error for orders.
-- Default field values on insert: `MenuItem.available` defaults to `true`; `Reservation.status` defaults to `'confirmed'`.
-
-## Frontend State & Data
-
-- State: `zustand` (`authStore`, `cartStore`), `react-hook-form` for forms, `@tanstack/react-query` for server state. `App.tsx` global overlay via `useIsFetching`/`useIsMutating`.
-- Forms: use `TableSelect` for table numbers (not raw number inputs). Invalidate `['tables']` after order/reservation mutations and `['restaurantSettings']` after settings update.
-- Error handling: backend throws coded `AppError`s (`backend/graphql/errors.ts`: `UNAUTHENTICATED`/`FORBIDDEN`/`VALIDATION_FAILED`/`NOT_FOUND`/`CONFLICT`, surfaced as `extensions.code` via `customFormatErrorFn`); frontend uses only the shared `getGraphQLErrorMessage(err, fallback)` (`frontend/src/utils/graphqlErrors.ts`), which maps `FORBIDDEN` → permission text and expired-session `UNAUTHENTICATED` → re-login text, and treats `Failed to fetch`/`NetworkError` as `Network error: backend is unavailable`. Never add local copies.
-
-## Code Style & Quality
-
-- TypeScript strict; keep imports with `.js` extension in backend (node16). Run `npm run build` in both `backend/` and `frontend/` before committing — must compile without errors.
-- Formatting: `.prettierrc` + `.editorconfig` at root; `prettier` installed — run `npm run format` (or `npx prettier --write .`) before commit.
-- **Testing required:** When implementing any new feature, fix, or refactor, write or update tests alongside the change. Backend: Jest + `ts-jest` (`backend/tests/`, `backend/jest.config.cjs`, `npm test` in `backend/`). Frontend: Testing Library + Jest via `react-scripts` (`frontend/src/**/__tests__/`, `frontend/src/setupTests.ts`, `npm test` in `frontend/`). Ensure both `npm run build` **and** `npm test` pass before committing. Keep coverage meaningful (validators, helpers, resolvers, components, pages, stores, hooks).
-- No CI/CD workflows — do not add GitHub Actions unless requested.
-
-## Component Guidelines
-
-- Prefer editing existing files over creating new ones; create new files only when required (e.g., `TableSelect`, `RestaurantSection`, `Tables`).
-- Reuse `SectionCard`, `FilterBar`, `StatusBadge`, `ConfirmDialog`, `LoadingSpinner`, `TableSelect`. Keep props small and typed.
-- Keep `frontend/src/components/pages/` for page-specific sections; `frontend/src/pages/` for route pages.
-
-## Git & Workflow
-
-- Two packages under one root — `cd` into subdirectory before running npm commands.
-- Do not commit `backend/.env` (gitignored) or secrets; copy from `backend/.env.example`.
-- Commit messages: concise, imperative (e.g. `feat:`, `fix:`, `style:`). Stage only intended files; inspect `git status`/`git diff --cached`.
-- Push only when explicitly requested.
-
-## Security
-
-- Never log JWT secrets or passwords. Validate `tableCount >= 1` and role checks server-side. Sanitize `logo`/`image` URLs on render (`onError` hide).
-
-## Agent Workflow
-
-- Read relevant files fully before editing; verify with `npm run build` and/or `npm start` where feasible.
-- Keep exactly one `in_progress` todo at a time; mark completed only after verification.
-- Preserve user corrections and scope constraints across turns until explicitly lifted.
-- Never revert user-made code changes. If the working tree differs from your last edit, the user modified it — reconcile with their version (adapt tests/docs to it) instead of overwriting it.
-- Update AGENTS.md whenever a new convention, command, or workflow is established that future agents should know about.
+- Strict TS; `npm run build` in both packages must pass. Format with prettier (`.prettierrc`/`.editorconfig`) before commit. Tests required with every feature/fix/refactor and `build` + `test` must pass: backend Jest+ts-jest (`backend/tests/`, `npm test`); frontend Testing Library via react-scripts (`src/**/__tests__/`, `npm test`). No CI — don't add Actions unless asked.
+- Commits: imperative (`feat:`/`fix:`/`style:`), stage only intended files (`git status`/`diff --cached`), push only on request.
+- Agent: read files fully before editing; one `in_progress` todo at a time (verify before completing); preserve user corrections/constraints; never overwrite user edits — reconcile instead; update this file when a new convention/workflow is established.
