@@ -1,5 +1,6 @@
 import React, { useState, Suspense } from 'react';
 import { Box, Typography } from '@mui/material';
+import Tabs, { TabOption } from '../components/Tabs';
 
 const UserSection = React.lazy(() => import('../components/pages/UserSection'));
 const CategorySection = React.lazy(() => import('../components/pages/CategorySection'));
@@ -10,8 +11,11 @@ type TabKey = 'restaurant' | 'users' | 'categories';
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<TabKey>('restaurant');
 
-  const tabBtn = (key: TabKey) =>
-    `tab-btn ${activeTab === key ? 'tab-btn-active' : 'tab-btn-inactive'}`;
+  const tabs: TabOption<TabKey>[] = [
+    { key: 'restaurant', label: 'Restaurant' },
+    { key: 'users', label: 'Users' },
+    { key: 'categories', label: 'Categories' },
+  ];
 
   return (
     <Box>
@@ -19,17 +23,7 @@ export default function Settings() {
         Settings
       </Typography>
 
-      <Box className="settings-tab-bar">
-        <button onClick={() => setActiveTab('restaurant')} className={tabBtn('restaurant')}>
-          Restaurant
-        </button>
-        <button onClick={() => setActiveTab('users')} className={tabBtn('users')}>
-          Users
-        </button>
-        <button onClick={() => setActiveTab('categories')} className={tabBtn('categories')}>
-          Categories
-        </button>
-      </Box>
+      <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} ariaLabel="Settings sections" />
 
       <Suspense fallback={null}>
         {activeTab === 'restaurant' && <RestaurantSection />}

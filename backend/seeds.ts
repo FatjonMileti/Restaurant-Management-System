@@ -99,7 +99,7 @@ const seed = async (): Promise<void> => {
         description: 'Toasted bread with tomato, basil, and mozzarella',
         price: 8.99,
         category: 'appetizer',
-        image: '/images/bruschetta.jpg',
+        image: 'bruschetta.jpg',
         available: true,
       },
       {
@@ -108,7 +108,7 @@ const seed = async (): Promise<void> => {
         description: 'Crispy fried squid with marinara sauce',
         price: 10.99,
         category: 'appetizer',
-        image: '/images/calamari.jpg',
+        image: 'calamari.jpg',
         available: true,
       },
       {
@@ -117,7 +117,7 @@ const seed = async (): Promise<void> => {
         description: 'Vegetable spring rolls with sweet chili dip',
         price: 7.49,
         category: 'appetizer',
-        image: '/images/spring-rolls.jpg',
+        image: 'spring-rolls.jpg',
         available: true,
       },
       {
@@ -126,7 +126,7 @@ const seed = async (): Promise<void> => {
         description: 'Atlantic salmon with lemon butter sauce and seasonal vegetables',
         price: 22.99,
         category: 'main',
-        image: '/images/grilled-salmon.jpg',
+        image: 'grilled-salmon.jpg',
         available: true,
       },
       {
@@ -135,7 +135,7 @@ const seed = async (): Promise<void> => {
         description: '12oz ribeye with mashed potatoes and asparagus',
         price: 29.99,
         category: 'main',
-        image: '/images/ribeye.jpg',
+        image: 'ribeye.jpg',
         available: true,
       },
       {
@@ -144,7 +144,7 @@ const seed = async (): Promise<void> => {
         description: 'Breaded chicken breast with marinara and melted cheese',
         price: 17.99,
         category: 'main',
-        image: '/images/chicken-parm.jpg',
+        image: 'chicken-parm.jpg',
         available: true,
       },
       {
@@ -153,7 +153,7 @@ const seed = async (): Promise<void> => {
         description: 'Penne with seasonal vegetables in pesto cream sauce',
         price: 15.49,
         category: 'main',
-        image: '/images/veggie-pasta.jpg',
+        image: 'veggie-pasta.jpg',
         available: true,
       },
       {
@@ -162,7 +162,7 @@ const seed = async (): Promise<void> => {
         description: 'Angus beef patty with cheddar, lettuce, and tomato',
         price: 14.99,
         category: 'main',
-        image: '/images/burger.jpg',
+        image: 'burger.jpg',
         available: true,
       },
       {
@@ -171,7 +171,7 @@ const seed = async (): Promise<void> => {
         description: 'Classic Italian coffee-flavored dessert',
         price: 8.49,
         category: 'dessert',
-        image: '/images/tiramisu.jpg',
+        image: 'tiramisu.jpg',
         available: true,
       },
       {
@@ -180,7 +180,7 @@ const seed = async (): Promise<void> => {
         description: 'Warm chocolate cake with molten center and ice cream',
         price: 9.99,
         category: 'dessert',
-        image: '/images/lava-cake.jpg',
+        image: 'lava-cake.jpg',
         available: true,
       },
       {
@@ -189,7 +189,7 @@ const seed = async (): Promise<void> => {
         description: 'New York style cheesecake with berry compote',
         price: 7.99,
         category: 'dessert',
-        image: '/images/cheesecake.jpg',
+        image: 'cheesecake.jpg',
         available: true,
       },
       {
@@ -198,7 +198,7 @@ const seed = async (): Promise<void> => {
         description: 'Double shot espresso',
         price: 3.49,
         category: 'beverage',
-        image: '/images/espresso.jpg',
+        image: 'espresso.jpg',
         available: true,
       },
       {
@@ -207,7 +207,7 @@ const seed = async (): Promise<void> => {
         description: 'Freshly squeezed orange juice',
         price: 4.99,
         category: 'beverage',
-        image: '/images/orange-juice.jpg',
+        image: 'orange-juice.jpg',
         available: true,
       },
       {
@@ -216,7 +216,7 @@ const seed = async (): Promise<void> => {
         description: 'Sparkling or still mineral water',
         price: 2.49,
         category: 'beverage',
-        image: '/images/water.jpg',
+        image: 'water.jpg',
         available: true,
       },
     ];

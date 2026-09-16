@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import Tabs from '../Tabs';
 
 interface Props {
   categories: string[];
@@ -10,29 +11,19 @@ interface Props {
 function MenuCategoryFilter({ categories, value, onChange }: Props) {
   return (
     <Box
-      className="flex gap-2 mb-2 bg-gray-100 p-2 rounded items-center"
+      className="flex gap-2 mb-2 bg-gray-100 p-2 rounded items-center overflow-x-auto"
       sx={{ position: 'sticky', top: 114, zIndex: 9 }}
     >
-      <Typography variant="body2" className="font-semibold">
+      <Typography variant="body2" className="font-semibold shrink-0">
         Filter:
       </Typography>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="form-input-sm w-40 mt-3"
-      >
-        <option value="">All</option>
-        {categories.map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </select>
-      {value && (
-        <Button size="small" onClick={() => onChange('')}>
-          Clear
-        </Button>
-      )}
+      <Tabs
+        tabs={[{ key: '', label: 'All' }, ...categories.map((c) => ({ key: c, label: c }))]}
+        active={value}
+        onChange={onChange}
+        ariaLabel="Filter by category"
+        className="flex gap-2"
+      />
     </Box>
   );
 }

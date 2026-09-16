@@ -51,7 +51,7 @@ describe('Menu page', () => {
     render(<Menu />);
     expect(screen.getAllByTestId('card')).toHaveLength(2);
     // Change filter to Drinks
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Drinks' } });
+    fireEvent.click(screen.getByText('Drinks'));
     expect(screen.getByText('Cola')).toBeInTheDocument();
     expect(screen.queryByText('Pizza')).not.toBeInTheDocument();
   });

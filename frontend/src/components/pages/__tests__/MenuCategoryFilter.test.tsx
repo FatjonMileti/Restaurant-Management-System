@@ -3,33 +3,30 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import MenuCategoryFilter from '../MenuCategoryFilter';
 
 describe('MenuCategoryFilter', () => {
-  it('renders categories', () => {
+  it('renders All plus categories as tabs', () => {
     render(<MenuCategoryFilter categories={['Food', 'Drinks']} value="" onChange={jest.fn()} />);
+    expect(screen.getByText('All')).toBeInTheDocument();
     expect(screen.getByText('Food')).toBeInTheDocument();
     expect(screen.getByText('Drinks')).toBeInTheDocument();
   });
 
-  it('shows Clear when value present', () => {
+  it('marks the active category tab', () => {
     render(<MenuCategoryFilter categories={['Food']} value="Food" onChange={jest.fn()} />);
-    expect(screen.getByText('Clear')).toBeInTheDocument();
+    expect(screen.getByText('Food')).toHaveClass('tab-btn-active');
+    expect(screen.getByText('All')).toHaveClass('tab-btn-inactive');
   });
 
-  it('does not show Clear when empty', () => {
-    render(<MenuCategoryFilter categories={['Food']} value="" onChange={jest.fn()} />);
-    expect(screen.queryByText('Clear')).not.toBeInTheDocument();
-  });
-
-  it('calls onChange on select', () => {
+  it('calls onChange when a category tab is clicked', () => {
     const onChange = jest.fn();
     render(<MenuCategoryFilter categories={['Food', 'Drinks']} value="" onChange={onChange} />);
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Drinks' } });
+    fireEvent.click(screen.getByText('Drinks'));
     expect(onChange).toHaveBeenCalledWith('Drinks');
   });
 
-  it('calls onChange empty on Clear', () => {
+  it('calls onChange with empty when All is clicked', () => {
     const onChange = jest.fn();
     render(<MenuCategoryFilter categories={['Food']} value="Food" onChange={onChange} />);
-    fireEvent.click(screen.getByText('Clear'));
+    fireEvent.click(screen.getByText('All'));
     expect(onChange).toHaveBeenCalledWith('');
   });
 });
