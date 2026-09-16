@@ -30,6 +30,7 @@ export default function MenuItemForm({ categories, item, onSuccess, onCancel }: 
           price: item.price,
           category: item.category,
           image: item.image || '',
+          available: item.available,
         }
       : {
           name: '',
@@ -37,22 +38,24 @@ export default function MenuItemForm({ categories, item, onSuccess, onCancel }: 
           price: 0,
           category: categories.length > 0 ? categories[0] : '',
           image: '',
+          available: true,
         },
   });
 
-  useEffect(() => {
-    if (item) {
-      reset({
-        name: item.name,
-        description: item.description || '',
-        price: item.price,
-        category: item.category,
-        image: item.image || '',
-      });
-    }
-  }, [item, reset]);
+      useEffect(() => {
+        if (item) {
+          reset({
+            name: item.name,
+            description: item.description || '',
+            price: item.price,
+            category: item.category,
+            image: item.image || '',
+            available: item.available,
+          });
+        }
+      }, [item, reset]);
 
-  const onSubmit = async (data: MenuItemFormData) => {
+  const onSubmit: any = async (data: MenuItemFormData) => {
     try {
       if (isEdit && item) {
         await updateItem.mutateAsync({
@@ -84,16 +87,25 @@ export default function MenuItemForm({ categories, item, onSuccess, onCancel }: 
         className="form-input-sm"
       />
       {errors.price && <p className="error-text text-sm">{errors.price.message}</p>}
-      <select {...register('category')} className="form-input-sm">
-        {categories.map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </select>
-      {errors.category && <p className="error-text text-sm">{errors.category.message}</p>}
-      <input
-        placeholder="restaurant.jpeg or https://..."
+       <select {...register('category')} className="form-input-sm">
+         {categories.map((c) => (
+           <option key={c} value={c}>
+             {c}
+           </option>
+         ))}
+       </select>
+       {errors.category && <p className="error-text text-sm">{errors.category.message}</p>}
+       <div className="flex items-center gap-2 mb-2">
+         <input
+           type="checkbox"
+           id="available"
+           {...register('available')}
+           className="w-4 h-4"
+         />
+         <label htmlFor="available" className="text-sm">Available</label>
+       </div>
+       <input
+         placeholder="restaurant.jpeg or https://..."
         {...register('image')}
         className="form-input-sm"
       />

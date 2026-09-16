@@ -21,10 +21,10 @@ const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit, onDelete }
   const imgSrc = useCachedImage(item.image, '/images/empty.jpg', item.updatedAt);
   return (
     <div
-      className={`card-grid ${isAdmin ? 'cursor-pointer' : ''}`}
+      className={`card-grid ${isAdmin ? 'cursor-pointer' : ''} ${!item.available ? 'opacity-60 grayscale' : ''}`}
       onClick={() => isAdmin && onEdit(item)}
     >
-      <div className="w-full h-32 rounded-md overflow-hidden mb-3 bg-gray-100">
+      <div className="w-full h-32 rounded-md overflow-hidden mb-3 bg-gray-100 relative">
         <img
           src={imgSrc || '/images/empty.jpg'}
           alt={item.name}
@@ -32,8 +32,15 @@ const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit, onDelete }
           loading="lazy"
           onError={(e) => ((e.target as HTMLImageElement).src = '/images/empty.jpg')}
         />
+        {!item.available && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+            <span className="bg-white text-black text-xs font-bold px-2 py-1 rounded uppercase">
+              Unavailable
+            </span>
+          </div>
+        )}
       </div>
-      <h3 className="text-lg font-semibold">{item.name}</h3>
+      <h3 className={`text-lg font-semibold ${!item.available ? 'text-gray-500' : ''}`}>{item.name}</h3>
       <p className="text-gray-500">{item.description}</p>
       <p className="mt-2">
         <strong>${item.price.toFixed(2)}</strong>{' '}

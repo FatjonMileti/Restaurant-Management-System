@@ -27,6 +27,7 @@ export const menuItemSchema = z.object({
   price: z.number().positive('Price must be positive'),
   category: z.string().min(1, 'Category is required'),
   image: imageRefSchema,
+  available: z.boolean().optional(),
 });
 
 export const orderItemSchema = z.object({
