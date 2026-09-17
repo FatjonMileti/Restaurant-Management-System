@@ -6,11 +6,11 @@ const EVENT_SOURCE_URL =
 
 let eventSource: EventSource | null = null;
 
-export const getEventSource = (): EventSource => {
-  if (!eventSource) {
-    eventSource = new EventSource(EVENT_SOURCE_URL);
+export const getEventSource = (id?: string): EventSource | null => {
+  if (!eventSource && id) {
+    eventSource = new EventSource(`${EVENT_SOURCE_URL}/${id}`);
   }
-  return eventSource;
+  return eventSource || null;
 };
 
 export const closeEventSource = () => {

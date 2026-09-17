@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQueryClient, QueryClient } from '@tanstack/react-query';
 import { getEventSource } from '../eventSource';
 import { mapId, mapUserRef } from '../api/queries';
+import { useAuth } from '../store/authStore';
 
 const parseData = (event: Event): any | null => {
   try {
@@ -41,9 +42,11 @@ const normalizeSimple = (o: any) => mapId(o);
 
 export const useEventSource = () => {
   const qc = useQueryClient();
+  const {user} = useAuth();
 
   useEffect(() => {
-    const eventSource = getEventSource();
+    const eventSource = getEventSource(user?._id || '');
+    if (!eventSource) return;
 
     // Apply an entity payload to its cached list; fall back to a refetch when
     // the event carries no usable payload (e.g. an older backend).

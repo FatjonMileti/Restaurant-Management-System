@@ -166,7 +166,7 @@ export const useCategories = () =>
       const data = await request(endpoint, GET_CATEGORIES);
       return mapArray<Category>((data as any)?.categories);
     },
-    staleTime: 60 * 1000,
+    staleTime: Infinity,
   });
 
 export const useCreateCategory = () => {
@@ -224,7 +224,7 @@ export const useMenu = () =>
       const data = await request(endpoint, GET_MENU_ITEMS);
       return mapArray<MenuItem>((data as any)?.menuItems);
     },
-    staleTime: 60 * 1000,
+    staleTime: Infinity,
   });
 
 export const useCreateMenuItem = () => {
@@ -283,7 +283,7 @@ export const useOrders = () =>
       const data = await request(endpoint, GET_ORDERS);
       return mapArray<Order>((data as any)?.orders).map(mapUserRef);
     },
-    staleTime: 30 * 1000,
+    staleTime: Infinity,
   });
 
 export const useCreateOrder = () => {
@@ -431,7 +431,7 @@ export const useReservations = () =>
       const data = await request(endpoint, GET_RESERVATIONS);
       return mapArray<Reservation>((data as any)?.reservations).map(mapUserRef);
     },
-    staleTime: 30 * 1000,
+    staleTime: Infinity,
   });
 
 export const useCreateReservation = () => {
@@ -491,7 +491,7 @@ export const useUsers = () =>
       const data = await request(endpoint, GET_USERS);
       return mapArray<AdminUser>((data as any)?.authUsers);
     },
-    staleTime: 60 * 1000,
+    staleTime: Infinity,
   });
 
 export const useCreateUser = () => {
@@ -570,7 +570,7 @@ export const useRestaurantSettings = () =>
       if (!raw) return null;
       return mapId<RestaurantSettings>(raw);
     },
-    staleTime: 60 * 1000,
+    staleTime: Infinity,
   });
 
 export const useUpdateRestaurantSettings = () => {
@@ -602,7 +602,7 @@ export const useTables = () =>
       return ((data as any)?.tables || []) as TableStatus[];
     },
     meta: { silent: true },
-    staleTime: 30 * 1000,
+    staleTime: Infinity,
   });
 
 export interface DashboardStats {
@@ -643,6 +643,6 @@ export const useDashboardStats = () =>
       } as DashboardStats;
     },
     meta: { silent: true },
-    staleTime: 30 * 1000,
+    staleTime: Infinity,
     // refetchInterval: 60 * 1000,
   });

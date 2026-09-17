@@ -68,14 +68,14 @@ export const orderResolvers = {
       status: 'pending',
       createdAt: moment().toISOString(),
     });
-    emitEvent('tables:changed');
+    emitEvent('tables:changed', {}, context?.userId);
     // Return the formatted order (populated user + menuItem objects), not the
     // raw doc: items store menuItem as a plain id string, which cannot resolve
     // the `menuItem { id }` selection ("Cannot return null for non-nullable
     // field MenuItem.id").
     const menuItemMap = await buildMenuItemMap(db);
     const order = await formatOrder(orderDoc.toJSON(), menuItemMap);
-    emitEvent('orders:changed', { order });
+    emitEvent('orders:changed', { order }, context?.userId);
     return order;
   },
 
@@ -109,8 +109,8 @@ export const orderResolvers = {
     const updated = await db.orders.findOne(id).exec();
     const menuItemMap = await buildMenuItemMap(db);
     const order = await formatOrder((updated || doc).toJSON(), menuItemMap);
-    emitEvent('orders:changed', { order });
-    emitEvent('tables:changed');
+    emitEvent('orders:changed', { order }, context?.userId);
+    emitEvent('tables:changed', {}, context?.userId);
     return order;
   },
 
@@ -121,7 +121,7 @@ export const orderResolvers = {
     if (!doc) throw notFoundError('Order not found');
     await doc.remove();
     await db.orders.cleanup(0);
-    emitEvent('orders:changed', { order: { id, deleted: true } });
+    emitEvent('orders:changed', { order: { id, deleted: true } }, context?.userId);
     return 'Order removed';
   },
 
@@ -134,8 +134,8 @@ export const orderResolvers = {
     const updated = await db.orders.findOne(id).exec();
     const menuItemMap = await buildMenuItemMap(db);
     const order = await formatOrder((updated || doc).toJSON(), menuItemMap);
-    emitEvent('orders:changed', { order });
-    emitEvent('tables:changed');
+    emitEvent('orders:changed', { order }, context?.userId);
+    emitEvent('tables:changed', {}, context?.userId);
     return order;
   },
 };

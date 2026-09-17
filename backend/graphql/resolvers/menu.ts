@@ -38,7 +38,7 @@ export const menuResolvers = {
       updatedAt: new Date().toISOString(),
     });
     const menuItem = formatMenuItem(item);
-    emitEvent('menu:changed', { menuItem });
+    emitEvent('menu:changed', { menuItem }, context?.userId);
     return menuItem;
   },
 
@@ -52,7 +52,7 @@ export const menuResolvers = {
     await existing.update({ $set: { ...v.data, updatedAt: new Date().toISOString() } });
     const updated = await db.menuItems.findOne(id).exec();
     const menuItem = formatMenuItem(updated?.toJSON() || existing.toJSON());
-    emitEvent('menu:changed', { menuItem });
+    emitEvent('menu:changed', { menuItem }, context?.userId);
     return menuItem;
   },
 
@@ -63,7 +63,7 @@ export const menuResolvers = {
     if (!item) throw notFoundError('Menu item not found');
     await item.remove();
     await db.menuItems.cleanup(0);
-    emitEvent('menu:changed', { menuItem: { id, deleted: true } });
+    emitEvent('menu:changed', { menuItem: { id, deleted: true } }, context?.userId);
     return 'Menu item removed';
   },
 };

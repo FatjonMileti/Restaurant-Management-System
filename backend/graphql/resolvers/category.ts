@@ -28,7 +28,7 @@ export const categoryResolvers = {
     const db = await getDB();
     const catDoc = await db.categories.insert({ _id: genId(), ...v.data });
     const category = formatCategory(catDoc.toJSON());
-    emitEvent('categories:changed', { category });
+    emitEvent('categories:changed', { category }, context?.userId);
     return category;
   },
   updateCategory: async ({ id, name }: any, context?: any) => {
@@ -41,7 +41,7 @@ export const categoryResolvers = {
     await doc.update({ $set: v.data });
     const updated = await db.categories.findOne(id).exec();
     const category = formatCategory(updated?.toJSON() || doc.toJSON());
-    emitEvent('categories:changed', { category });
+    emitEvent('categories:changed', { category }, context?.userId);
     return category;
   },
   deleteCategory: async ({ id }: any, context?: any) => {
@@ -51,7 +51,7 @@ export const categoryResolvers = {
     if (!doc) throw notFoundError('Category not found');
     await doc.remove();
     await db.categories.cleanup(0);
-    emitEvent('categories:changed', { category: { id, deleted: true } });
+    emitEvent('categories:changed', { category: { id, deleted: true } }, context?.userId);
     return 'Category removed';
   },
 };

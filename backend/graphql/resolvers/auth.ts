@@ -110,7 +110,7 @@ export const authResolvers = {
     const user = userDoc.toJSON();
     delete user.password;
     const formattedUser = formatUser(user);
-    emitEvent('users:changed', { user: formattedUser });
+    emitEvent('users:changed', { user: formattedUser }, context.userId);
     return formattedUser;
   },
 
@@ -126,7 +126,7 @@ export const authResolvers = {
     const user = updated?.toJSON() || userDoc.toJSON();
     delete user.password;
     const formattedUser = formatUser(user);
-    emitEvent('users:changed', { user: formattedUser });
+    emitEvent('users:changed', { user: formattedUser }, context.userId);
     return formattedUser;
   },
 
@@ -139,7 +139,7 @@ export const authResolvers = {
     if (user.role === 'admin') throw forbiddenError('Cannot delete admin user');
     await userDoc.remove();
     await db.users.cleanup(0);
-    emitEvent('users:changed', { user: { id, deleted: true } });
+    emitEvent('users:changed', { user: { id, deleted: true } }, context.userId);
     return 'User removed';
   },
 };
