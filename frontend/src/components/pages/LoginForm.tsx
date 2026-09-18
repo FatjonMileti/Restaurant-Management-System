@@ -64,12 +64,12 @@ export default function LoginFormComponent() {
           </Button>
         </form>
       </Paper>
-      <Typography className="mt-2">
+      {/* <Typography className="mt-2">
         Don't have an account?{' '}
         <Link to="/register" className="text-[#e94560]">
           Register
         </Link>
-      </Typography>
+      </Typography> */}
     </Box>
   );
 }
