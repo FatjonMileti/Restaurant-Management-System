@@ -11,6 +11,7 @@ import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import FilterBar from '../FilterBar';
 import ConfirmDialog from '../ConfirmDialog';
 import ReservationCard from './ReservationCard';
+import VirtualizedList from '../VirtualizedList';
 
 interface Props {
   onEditReservation?: (res: Reservation) => void;
@@ -121,12 +122,12 @@ export default function ReservationList({ onEditReservation }: Props) {
         onConfirm={handleDelete}
         onCancel={() => setDeleteConfirm({ open: false })}
       />
-      {filteredReservations.length === 0 ? (
-        <p className="text-gray-400 mt-5">No reservations yet.</p>
-      ) : (
-        filteredReservations.map((res: Reservation) => (
+      <VirtualizedList<Reservation>
+        items={filteredReservations}
+        estimateSize={200}
+        keyOf={(res) => res._id}
+        renderItem={(res) => (
           <ReservationCard
-            key={res._id}
             reservation={res}
             isStaff={isStaff}
             isOwner={res.user?._id === user?._id}
@@ -134,8 +135,9 @@ export default function ReservationList({ onEditReservation }: Props) {
             onCancel={handleCancel}
             onDelete={handleDeleteClick}
           />
-        ))
-      )}
+        )}
+        emptyMessage="No reservations yet."
+      />
     </>
   );
 }

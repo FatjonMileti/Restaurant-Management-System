@@ -110,9 +110,7 @@ function Menu() {
           <MenuItemCard key={item._id} item={item} onEdit={handleEdit} onDelete={handleDeleteClick} />
         ))}
       </Box>
-      {deleteError && (
-        <Typography className="text-red-600 mt-2">{deleteError}</Typography>
-      )}
+      {deleteError && <Typography className="text-red-600 mt-2">{deleteError}</Typography>}
       <ConfirmDialog
         open={deleteConfirm.open}
         title="Delete Menu Item"

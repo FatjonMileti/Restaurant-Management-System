@@ -6,11 +6,21 @@ import { notFoundError, validationError } from '../errors.js';
 import { formatReservation } from '../helpers/formatters.js';
 import { emitEvent } from '../../sse.js';
 import { requireStaffOrAdmin } from '../helpers/auth.js';
+import { recordActivity } from '../helpers/activityLog.js';
 
 const genId = () => crypto.randomUUID();
 
+const paginate = <T>(rows: T[], limit?: unknown, offset?: unknown): T[] => {
+  const start =
+    Number.isFinite(Number(offset)) && Number(offset) >= 0 ? Math.floor(Number(offset)) : 0;
+  if (limit === undefined || limit === null) return rows.slice(start);
+  const size =
+    Number.isFinite(Number(limit)) && Number(limit) >= 0 ? Math.floor(Number(limit)) : rows.length;
+  return rows.slice(start, start + size);
+};
+
 export const reservationResolvers = {
-  reservations: async ({ status, tableNumber }: any, context?: any) => {
+  reservations: async ({ status, tableNumber, limit, offset }: any, context?: any) => {
     await requireStaffOrAdmin(context);
     const filter: any = {};
     if (status) filter.status = status;
@@ -20,7 +30,8 @@ export const reservationResolvers = {
     // NOTE: doc.populate() is broken with the @basepurpose/rxdb-sqlite adapter
     // (it returns docs with all fields emptied), so user ids are resolved via
     // the findOne fallback inside formatReservation instead.
-    return Promise.all(docs.map((doc: any) => formatReservation(doc.toJSON())));
+    const rows = await Promise.all(docs.map((doc: any) => formatReservation(doc.toJSON())));
+    return paginate(rows, limit, offset);
   },
   reservation: async ({ id }: any, context?: any) => {
     await requireStaffOrAdmin(context);
@@ -56,6 +67,12 @@ export const reservationResolvers = {
     const reservation = await formatReservation(resDoc.toJSON());
     emitEvent('reservations:changed', { reservation }, context?.userId);
     emitEvent('tables:changed', {}, context?.userId);
+    await recordActivity(context, {
+      action: 'create',
+      entity: 'reservation',
+      entityId: reservation?.id,
+      summary: `Reservation for ${reservation?.date ?? date} ${reservation?.time ?? time} created (${reservation?.guests ?? guests} guests)`,
+    });
     return reservation;
   },
   updateReservation: async ({ id, ...rest }: any, context?: any) => {
@@ -70,6 +87,12 @@ export const reservationResolvers = {
     const reservation = await formatReservation((updated || doc).toJSON());
     emitEvent('reservations:changed', { reservation }, context?.userId);
     emitEvent('tables:changed', {}, context?.userId);
+    await recordActivity(context, {
+      action: v.data.status ? 'status' : 'update',
+      entity: 'reservation',
+      entityId: id,
+      summary: `Reservation ${id} ${v.data.status ? `moved to "${v.data.status}"` : 'updated'}`,
+    });
     return reservation;
   },
   deleteReservation: async ({ id }: any, context?: any) => {
@@ -81,6 +104,12 @@ export const reservationResolvers = {
     await db.reservations.cleanup(0);
     emitEvent('reservations:changed', { reservation: { id, deleted: true } }, context?.userId);
     emitEvent('tables:changed', {}, context?.userId);
+    await recordActivity(context, {
+      action: 'delete',
+      entity: 'reservation',
+      entityId: id,
+      summary: `Reservation ${id} deleted`,
+    });
     return 'Reservation removed';
   },
   cancelReservation: async ({ id }: any, context?: any) => {
@@ -93,6 +122,12 @@ export const reservationResolvers = {
     const reservation = await formatReservation((updated || doc).toJSON());
     emitEvent('reservations:changed', { reservation }, context?.userId);
     emitEvent('tables:changed', {}, context?.userId);
+    await recordActivity(context, {
+      action: 'status',
+      entity: 'reservation',
+      entityId: id,
+      summary: `Reservation ${id} cancelled`,
+    });
     return reservation;
   },
 };

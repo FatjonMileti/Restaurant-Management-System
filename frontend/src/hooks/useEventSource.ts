@@ -14,8 +14,7 @@ const parseData = (event: Event): any | null => {
   }
 };
 
-const matchesId = (entry: any, id: string) =>
-  entry && (entry._id === id || entry.id === id);
+const matchesId = (entry: any, id: string) => entry && (entry._id === id || entry.id === id);
 
 // Merge a server entity into a cached list: update in place when present,
 // prepend when new (lists are ordered newest-first).
@@ -42,7 +41,7 @@ const normalizeSimple = (o: any) => mapId(o);
 
 export const useEventSource = () => {
   const qc = useQueryClient();
-  const {user} = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     const eventSource = getEventSource(user?._id || '');
@@ -115,6 +114,31 @@ export const useEventSource = () => {
         'tables:changed',
         () => {
           qc.invalidateQueries({ queryKey: ['tables'] });
+          qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+        },
+      ],
+      [
+        'logs:changed',
+        (e) => {
+          // Infinite activity-log queries are keyed ['activityLogs', 'infinite', ...filters];
+          // patch every cached infinite list by prepending the new entry, then
+          // refetch counts in the background.
+          const raw = parseData(e)?.activityLog;
+          if (raw && typeof raw === 'object' && (raw as any).id) {
+            const normalized = { ...(raw as any), _id: (raw as any).id };
+            const queries = qc.getQueryCache().findAll({ queryKey: ['activityLogs', 'infinite'] });
+            queries.forEach((q) => {
+              qc.setQueryData(q.queryKey, (old: any) => {
+                if (!old?.pages) return old;
+                const first = old.pages[0] ?? [];
+                if (first.some((l: any) => l && l._id === normalized._id)) return old;
+                return { ...old, pages: [[normalized, ...first], ...old.pages.slice(1)] };
+              });
+            });
+          } else {
+            qc.invalidateQueries({ queryKey: ['activityLogs'] });
+          }
+          qc.invalidateQueries({ queryKey: ['activityLogs', 'count'] });
           qc.invalidateQueries({ queryKey: ['dashboardStats'] });
         },
       ],

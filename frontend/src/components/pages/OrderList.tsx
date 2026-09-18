@@ -11,6 +11,7 @@ import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import FilterBar from '../FilterBar';
 import ConfirmDialog from '../ConfirmDialog';
 import OrderCard from './OrderCard';
+import VirtualizedList from '../VirtualizedList';
 
 interface Props {
   onEditOrder: (order: Order) => void;
@@ -134,17 +135,22 @@ export default function OrderList({ onEditOrder }: Props) {
         onConfirm={handleDeleteOrder}
         onCancel={() => setDeleteConfirm({ open: false })}
       />
-      {filteredOrders.map((order: Order) => (
-        <OrderCard
-          key={order._id}
-          order={order}
-          isStaffView={isStaffView}
-          isOwner={order.user?._id === user?._id}
-          onEdit={onEditOrder}
-          onUpdateStatus={handleUpdateStatus}
-          onDelete={handleDeleteClick}
-        />
-      ))}
+      <VirtualizedList<Order>
+        items={filteredOrders}
+        estimateSize={220}
+        keyOf={(order) => order._id}
+        renderItem={(order) => (
+          <OrderCard
+            order={order}
+            isStaffView={isStaffView}
+            isOwner={order.user?._id === user?._id}
+            onEdit={onEditOrder}
+            onUpdateStatus={handleUpdateStatus}
+            onDelete={handleDeleteClick}
+          />
+        )}
+        emptyMessage="No orders yet."
+      />
     </>
   );
 }

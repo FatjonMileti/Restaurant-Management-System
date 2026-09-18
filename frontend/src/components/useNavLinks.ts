@@ -33,6 +33,7 @@ export const useNavLinks = () => {
           ? [{ label: 'Tables', path: '/tables' }]
           : []),
         ...(user.role === 'admin' ? [{ label: 'Settings', path: '/settings' }] : []),
+        ...(user.role === 'admin' ? [{ label: 'Logs', path: '/logs' }] : []),
       ]
     : [
         { label: 'Menu', path: '/menu' },

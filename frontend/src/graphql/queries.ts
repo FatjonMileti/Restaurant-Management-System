@@ -38,8 +38,8 @@ export const DELETE_CATEGORY = gql`
 `;
 
 export const GET_MENU_ITEMS = gql`
-  query GetMenuItems($category: String, $available: Boolean) {
-    menuItems(category: $category, available: $available) {
+  query GetMenuItems($category: String, $available: Boolean, $limit: Int, $offset: Int) {
+    menuItems(category: $category, available: $available, limit: $limit, offset: $offset) {
       id
       name
       description
@@ -114,8 +114,8 @@ export const DELETE_MENU_ITEM = gql`
 `;
 
 export const GET_ORDERS = gql`
-  query GetOrders($status: String, $tableNumber: Int) {
-    orders(status: $status, tableNumber: $tableNumber) {
+  query GetOrders($status: String, $tableNumber: Int, $limit: Int, $offset: Int) {
+    orders(status: $status, tableNumber: $tableNumber, limit: $limit, offset: $offset) {
       id
       user {
         id
@@ -198,8 +198,8 @@ export const UPDATE_ORDER_STATUS = gql`
 `;
 
 export const GET_RESERVATIONS = gql`
-  query GetReservations($status: String, $tableNumber: Int) {
-    reservations(status: $status, tableNumber: $tableNumber) {
+  query GetReservations($status: String, $tableNumber: Int, $limit: Int, $offset: Int) {
+    reservations(status: $status, tableNumber: $tableNumber, limit: $limit, offset: $offset) {
       id
       user {
         id
@@ -380,6 +380,43 @@ export const GET_TABLES = gql`
       busyType
       occupiedBy
     }
+  }
+`;
+export const GET_ACTIVITY_LOGS = gql`
+  query GetActivityLogs(
+    $entity: String
+    $action: String
+    $search: String
+    $limit: Int
+    $offset: Int
+  ) {
+    activityLogs(
+      entity: $entity
+      action: $action
+      search: $search
+      limit: $limit
+      offset: $offset
+    ) {
+      id
+      actorId
+      actorName
+      actorRole
+      action
+      entity
+      entityId
+      summary
+      createdAt
+    }
+  }
+`;
+export const GET_ACTIVITY_LOG_COUNT = gql`
+  query GetActivityLogCount($entity: String, $action: String, $search: String) {
+    activityLogCount(entity: $entity, action: $action, search: $search)
+  }
+`;
+export const CLEAR_ACTIVITY_LOGS = gql`
+  mutation ClearActivityLogs {
+    clearActivityLogs
   }
 `;
 export const GET_DASHBOARD_STATS = gql`

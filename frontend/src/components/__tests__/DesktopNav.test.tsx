@@ -49,6 +49,7 @@ describe('DesktopNav', () => {
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Tables' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Logs' })).toBeInTheDocument();
     expect(screen.getByText('Admin')).toBeInTheDocument();
   });
 

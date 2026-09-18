@@ -24,4 +24,15 @@ describe('typeDefs', () => {
     expect(schema.getType('TableStatus')).toBeDefined();
     expect(schema.getType('StatusCount')).toBeDefined();
   });
+
+  it('contains ActivityLog and paginated list queries', () => {
+    const schema = buildSchema(typeDefs);
+    expect(schema.getType('ActivityLog')).toBeDefined();
+    const fields = schema.getQueryType()!.getFields();
+    expect(fields.activityLogs).toBeDefined();
+    expect(fields.activityLogCount).toBeDefined();
+    expect(fields.orders.args).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'limit' })]),
+    );
+  });
 });

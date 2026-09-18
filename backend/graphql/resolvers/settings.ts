@@ -4,6 +4,7 @@ import { notFoundError, validationError } from '../errors.js';
 import { formatRestaurantSettings, getOrCreateRestaurantSettings } from '../helpers/formatters.js';
 import { requireAdmin } from '../helpers/auth.js';
 import { emitEvent } from '../../sse.js';
+import { recordActivity } from '../helpers/activityLog.js';
 
 export const settingsResolvers = {
   restaurantSettings: async (context: any) => {
@@ -41,6 +42,12 @@ export const settingsResolvers = {
     const settings = formatRestaurantSettings(updated?.toJSON() || doc.toJSON());
     emitEvent('settings:changed', { settings }, context?.userId);
     emitEvent('tables:changed', {}, context?.userId);
+    await recordActivity(context, {
+      action: 'update',
+      entity: 'settings',
+      entityId: settings?.id,
+      summary: 'Restaurant settings updated',
+    });
     return settings;
   },
 };

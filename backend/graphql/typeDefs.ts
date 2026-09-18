@@ -110,6 +110,18 @@ export const typeDefs = `
     count: Int!
   }
 
+  type ActivityLog {
+    id: ID!
+    actorId: String
+    actorName: String
+    actorRole: String
+    action: String!
+    entity: String!
+    entityId: String
+    summary: String!
+    createdAt: String
+  }
+
   type DashboardStats {
     totalOrders: Int!
     pendingOrders: Int!
@@ -141,14 +153,17 @@ export const typeDefs = `
     authMe: User
     authUsers: [User!]!
 
-    menuItems(category: String, available: Boolean): [MenuItem!]!
+    menuItems(category: String, available: Boolean, limit: Int, offset: Int): [MenuItem!]!
     menuItem(id: ID!): MenuItem
 
-    orders(status: String, tableNumber: Int): [Order!]!
+    orders(status: String, tableNumber: Int, limit: Int, offset: Int): [Order!]!
     order(id: ID!): Order
 
-    reservations(status: String, tableNumber: Int): [Reservation!]!
+    reservations(status: String, tableNumber: Int, limit: Int, offset: Int): [Reservation!]!
     reservation(id: ID!): Reservation
+
+    activityLogs(entity: String, action: String, search: String, limit: Int, offset: Int): [ActivityLog!]!
+    activityLogCount(entity: String, action: String, search: String): Int!
 
     categories: [Category!]!
     category(id: ID!): Category
@@ -185,5 +200,7 @@ export const typeDefs = `
     deleteUser(id: ID!): String
 
     updateRestaurantSettings(name: String, logo: String, address: String, phone: String, email: String, tableCount: Int): RestaurantSettings
+
+    clearActivityLogs: String
   }
 `;

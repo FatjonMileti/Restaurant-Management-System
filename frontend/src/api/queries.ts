@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { useAuth, useAuthStore } from '../store/authStore';
 import {
@@ -28,6 +28,9 @@ import {
   UPDATE_RESTAURANT_SETTINGS,
   GET_TABLES,
   GET_DASHBOARD_STATS,
+  GET_ACTIVITY_LOGS,
+  GET_ACTIVITY_LOG_COUNT,
+  CLEAR_ACTIVITY_LOGS,
   resolveGraphQLEndpoint,
 } from '../graphql/queries';
 
@@ -645,4 +648,148 @@ export const useDashboardStats = () =>
     meta: { silent: true },
     staleTime: Infinity,
     // refetchInterval: 60 * 1000,
+  });
+
+export interface ActivityLog {
+  _id: string;
+  actorId?: string | null;
+  actorName?: string | null;
+  actorRole?: string | null;
+  action: string;
+  entity: string;
+  entityId?: string | null;
+  summary: string;
+  createdAt?: string | null;
+}
+
+export interface ActivityLogFilters {
+  entity?: string;
+  action?: string;
+  search?: string;
+}
+
+const mapActivityLog = (raw: any): ActivityLog => {
+  const { id, ...rest } = raw ?? {};
+  return { ...rest, _id: id ?? rest._id } as ActivityLog;
+};
+
+export const ACTIVITY_LOG_PAGE_SIZE = 25;
+export const LIST_PAGE_SIZE = 25;
+
+/** Paged fetch shared by the infinite list hooks (limit/offset pagination). */
+const fetchPage = async (document: any, variables: any, field: string): Promise<any[]> => {
+  const data = await request(endpoint, document, variables);
+  return ((data as any)?.[field] || []) as any[];
+};
+
+export const useInfiniteActivityLogs = (filters: ActivityLogFilters = {}) =>
+  useInfiniteQuery({
+    queryKey: [
+      'activityLogs',
+      'infinite',
+      filters.entity ?? '',
+      filters.action ?? '',
+      filters.search ?? '',
+    ],
+    queryFn: async ({ pageParam = 0 }) => {
+      const rows = await fetchPage(
+        GET_ACTIVITY_LOGS,
+        {
+          entity: filters.entity || undefined,
+          action: filters.action || undefined,
+          search: filters.search || undefined,
+          limit: ACTIVITY_LOG_PAGE_SIZE,
+          offset: pageParam,
+        },
+        'activityLogs',
+      );
+      return rows.map(mapActivityLog);
+    },
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.length < ACTIVITY_LOG_PAGE_SIZE ? undefined : lastPageParam + ACTIVITY_LOG_PAGE_SIZE,
+    initialPageParam: 0
+  });
+
+export const useActivityLogCount = (filters: ActivityLogFilters = {}) =>
+  useQuery({
+    queryKey: [
+      'activityLogs',
+      'count',
+      filters.entity ?? '',
+      filters.action ?? '',
+      filters.search ?? '',
+    ],
+    queryFn: async () => {
+      const data = await request(endpoint, GET_ACTIVITY_LOG_COUNT, {
+        entity: filters.entity || undefined,
+        action: filters.action || undefined,
+        search: filters.search || undefined,
+      });
+      return Number((data as any)?.activityLogCount ?? 0);
+    }
+  });
+
+export const useClearActivityLogs = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => request(endpoint, CLEAR_ACTIVITY_LOGS),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['activityLogs'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
+  });
+};
+
+/** Infinite orders (server-paginated) for long lists + virtualized rendering. */
+export const useInfiniteOrders = () =>
+  useInfiniteQuery({
+    queryKey: ['orders', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      const rows = await fetchPage(
+        GET_ORDERS,
+        { limit: LIST_PAGE_SIZE, offset: pageParam },
+        'orders',
+      );
+      return mapArray<Order>(rows).map(mapUserRef);
+    },
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.length < LIST_PAGE_SIZE ? undefined : lastPageParam + LIST_PAGE_SIZE,
+    initialPageParam: 0,
+    staleTime: Infinity,
+  });
+
+/** Infinite reservations (server-paginated) for long lists + virtualized rendering. */
+export const useInfiniteReservations = () =>
+  useInfiniteQuery({
+    queryKey: ['reservations', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      const rows = await fetchPage(
+        GET_RESERVATIONS,
+        { limit: LIST_PAGE_SIZE, offset: pageParam },
+        'reservations',
+      );
+      return mapArray<Reservation>(rows).map(mapUserRef);
+    },
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.length < LIST_PAGE_SIZE ? undefined : lastPageParam + LIST_PAGE_SIZE,
+    initialPageParam: 0,
+    staleTime: Infinity,
+  });
+
+/** Infinite menu items (server-paginated) for long lists + virtualized rendering. */
+export const useInfiniteMenuItems = () =>
+  useInfiniteQuery({
+    queryKey: ['menu', 'infinite'],
+    queryFn: async ({ pageParam = 0 }) => {
+      const rows = await fetchPage(
+        GET_MENU_ITEMS,
+        { limit: LIST_PAGE_SIZE, offset: pageParam },
+        'menuItems',
+      );
+      return mapArray<MenuItem>(rows);
+    },
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.length < LIST_PAGE_SIZE ? undefined : lastPageParam + LIST_PAGE_SIZE,
+    initialPageParam: 0,
+    staleTime: Infinity,
   });

@@ -19,6 +19,7 @@ import {
 } from '../errors.js';
 import { emitEvent } from '../../sse.js';
 import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
+import { recordActivity } from '../helpers/activityLog.js';
 
 const genId = () => crypto.randomUUID();
 
@@ -71,7 +72,18 @@ export const authResolvers = {
     const token = generateToken(userDoc._id as string);
     const user = userDoc.toJSON();
     delete user.password;
-    return { token, user: formatUser(user) };
+    const formatted = formatUser(user);
+    await recordActivity(
+      undefined,
+      {
+        action: 'register',
+        entity: 'auth',
+        entityId: formatted?.id,
+        summary: `${formatted?.name ?? email} registered`,
+      },
+      { actorId: formatted?.id, actorName: formatted?.name ?? email, actorRole: 'customer' },
+    );
+    return { token, user: formatted };
   },
 
   login: async ({ email, password }: any) => {
@@ -85,7 +97,17 @@ export const authResolvers = {
     if (!match) throw authError('Invalid email or password');
     const token = generateToken(user._id as string);
     delete user.password;
-    return { token, user: formatUser(user) };
+    const formatted = formatUser(user);
+    await recordActivity(
+      { userId: user._id },
+      {
+        action: 'login',
+        entity: 'auth',
+        entityId: formatted?.id,
+        summary: `${formatted?.name ?? email} logged in`,
+      },
+    );
+    return { token, user: formatted };
   },
 
   createUserByAdmin: async ({ name, email, password, phone, role }: any, context: any) => {
@@ -111,6 +133,12 @@ export const authResolvers = {
     delete user.password;
     const formattedUser = formatUser(user);
     emitEvent('users:changed', { user: formattedUser }, context.userId);
+    await recordActivity(context, {
+      action: 'create',
+      entity: 'user',
+      entityId: formattedUser?.id,
+      summary: `User "${formattedUser?.name ?? email}" created with role "${formattedUser?.role}"`,
+    });
     return formattedUser;
   },
 
@@ -127,6 +155,12 @@ export const authResolvers = {
     delete user.password;
     const formattedUser = formatUser(user);
     emitEvent('users:changed', { user: formattedUser }, context.userId);
+    await recordActivity(context, {
+      action: 'update',
+      entity: 'user',
+      entityId: id,
+      summary: `User ${formattedUser?.name ?? id} role changed to "${formattedUser?.role}"`,
+    });
     return formattedUser;
   },
 
@@ -140,6 +174,12 @@ export const authResolvers = {
     await userDoc.remove();
     await db.users.cleanup(0);
     emitEvent('users:changed', { user: { id, deleted: true } }, context.userId);
+    await recordActivity(context, {
+      action: 'delete',
+      entity: 'user',
+      entityId: id,
+      summary: `User "${user.name ?? user.email ?? id}" deleted`,
+    });
     return 'User removed';
   },
 };

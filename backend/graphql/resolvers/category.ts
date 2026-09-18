@@ -5,6 +5,7 @@ import { notFoundError, validationError } from '../errors.js';
 import { formatCategory } from '../helpers/formatters.js';
 import { emitEvent } from '../../sse.js';
 import { requireAdmin } from '../helpers/auth.js';
+import { recordActivity } from '../helpers/activityLog.js';
 
 const genId = () => crypto.randomUUID();
 
@@ -29,6 +30,12 @@ export const categoryResolvers = {
     const catDoc = await db.categories.insert({ _id: genId(), ...v.data });
     const category = formatCategory(catDoc.toJSON());
     emitEvent('categories:changed', { category }, context?.userId);
+    await recordActivity(context, {
+      action: 'create',
+      entity: 'category',
+      entityId: category?.id,
+      summary: `Category "${category?.name}" created`,
+    });
     return category;
   },
   updateCategory: async ({ id, name }: any, context?: any) => {
@@ -42,6 +49,12 @@ export const categoryResolvers = {
     const updated = await db.categories.findOne(id).exec();
     const category = formatCategory(updated?.toJSON() || doc.toJSON());
     emitEvent('categories:changed', { category }, context?.userId);
+    await recordActivity(context, {
+      action: 'update',
+      entity: 'category',
+      entityId: id,
+      summary: `Category "${category?.name}" updated`,
+    });
     return category;
   },
   deleteCategory: async ({ id }: any, context?: any) => {
@@ -52,6 +65,12 @@ export const categoryResolvers = {
     await doc.remove();
     await db.categories.cleanup(0);
     emitEvent('categories:changed', { category: { id, deleted: true } }, context?.userId);
+    await recordActivity(context, {
+      action: 'delete',
+      entity: 'category',
+      entityId: id,
+      summary: `Category ${id} deleted`,
+    });
     return 'Category removed';
   },
 };

@@ -5,17 +5,27 @@ import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 import { formatMenuItem } from '../helpers/formatters.js';
 import { notFoundError, validationError } from '../errors.js';
 import { emitEvent } from '../../sse.js';
+import { recordActivity } from '../helpers/activityLog.js';
 
 const genId = () => crypto.randomUUID();
 
+const paginate = <T>(rows: T[], limit?: unknown, offset?: unknown): T[] => {
+  const start =
+    Number.isFinite(Number(offset)) && Number(offset) >= 0 ? Math.floor(Number(offset)) : 0;
+  if (limit === undefined || limit === null) return rows.slice(start);
+  const size =
+    Number.isFinite(Number(limit)) && Number(limit) >= 0 ? Math.floor(Number(limit)) : rows.length;
+  return rows.slice(start, start + size);
+};
+
 export const menuResolvers = {
-  menuItems: async ({ category, available }: any) => {
+  menuItems: async ({ category, available, limit, offset }: any) => {
     const filter: any = {};
     if (category) filter.category = category;
     if (available !== undefined) filter.available = available;
     const db = await getDB();
     const docs = await db.menuItems.find(filter).sort('category').exec();
-    return docs.map(formatMenuItem);
+    return paginate(docs.map(formatMenuItem), limit, offset);
   },
 
   menuItem: async ({ id }: any, context?: any) => {
@@ -39,6 +49,12 @@ export const menuResolvers = {
     });
     const menuItem = formatMenuItem(item);
     emitEvent('menu:changed', { menuItem }, context?.userId);
+    await recordActivity(context, {
+      action: 'create',
+      entity: 'menuItem',
+      entityId: menuItem?.id,
+      summary: `Menu item "${menuItem?.name}" created`,
+    });
     return menuItem;
   },
 
@@ -53,6 +69,12 @@ export const menuResolvers = {
     const updated = await db.menuItems.findOne(id).exec();
     const menuItem = formatMenuItem(updated?.toJSON() || existing.toJSON());
     emitEvent('menu:changed', { menuItem }, context?.userId);
+    await recordActivity(context, {
+      action: 'update',
+      entity: 'menuItem',
+      entityId: menuItem?.id,
+      summary: `Menu item "${menuItem?.name}" updated`,
+    });
     return menuItem;
   },
 
@@ -61,9 +83,16 @@ export const menuResolvers = {
     const db = await getDB();
     const item = await db.menuItems.findOne(id).exec();
     if (!item) throw notFoundError('Menu item not found');
+    const removedName = item.toJSON()?.name ?? id;
     await item.remove();
     await db.menuItems.cleanup(0);
     emitEvent('menu:changed', { menuItem: { id, deleted: true } }, context?.userId);
+    await recordActivity(context, {
+      action: 'delete',
+      entity: 'menuItem',
+      entityId: id,
+      summary: `Menu item "${removedName}" deleted`,
+    });
     return 'Menu item removed';
   },
 };

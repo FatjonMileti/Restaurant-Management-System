@@ -6,6 +6,7 @@ import { categoryResolvers } from './category.js';
 import { settingsResolvers } from './settings.js';
 import { tablesResolvers } from './tables.js';
 import { dashboardResolvers } from './dashboard.js';
+import { activityResolvers } from './activity.js';
 
 export const resolvers = {
   hello: () => 'Hello from GraphQL',
@@ -17,4 +18,5 @@ export const resolvers = {
   ...settingsResolvers,
   ...tablesResolvers,
   ...dashboardResolvers,
+  ...activityResolvers,
 };

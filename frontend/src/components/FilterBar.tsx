@@ -71,7 +71,7 @@ export default function FilterBar({
             placeholder={inputPlaceholder}
             value={inputValue || ''}
             onChange={(e) => onInputChange?.(e.target.value)}
-            className="form-input-sm w-28 !mb-0"
+            className="form-input-sm w-48 !mb-0"
           />
         ))}
       {userOptions !== undefined && (

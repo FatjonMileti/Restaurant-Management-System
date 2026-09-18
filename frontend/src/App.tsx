@@ -16,6 +16,7 @@ const Orders = React.lazy(() => import('./pages/Orders'));
 const Reservations = React.lazy(() => import('./pages/Reservations'));
 const Tables = React.lazy(() => import('./pages/Tables'));
 const Settings = React.lazy(() => import('./pages/Settings'));
+const Logs = React.lazy(() => import('./pages/Logs'));
 
 function App() {
   const isFetching = useIsFetching({ predicate: (query) => !query.meta?.silent });
@@ -75,6 +76,14 @@ function App() {
                 element={
                   <ProtectedRoute adminOnly>
                     <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/logs"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <Logs />
                   </ProtectedRoute>
                 }
               />

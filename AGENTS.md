@@ -28,7 +28,7 @@ Two packages under one root: `backend/` and `frontend/`. Always `cd` into the su
 - `proxy` → `http://localhost:5000`. `npm start` (dev), `npm run build` (→ `build/`).
 - State: `zustand` (`authStore`, `cartStore`; `useAuth()` persists `user`+`token` in `localStorage`), `react-hook-form`, `@tanstack/react-query`. `App.tsx` global `LoadingSpinner` via `useIsFetching`/`useIsMutating`.
 - Layout: `src/pages/` routes, `src/components/pages/` sections (MenuItemCard/Form/Header, OrderForm/List, ReservationForm/List, User/Category/RestaurantSection, Login/RegisterForm). Reuse `SectionCard`, `FilterBar`, `StatusBadge`, `ConfirmDialog`, `LoadingSpinner`, `ActionRow`, `TableSelect` (always for table numbers, never raw inputs). Small typed props; prefer editing existing files.
-- Data rules: invalidate `['tables']` after order/reservation mutations, `['restaurantSettings']` after settings update.
+- Data rules: invalidate `['tables']` after order/reservation mutations, `['restaurantSettings']` after settings update. Debounce free-text search inputs with `use-debounce` (500ms) so each keystroke doesn't fire a query.
 
 ## Auth, roles, domain rules
 

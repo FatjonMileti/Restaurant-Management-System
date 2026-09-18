@@ -6,8 +6,18 @@ import { authError, conflictError, notFoundError, validationError } from '../err
 import { formatOrder } from '../helpers/formatters.js';
 import { emitEvent } from '../../sse.js';
 import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
+import { recordActivity } from '../helpers/activityLog.js';
 
 const genId = () => crypto.randomUUID();
+
+const paginate = <T>(rows: T[], limit?: unknown, offset?: unknown): T[] => {
+  const start =
+    Number.isFinite(Number(offset)) && Number(offset) >= 0 ? Math.floor(Number(offset)) : 0;
+  if (limit === undefined || limit === null) return rows.slice(start);
+  const size =
+    Number.isFinite(Number(limit)) && Number(limit) >= 0 ? Math.floor(Number(limit)) : rows.length;
+  return rows.slice(start, start + size);
+};
 
 const buildMenuItemMap = async (db: any): Promise<Map<string, any>> => {
   const docs = await db.menuItems.find().exec();
@@ -20,7 +30,7 @@ const buildMenuItemMap = async (db: any): Promise<Map<string, any>> => {
 };
 
 export const orderResolvers = {
-  orders: async ({ status, tableNumber }: any, context?: any) => {
+  orders: async ({ status, tableNumber, limit, offset }: any, context?: any) => {
     await requireStaffOrAdmin(context);
     const filter: any = {};
     if (status) filter.status = status;
@@ -30,7 +40,8 @@ export const orderResolvers = {
       db.orders.find(filter).sort({ createdAt: -1 }).exec(),
       buildMenuItemMap(db),
     ]);
-    return Promise.all(docs.map((doc: any) => formatOrder(doc.toJSON(), menuItemMap)));
+    const rows = await Promise.all(docs.map((doc: any) => formatOrder(doc.toJSON(), menuItemMap)));
+    return paginate(rows, limit, offset);
   },
 
   order: async ({ id }: any, context?: any) => {
@@ -76,6 +87,12 @@ export const orderResolvers = {
     const menuItemMap = await buildMenuItemMap(db);
     const order = await formatOrder(orderDoc.toJSON(), menuItemMap);
     emitEvent('orders:changed', { order }, context?.userId);
+    await recordActivity(context, {
+      action: 'create',
+      entity: 'order',
+      entityId: order?.id,
+      summary: `Order for table ${order?.tableNumber ?? tableNumber} created (${order?.totalAmount ?? totalAmount})`,
+    });
     return order;
   },
 
@@ -111,6 +128,12 @@ export const orderResolvers = {
     const order = await formatOrder((updated || doc).toJSON(), menuItemMap);
     emitEvent('orders:changed', { order }, context?.userId);
     emitEvent('tables:changed', {}, context?.userId);
+    await recordActivity(context, {
+      action: v.data.status ? 'status' : 'update',
+      entity: 'order',
+      entityId: id,
+      summary: `Order ${id} ${v.data.status ? `moved to "${v.data.status}"` : 'updated'}`,
+    });
     return order;
   },
 
@@ -122,6 +145,12 @@ export const orderResolvers = {
     await doc.remove();
     await db.orders.cleanup(0);
     emitEvent('orders:changed', { order: { id, deleted: true } }, context?.userId);
+    await recordActivity(context, {
+      action: 'delete',
+      entity: 'order',
+      entityId: id,
+      summary: `Order ${id} deleted`,
+    });
     return 'Order removed';
   },
 
@@ -136,6 +165,12 @@ export const orderResolvers = {
     const order = await formatOrder((updated || doc).toJSON(), menuItemMap);
     emitEvent('orders:changed', { order }, context?.userId);
     emitEvent('tables:changed', {}, context?.userId);
+    await recordActivity(context, {
+      action: 'status',
+      entity: 'order',
+      entityId: id,
+      summary: `Order ${id} moved to "${status}"`,
+    });
     return order;
   },
 };

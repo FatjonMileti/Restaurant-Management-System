@@ -18,6 +18,7 @@ type Collections = {
   orders: any;
   reservations: any;
   settings: any;
+  activityLogs: any;
 };
 
 let dbInstance: any = null;
@@ -165,6 +166,28 @@ export const getRxDB = async (): Promise<any> => {
     indexes: [],
   };
 
+  // Activity log: append-only record of restaurant actions for the admin logs page.
+  const activityLogSchema = {
+    title: 'activityLog schema',
+    version: 0,
+    description: 'activity log collection',
+    type: 'object',
+    primaryKey: '_id',
+    properties: {
+      _id: { type: 'string', maxLength: 100 },
+      actorId: { type: 'string' },
+      actorName: { type: 'string' },
+      actorRole: { type: 'string' },
+      action: { type: 'string' },
+      entity: { type: 'string' },
+      entityId: { type: 'string' },
+      summary: { type: 'string' },
+      createdAt: { type: 'string' },
+    },
+    required: ['action', 'entity', 'createdAt'],
+    indexes: ['createdAt', 'entity', 'action'],
+  };
+
   // Identity migrations: v0 -> v1 only adds `ref` metadata (no stored data changes).
   // Convention: whenever a collection schema changes, bump its `version` and add a
   // migration strategy here — otherwise RxDB throws a schema-mismatch error on
@@ -181,6 +204,7 @@ export const getRxDB = async (): Promise<any> => {
       migrationStrategies: { 0: identityMigration, 1: identityMigration, 2: identityMigration },
     },
     settings: { schema: settingsSchema, migrationStrategies: { 1: identityMigration } },
+    activityLogs: { schema: activityLogSchema },
   });
 
   return dbInstance;
