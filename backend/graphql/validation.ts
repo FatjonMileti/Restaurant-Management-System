@@ -91,6 +91,17 @@ export const updateUserRoleSchema = z.object({
   role: z.enum(['customer', 'staff', 'admin']),
 });
 
+export const updateUserSchema = z.object({
+  name: z.string().min(1, 'Name is required').optional(),
+  email: z.string().email('Invalid email address').optional(),
+  phone: z.string().optional(),
+  role: z.enum(['customer', 'staff', 'admin']).optional(),
+});
+
+export const adminUpdatePasswordSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
 type ValidationResult<T> = { success: true; data: T } | { success: false; errors: string[] };
 
 export function validate<T>(schema: z.ZodSchema<T>, data: unknown): ValidationResult<T> {

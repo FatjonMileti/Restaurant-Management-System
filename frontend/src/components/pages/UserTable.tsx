@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '../../store/authStore';
-import { useDeleteUser, useUpdateUserRole, useUsers } from '../../api/queries';
+import { useDeleteUser, useUpdateUserRole, useUsers, AdminUser } from '../../api/queries';
 import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import ConfirmDialog from '../ConfirmDialog';
 
@@ -18,6 +18,7 @@ function UserRow({
   onStartEdit,
   onRoleChange,
   onDelete,
+  onEditUser,
 }: {
   user: any;
   isCurrent: boolean;
@@ -25,12 +26,17 @@ function UserRow({
   onStartEdit: () => void;
   onRoleChange: (role: string) => void;
   onDelete: () => void;
+  onEditUser: () => void;
 }) {
   return (
-    <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+    <tr
+      className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+      onClick={onEditUser}
+      title="Click to edit user"
+    >
       <td className="table-td">{user.name}</td>
       <td className="table-td">{user.email}</td>
-      <td className="table-td">
+      <td className="table-td" onClick={(e) => e.stopPropagation()}>
         {editing ? (
           <select
             value={user.role}
@@ -56,7 +62,7 @@ function UserRow({
         )}
       </td>
       <td className="table-td">{user.phone || '-'}</td>
-      <td className="table-td">
+      <td className="table-td" onClick={(e) => e.stopPropagation()}>
         {!isCurrent && (
           <button onClick={onDelete} className="btn-danger">
             Delete
@@ -67,7 +73,11 @@ function UserRow({
   );
 }
 
-export default function UserTable() {
+interface Props {
+  onEditUser?: (user: AdminUser) => void;
+}
+
+export default function UserTable({ onEditUser }: Props) {
   const { user: currentUser } = useAuth();
   const { data: users = [] } = useUsers();
   const deleteUser = useDeleteUser();
@@ -130,6 +140,7 @@ export default function UserTable() {
                 onStartEdit={() => setEditingRole(u._id)}
                 onRoleChange={(role) => handleRoleChange(u._id, role)}
                 onDelete={() => setDeleteConfirm({ open: true, id: u._id })}
+                onEditUser={() => onEditUser?.(u)}
               />
             ))}
           </tbody>

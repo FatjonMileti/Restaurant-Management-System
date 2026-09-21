@@ -23,6 +23,8 @@ import {
   GET_USERS,
   CREATE_USER,
   UPDATE_USER_ROLE,
+  UPDATE_USER,
+  ADMIN_UPDATE_USER_PASSWORD,
   DELETE_USER,
   GET_RESTAURANT_SETTINGS,
   UPDATE_RESTAURANT_SETTINGS,
@@ -546,6 +548,46 @@ export const useUpdateUserRole = () => {
   });
 };
 
+export interface UpdateUserPayload {
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+}
+
+export const useUpdateUser = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { id: string; data: UpdateUserPayload }) => {
+      const data = await request(endpoint, UPDATE_USER, { id: payload.id, ...payload.data });
+      return mapId<AdminUser>((data as any)?.updateUser);
+    },
+    onSuccess: (updated) => {
+      if (updated) {
+        qc.setQueryData(['users'], (oldData: any) =>
+          (oldData ?? []).map((user: AdminUser) =>
+            user._id === updated._id ? { ...user, ...updated } : user,
+          ),
+        );
+      } else {
+        qc.invalidateQueries({ queryKey: ['users'] });
+      }
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
+  });
+};
+
+export const useAdminUpdateUserPassword = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { id: string; password: string }) =>
+      request(endpoint, ADMIN_UPDATE_USER_PASSWORD, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
+  });
+};
+
 export interface RestaurantSettings {
   _id: string;
   name: string;
@@ -707,7 +749,7 @@ export const useInfiniteActivityLogs = (filters: ActivityLogFilters = {}) =>
     },
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.length < ACTIVITY_LOG_PAGE_SIZE ? undefined : lastPageParam + ACTIVITY_LOG_PAGE_SIZE,
-    initialPageParam: 0
+    initialPageParam: 0,
   });
 
 export const useActivityLogCount = (filters: ActivityLogFilters = {}) =>
@@ -726,7 +768,7 @@ export const useActivityLogCount = (filters: ActivityLogFilters = {}) =>
         search: filters.search || undefined,
       });
       return Number((data as any)?.activityLogCount ?? 0);
-    }
+    },
   });
 
 export const useClearActivityLogs = () => {

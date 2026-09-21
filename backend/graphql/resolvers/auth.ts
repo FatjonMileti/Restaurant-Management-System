@@ -7,6 +7,8 @@ import {
   loginSchema,
   createUserSchema,
   updateUserRoleSchema,
+  updateUserSchema,
+  adminUpdatePasswordSchema,
   validate,
 } from '../validation.js';
 import { formatUser } from '../helpers/formatters.js';
@@ -162,6 +164,76 @@ export const authResolvers = {
       summary: `User ${formattedUser?.name ?? id} role changed to "${formattedUser?.role}"`,
     });
     return formattedUser;
+  },
+
+  updateUser: async ({ id, name, email, phone, role }: any, context: any) => {
+    await requireAdmin(context);
+    const v = validate(updateUserSchema, { name, email, phone, role });
+    if (!v.success) throw validationError(v.errors.join(', '));
+    if (
+      v.data.name === undefined &&
+      v.data.email === undefined &&
+      v.data.phone === undefined &&
+      v.data.role === undefined
+    ) {
+      throw validationError('No fields to update');
+    }
+    const db = await getDB();
+    const userDoc = await db.users.findOne(id).exec();
+    if (!userDoc) throw notFoundError('User not found');
+    const current = userDoc.toJSON();
+    // Prevent an admin from demoting/deleting their own admin access via this path.
+    if (context?.userId === id && v.data.role !== undefined && v.data.role !== 'admin') {
+      throw forbiddenError('Cannot change your own role');
+    }
+    if (v.data.email !== undefined && v.data.email !== current.email) {
+      const all = await db.users.find().exec();
+      const clash = all.map((d: any) => d.toJSON()).find((u: any) => u.email === v.data.email);
+      if (clash) throw conflictError('Email already in use');
+    }
+    const patch: Record<string, any> = {};
+    if (v.data.name !== undefined) patch.name = v.data.name;
+    if (v.data.email !== undefined) patch.email = v.data.email;
+    if (v.data.phone !== undefined) patch.phone = v.data.phone;
+    if (v.data.role !== undefined) patch.role = v.data.role;
+    await userDoc.update({ $set: patch });
+    const updated = await db.users.findOne(id).exec();
+    const user = updated?.toJSON() || userDoc.toJSON();
+    delete user.password;
+    const formattedUser = formatUser(user);
+    emitEvent('users:changed', { user: formattedUser }, context.userId);
+    await recordActivity(context, {
+      action: 'update',
+      entity: 'user',
+      entityId: id,
+      summary: `User ${formattedUser?.name ?? id} updated`,
+    });
+    return formattedUser;
+  },
+
+  adminUpdateUserPassword: async ({ id, password }: any, context: any) => {
+    await requireAdmin(context);
+    const v = validate(adminUpdatePasswordSchema, { password });
+    if (!v.success) throw validationError(v.errors.join(', '));
+    const db = await getDB();
+    const userDoc = await db.users.findOne(id).exec();
+    if (!userDoc) throw notFoundError('User not found');
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(v.data.password, salt);
+    await userDoc.update({ $set: { password: hashed } });
+    const user = (await db.users.findOne(id).exec())?.toJSON() || userDoc.toJSON();
+    emitEvent(
+      'users:changed',
+      { user: formatUser({ ...user, password: undefined }) },
+      context.userId,
+    );
+    await recordActivity(context, {
+      action: 'update',
+      entity: 'user',
+      entityId: id,
+      summary: `Password reset for user "${user.name ?? user.email ?? id}"`,
+    });
+    return 'Password updated';
   },
 
   deleteUser: async ({ id }: any, context: any) => {

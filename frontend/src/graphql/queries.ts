@@ -324,6 +324,22 @@ export const UPDATE_USER_ROLE = gql`
     }
   }
 `;
+export const UPDATE_USER = gql`
+  mutation UpdateUser($id: ID!, $name: String, $email: String, $phone: String, $role: String) {
+    updateUser(id: $id, name: $name, email: $email, phone: $phone, role: $role) {
+      id
+      name
+      email
+      role
+      phone
+    }
+  }
+`;
+export const ADMIN_UPDATE_USER_PASSWORD = gql`
+  mutation AdminUpdateUserPassword($id: ID!, $password: String!) {
+    adminUpdateUserPassword(id: $id, password: $password)
+  }
+`;
 export const DELETE_USER = gql`
   mutation DeleteUser($id: ID!) {
     deleteUser(id: $id)

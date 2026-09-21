@@ -197,6 +197,8 @@ export const typeDefs = `
 
     createUserByAdmin(name: String!, email: String!, password: String!, phone: String, role: String): User
     updateUserRole(id: ID!, role: String!): User
+    updateUser(id: ID!, name: String, email: String, phone: String, role: String): User
+    adminUpdateUserPassword(id: ID!, password: String!): String
     deleteUser(id: ID!): String
 
     updateRestaurantSettings(name: String, logo: String, address: String, phone: String, email: String, tableCount: Int): RestaurantSettings

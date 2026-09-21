@@ -30,6 +30,8 @@ import {
   useCreateCategory,
   useUpdateOrder,
   useUpdateOrderStatus,
+  useUpdateUser,
+  useAdminUpdateUserPassword,
 } from '../queries';
 
 const createWrapper = () => {
@@ -142,16 +144,19 @@ describe('api queries', () => {
       },
     });
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    qc.setQueryData(['orders'], [
-      {
-        _id: 'old1',
-        items: [],
-        totalAmount: 5,
-        status: 'pending',
-        tableNumber: 1,
-        createdAt: '2024-01-01T12:00:00.000Z',
-      },
-    ]);
+    qc.setQueryData(
+      ['orders'],
+      [
+        {
+          _id: 'old1',
+          items: [],
+          totalAmount: 5,
+          status: 'pending',
+          tableNumber: 1,
+          createdAt: '2024-01-01T12:00:00.000Z',
+        },
+      ],
+    );
     const wrapper = ({ children }: any) => (
       <QueryClientProvider client={qc}>{children}</QueryClientProvider>
     );
@@ -182,17 +187,20 @@ describe('api queries', () => {
     });
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     // As stored by the useEventSource upsert: normalized, top of the list.
-    qc.setQueryData(['orders'], [
-      {
-        _id: 'new1',
-        user: { _id: 'u1', name: 'John', email: 'john@example.com' },
-        items: [],
-        totalAmount: 10,
-        status: 'pending',
-        tableNumber: 3,
-        createdAt: '2024-02-01T12:00:00.000Z',
-      },
-    ]);
+    qc.setQueryData(
+      ['orders'],
+      [
+        {
+          _id: 'new1',
+          user: { _id: 'u1', name: 'John', email: 'john@example.com' },
+          items: [],
+          totalAmount: 10,
+          status: 'pending',
+          tableNumber: 3,
+          createdAt: '2024-02-01T12:00:00.000Z',
+        },
+      ],
+    );
     const wrapper = ({ children }: any) => (
       <QueryClientProvider client={qc}>{children}</QueryClientProvider>
     );
@@ -431,11 +439,73 @@ describe('api queries', () => {
       const { qc, wrapper } = seedClient();
       const { result } = renderHook(() => useUpdateOrderStatus(), { wrapper });
       await act(async () => {
-        await expect(
-          result.current.mutateAsync({ id: 'o1', status: 'completed' }),
-        ).rejects.toThrow('Forbidden');
+        await expect(result.current.mutateAsync({ id: 'o1', status: 'completed' })).rejects.toThrow(
+          'Forbidden',
+        );
       });
       expect((qc.getQueryData(['orders']) as any[])[0].status).toBe('pending');
+    });
+  });
+
+  describe('useUpdateUser / useAdminUpdateUserPassword', () => {
+    const seedUsers = () => {
+      const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      qc.setQueryData(
+        ['users'],
+        [{ _id: 'u1', name: 'John', email: 'john@example.com', role: 'customer', phone: '111' }],
+      );
+      const wrapper = ({ children }: any) => (
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      );
+      return { qc, wrapper };
+    };
+
+    it('merges updated fields into the cached user', async () => {
+      (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({
+        updateUser: {
+          id: 'u1',
+          name: 'Johnny',
+          email: 'johnny@example.com',
+          role: 'staff',
+          phone: '222',
+        },
+      });
+      const { qc, wrapper } = seedUsers();
+      const { result } = renderHook(() => useUpdateUser(), { wrapper });
+      await act(async () => {
+        await result.current.mutateAsync({ id: 'u1', data: { name: 'Johnny', role: 'staff' } });
+      });
+      const cached = qc.getQueryData(['users']) as any[];
+      expect(cached).toHaveLength(1);
+      expect(cached[0]._id).toBe('u1');
+      expect(cached[0].name).toBe('Johnny');
+      expect(cached[0].role).toBe('staff');
+      expect(gqlRequest.request).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        { id: 'u1', name: 'Johnny', role: 'staff' },
+        { Authorization: 'Bearer test-token' },
+      );
+    });
+
+    it('sends the new password to adminUpdateUserPassword', async () => {
+      (gqlRequest.request as unknown as jest.Mock).mockResolvedValue({
+        adminUpdateUserPassword: 'Password updated',
+      });
+      const { result } = renderHook(() => useAdminUpdateUserPassword(), {
+        wrapper: createWrapper(),
+      });
+      let res: any;
+      await act(async () => {
+        res = await result.current.mutateAsync({ id: 'u1', password: 'newsecret123' });
+      });
+      expect(res.adminUpdateUserPassword).toBe('Password updated');
+      expect(gqlRequest.request).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        { id: 'u1', password: 'newsecret123' },
+        { Authorization: 'Bearer test-token' },
+      );
     });
   });
 });

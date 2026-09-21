@@ -68,6 +68,17 @@ export const userFormSchema = z.object({
   role: z.enum(['customer', 'staff', 'admin']),
 });
 
+export const userUpdateSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().optional(),
+  role: z.enum(['customer', 'staff', 'admin']),
+  newPassword: z
+    .string()
+    .optional()
+    .refine((v) => !v || v.length >= 6, { message: 'Password must be at least 6 characters' }),
+});
+
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type MenuItemFormData = z.infer<typeof menuItemSchema>;
@@ -75,3 +86,4 @@ export type OrderFormData = z.infer<typeof orderFormSchema>;
 export type ReservationFormData = z.infer<typeof reservationSchema>;
 export type RestaurantSettingsFormData = z.infer<typeof restaurantSettingsSchema>;
 export type UserFormData = z.infer<typeof userFormSchema>;
+export type UserUpdateFormData = z.infer<typeof userUpdateSchema>;

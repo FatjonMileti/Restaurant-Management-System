@@ -10,6 +10,8 @@ import {
   restaurantSettingsSchema,
   createUserSchema,
   updateUserRoleSchema,
+  updateUserSchema,
+  adminUpdatePasswordSchema,
   validate,
 } from '../graphql/validation';
 
@@ -200,6 +202,18 @@ describe('validation schemas', () => {
     });
     it('rejects invalid role', () => {
       expect(validate(updateUserRoleSchema, { role: 'superadmin' as any }).success).toBe(false);
+    });
+    it('accepts partial user updates', () => {
+      expect(validate(updateUserSchema, { name: 'Bob', phone: '123' }).success).toBe(true);
+    });
+    it('rejects invalid email on user update', () => {
+      expect(validate(updateUserSchema, { email: 'not-an-email' }).success).toBe(false);
+    });
+    it('rejects short admin-set password', () => {
+      expect(validate(adminUpdatePasswordSchema, { password: '123' }).success).toBe(false);
+    });
+    it('accepts a valid admin-set password', () => {
+      expect(validate(adminUpdatePasswordSchema, { password: 'newsecret123' }).success).toBe(true);
     });
   });
 });
