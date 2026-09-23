@@ -1,0 +1,49 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/server.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "backend/public/images/**"
+      }
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/graphql(.*)",
+      "dest": "/backend/server.ts"
+    },
+    {
+      "src": "/events(.*)",
+      "dest": "/backend/server.ts"
+    },
+    {
+      "src": "/api-docs(.*)",
+      "dest": "/backend/server.ts"
+    },
+    {
+      "src": "/images(.*)",
+      "dest": "/backend/server.ts"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_GRAPHQL_URL": "/graphql",
+    "REACT_APP_WS_URL": ""
+  }
+}
