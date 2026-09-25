@@ -85,6 +85,7 @@ app.get('/', (_req, res) => {
 });
 
 // Only for local development - seed the database
+// Remove on production
 app.get('/seed', async (_req, res) => {
   await seed();
   res.send('Database seeded successfully');

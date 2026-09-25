@@ -6,6 +6,7 @@ import { formatMenuItem } from '../helpers/formatters.js';
 import { notFoundError, validationError } from '../errors.js';
 import { emitEvent } from '../../sse.js';
 import { recordActivity } from '../helpers/activityLog.js';
+import { seed } from '../../seeds.js';
 
 const genId = () => crypto.randomUUID();
 
@@ -24,6 +25,11 @@ export const menuResolvers = {
     if (category) filter.category = category;
     if (available !== undefined) filter.available = available;
     const db = await getDB();
+    // if menuItems length is zero seed it
+    // Remove on production
+    if ((await db.menuItems.count().exec()) === 0) {
+      await seed();
+    }
     const docs = await db.menuItems.find(filter).sort('category').exec();
     return paginate(docs.map(formatMenuItem), limit, offset);
   },
