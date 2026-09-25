@@ -12,6 +12,7 @@ import { initSSE } from './sse.js';
 import { formatGraphQLError } from './graphql/errors.js';
 import fs from 'fs';
 import path from 'path';
+import { seed } from './seeds.js';
 
 dotenv.config();
 
@@ -57,11 +58,57 @@ app.use(
   }),
 );
 
+// Serve frontend build for demonstration / single-origin deploy.
+// `npm run build:frontend` (root) moves the build to backend/public/build;
+// the folder resolves differently under tsx (backend/) vs compiled
+// output (backend/dist/), so pick the first candidate with an index.html
+// (frontend/build kept as fallback for plain `npm run build` in frontend/).
+const frontendBuildCandidates = [
+  path.join(__dirname, 'public', 'build'),
+  path.join(__dirname, '..', 'public', 'build'),
+  path.join(__dirname, '..', 'frontend', 'build'),
+  path.join(__dirname, '..', '..', 'frontend', 'build'),
+];
+const frontendBuildDir = frontendBuildCandidates.find((dir) =>
+  fs.existsSync(path.join(dir, 'index.html')),
+);
+if (frontendBuildDir) {
+  app.use(express.static(frontendBuildDir));
+}
+
 app.get('/', (_req, res) => {
+  if (frontendBuildDir) {
+    res.sendFile(path.join(frontendBuildDir, 'index.html'));
+    return;
+  }
   res.send('Restaurant Management API is running...');
 });
 
+// Only for local development - seed the database
+app.get('/seed', async (_req, res) => {
+  await seed();
+  res.send('Database seeded successfully');
+});
+
 initSSE(app);
+
+// SPA fallback for React Router — serves index.html for any non-API GET.
+// Must come after /graphql, /events, /images, /api-docs and /seed.
+if (frontendBuildDir) {
+  app.get('*', (req, res, next) => {
+    if (
+      req.path.startsWith('/graphql') ||
+      req.path.startsWith('/events') ||
+      req.path.startsWith('/images') ||
+      req.path.startsWith('/api-docs') ||
+      req.path.startsWith('/seed')
+    ) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(frontendBuildDir as string, 'index.html'));
+  });
+}
 
 const PORT = process.env.PORT || 5000;
 

@@ -1,6 +1,9 @@
 {
   "scripts": {
     "start": "concurrently \"npm --prefix backend run dev\" \"npm --prefix frontend start\"",
+    "build:frontend": "REACT_APP_GRAPHQL_URL=/graphql REACT_APP_WS_URL= REACT_APP_API_URL= npm --prefix frontend run build && rm -rf backend/public/build && mv frontend/build backend/public/build",
+    "build:demo": "npm run build:frontend && npm --prefix backend run build",
+    "demo": "npm run build:demo && npm --prefix backend start",
     "format": "prettier --write ."
   },
   "devDependencies": {

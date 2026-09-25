@@ -22,14 +22,32 @@ type Collections = {
 };
 
 let dbInstance: any = null;
+let dbInitPromise: Promise<any> | null = null;
 
 export const getRxDB = async (): Promise<any> => {
   if (dbInstance) return dbInstance;
+  // Share the in-flight init so concurrent callers (e.g. server startup and
+  // the /seed route) don't create the database twice (RxDB DB8 error).
+  if (!dbInitPromise) {
+    dbInitPromise = initRxDB().then(
+      (db) => {
+        dbInstance = db;
+        return db;
+      },
+      (err) => {
+        dbInitPromise = null;
+        throw err;
+      },
+    );
+  }
+  return dbInitPromise;
+};
 
+const initRxDB = async (): Promise<any> => {
   const { getRxStorageSQLite } = await import('@basepurpose/rxdb-sqlite');
   const { getNodeAdapter } = await import('@basepurpose/rxdb-sqlite/node');
 
-  dbInstance = await createRxDatabase<{ collections: Collections }>({
+  const db = await createRxDatabase<{ collections: Collections }>({
     name: 'restaurant-db',
     storage: getRxStorageSQLite({ adapter: getNodeAdapter }),
   });
@@ -194,7 +212,7 @@ export const getRxDB = async (): Promise<any> => {
   // startup for anyone with an existing SQLite file.
   const identityMigration = (doc: any) => doc;
 
-  await dbInstance.addCollections({
+  await db.addCollections({
     users: { schema: userSchema },
     menuItems: { schema: menuItemSchema, migrationStrategies: { 1: identityMigration } },
     categories: { schema: categorySchema },
@@ -207,7 +225,7 @@ export const getRxDB = async (): Promise<any> => {
     activityLogs: { schema: activityLogSchema },
   });
 
-  return dbInstance;
+  return db;
 };
 export const getDB = () => {
   if (!dbInstance) throw new Error('Database not initialized. Call getRxDB() first.');

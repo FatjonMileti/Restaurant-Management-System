@@ -7,7 +7,7 @@ dotenv.config();
 
 const genId = () => crypto.randomUUID();
 
-const seed = async (): Promise<void> => {
+export const seed = async (): Promise<void> => {
   try {
     await getRxDB();
     const db = getDB();
@@ -291,4 +291,9 @@ const seed = async (): Promise<void> => {
   }
 };
 
-seed();
+// Only seed when executed directly (`npm run seed`). Importing this module
+// (e.g. server.ts for the /seed route) must NOT seed as a side effect —
+// that races database creation and wipes data on every server start.
+if (/seeds\.(ts|js)$/.test(process.argv[1] ?? '')) {
+  seed();
+}
