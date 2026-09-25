@@ -1,0 +1,22 @@
+# Build context for frontend/Dockerfile is the repo root (it needs both
+# frontend/ sources and the root Caddyfile), so this ignore file applies to
+# the `web` service build. The backend service (context: ./backend) uses
+# backend/.dockerignore instead.
+node_modules
+frontend/node_modules
+frontend/build
+backend/node_modules
+backend/dist
+.git
+.opencode
+
+# Never bake local env files or dev database files into images.
+.env
+.env.local
+frontend/.env
+backend/.env
+*.db
+*.db-shm
+*.db-wal
+coverage
+.vercel
