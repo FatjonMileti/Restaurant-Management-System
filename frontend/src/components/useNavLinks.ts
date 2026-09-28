@@ -38,7 +38,7 @@ export const useNavLinks = () => {
     : [
         { label: 'Menu', path: '/menu' },
         { label: 'Login', path: '/login' },
-        { label: 'Register', path: '/register' },
+        // { label: 'Register', path: '/register' },
       ];
 
   return { user, navLinks, isActive, handleLogout, handleNav };

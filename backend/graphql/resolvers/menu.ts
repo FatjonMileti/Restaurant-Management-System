@@ -26,7 +26,7 @@ export const menuResolvers = {
     if (available !== undefined) filter.available = available;
     const db = await getDB();
     // if menuItems length is zero seed it
-    // Remove on production
+    // TODO: Remove on production
     if ((await db.menuItems.count().exec()) === 0) {
       await seed();
     }
