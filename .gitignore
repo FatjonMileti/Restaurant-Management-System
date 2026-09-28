@@ -6,7 +6,6 @@ frontend/build/
 *.log
 .DS_Store
 AGENTS.md
-TODO.md
 
 # SQLite database files
 *.db
