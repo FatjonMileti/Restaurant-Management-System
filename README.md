@@ -10,12 +10,12 @@ Full-stack MERN restaurant platform — menu, orders, reservations, tables and a
 - **Reservations** – create/edit (`confirmed`), `completed`/`cancelled` deletable, staff status select.
 - **Tables** – `tableCount` from `RestaurantSettings` drives `TableSelect` everywhere; `tables` query computes busy from `pending`/`preparing` orders + `confirmed` reservations.
 - **Settings (admin)** – Restaurant details (name/logo/address/phone/email/`tableCount`), Users (create/delete/role change), Categories (CRUD). Tabs are lazy-loaded.
-- **Real-time** – `socket.io` events (`menu:changed`, `orders:changed`, `reservations:changed`, `categories:changed`, `users:changed`, `settings:changed`, `tables:changed`) auto-invalidate `react-query` caches.
+- **Real-time** – SSE events (`menu:changed`, `orders:changed`, `reservations:changed`, `categories:changed`, `users:changed`, `settings:changed`, `tables:changed`, `logs:changed`) auto-patch `react-query` caches (see Architecture).
 
 ## Tech Stack
 
-- **Frontend:** React 18 (CRA 5 + TypeScript), React Router 6, `@tanstack/react-query` 5, `zustand` (auth/cart), `react-hook-form` + `zod`, `graphql-request` + `@apollo/client` (`gql` docs), `@mui/material` styled with **Tailwind CSS**, `socket.io-client`, Testing Library/Jest
-- **Backend:** Node 18+, Express 4, Mongoose 8, TypeScript (`moduleResolution: node16` — imports require `.js` suffix), GraphQL (`graphql` + `express-graphql`, `graphiql: true`), `jsonwebtoken` + `bcryptjs`, `socket.io`, `zod`, `moment`, `swagger-jsdoc`/`swagger-ui-express`
+- **Frontend:** React 18 (CRA 5 + TypeScript), React Router 6, `@tanstack/react-query` 5, `zustand` (auth/cart), `react-hook-form` + `zod`, `graphql-request` + `@apollo/client` (`gql` docs), `@mui/material` styled with **Tailwind CSS**, native `EventSource` (SSE), Testing Library/Jest
+- **Backend:** Node 18+, Express 4, RxDB 17 + SQLite (`@basepurpose/rxdb-sqlite`, `better-sqlite3`), TypeScript (`moduleResolution: node16` — imports require `.js` suffix), GraphQL (`graphql` + `express-graphql`, `graphiql: true`), `jsonwebtoken` + `bcryptjs`, `node-sse-hub` (SSE), `node-retry-kit` (transient retry), `async-context-kit` (request correlation), `zod`, `moment`, `swagger-jsdoc`/`swagger-ui-express`
 - **Auth:** JWT Bearer (`protect` → `req.user`), `admin`/`staff` guards; frontend `useAuthStore` persists `user+token` in `localStorage`
 - **Testing:** Backend Jest + `ts-jest` (ESM), Frontend `react-scripts` Jest + Testing Library
 
@@ -132,7 +132,7 @@ Caddyfile.
 ### Testing
 
 ```bash
-# Backend — 11 suites, 73 tests
+# Backend — 17 suites, 160 tests (incl. retry, request-context, SSE hub)
 cd backend && npm test                 # jest --runInBand
 npm run test:coverage
 
@@ -197,6 +197,58 @@ All `graphql-request` calls in `frontend/src/api/queries.ts` attach `Authorizati
 
 ## Notes
 
-- **TypeScript quirk:** `backend/tsconfig.json` is `node16` → relative imports must use `.js` (e.g. `from './config/db.js'`). Run via `tsx` in dev (`npm run dev`), `tsc` in build.
+- **TypeScript quirk:** `backend/tsconfig.json` is `node16` → relative imports must use `.js` (e.g. `from './config/db.js'`). Run via `tsx` in dev (`npm run dev`), `tsc` in build. Third-party packages that ship dual CJS+ESM builds (`node-retry-kit`, `async-context-kit`, `node-sse-hub`) resolve correctly at every runtime, but `tsc` reports TS1479 on their static imports — see the documented `@ts-expect-error` in `backend/retry.ts`.
 - **Optimization:** lean queries + indexes (`Order.status+tableNumber`, `Reservation.status+tableNumber+date`, `MenuItem.category+available`), `Promise.all` in `dashboardStats`, `staleTime`/`gcTime` in react-query, `React.memo`/`useMemo`/`useCallback`, lazy images/tabs, `dashboardStats` invalidated on all relevant mutations/socket events.
 - **Recent refactor:** `PageHeader` (`flex justify-between items-center mb-2`) extracted; `backend/graphql/schema.ts:674` split into `typeDefs` + `helpers` + 8 resolver modules; frontend `OrderList`/`ReservationList`/`UserSection`/`Tables` split into `OrderCard`/`ReservationCard`/`UserTable`/`TableCard` etc.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Client["React frontend"]
+        RQ["React Query cache"]
+        ES["EventSource /events/:userId"]
+        Z["zustand auth/cart"]
+    end
+
+    subgraph Caddy["Caddy v2 single entrypoint"]
+        PX["/graphql, /events, /api-docs, /images/"]
+        SPA["frontend build + SPA fallback"]
+    end
+
+    subgraph Server["Express backend"]
+        MW["request-context middleware"]
+        GQL["/graphql resolvers"]
+        SSE["SSE hub"]
+        RTY["transient retry"]
+        RX["RxDB collections"]
+    end
+
+    DB["SQLite via better-sqlite3"]
+
+    RQ -->|"queries/mutations + JWT"| PX
+    ES -->|"entity events"| PX
+    PX --> MW --> GQL
+    PX --> SSE
+    GQL --> RTY --> RX --> DB
+    GQL -->|"emitEvent"| SSE
+```
+
+
+1. **React frontend** — routes in `frontend/src/pages/`, sections in `src/components/pages/`, data via typed React Query hooks (`src/api/queries.ts`), client state in zustand. No direct DB access; the single server contract is GraphQL + SSE.
+2. **RxDB** — server-side embedded database (`backend/config/rxdb.ts`, 7 collections). There is **no** RxDB client/replication on the frontend: "synchronization" is GraphQL for reads/writes plus SSE notifications that patch the React Query cache. No redundant sync framework sits on top.
+3. **GraphQL** — sole API at `POST /graphql` (`express-graphql`, SDL in `graphql/typeDefs.ts`, resolvers per domain). Errors are coded `AppError`s surfaced as `extensions.code`; the frontend renders them only through `getGraphQLErrorMessage`.
+4. **Express backend** — `server.ts` awaits `connectDB()` before `listen()`; JWT Bearer auth (`protect`/`admin`/`staff`) enforced in resolvers via `requireAuth`/`requireAdmin`/`requireStaffOrAdmin`, mirrored by frontend route/gate hiding.
+5. **SQLite** — persistence via `@basepurpose/rxdb-sqlite` (`better-sqlite3`), single file (`restaurant-db.db`, volume-mounted in Docker). Concurrent writes can surface transient `SQLITE_BUSY`/`SQLITE_LOCKED` — handled by retry (7), never by adding infrastructure.
+6. **SSE** — live invalidation events (`menu/orders/reservations/categories/users/settings/tables/logs:changed`, deletes as `{ id, deleted: true }`) from `backend/sse.ts` (`node-sse-hub`); the frontend `useEventSource` hook upserts/removes entities in the React Query cache and invalidates derived queries (`tables`, `dashboardStats`). Heartbeat comments every 15s keep the stream alive through Caddy (`flush_interval -1`); the browser `EventSource` reconnects on its own.
+7. **Retry handling** — `backend/retry.ts` (`node-retry-kit`): exponential backoff, full jitter, 3 retries, 1s max delay, retry _only_ transient failures (SQLite lock codes/messages, retryable network codes/statuses, attempt timeouts). `AppError`s (validation/auth/permission/not-found/conflict) never retry; the original error is rethrown unwrapped so GraphQL codes are preserved; attempts are logged with the request correlation id. Applied to order writes (`orders.insert/update/remove`) and the best-effort activity-log insert.
+8. **Request/correlation IDs** — `backend/requestContext.ts` (`async-context-kit`): middleware mints/propagates `x-request-id` (validated, echoed on the response), visible through all async work via `AsyncLocalStorage`. Access logs carry the id; `getLogContext()` exposes only `{ requestId, userId }` — tokens, passwords, cookies and bodies are never stored.
+9. **Synchronization flow** — mutation → RxDB write (with transient retry) → `emitEvent` (except-sender) → clients upsert/invalidate React Query caches. Responsibilities stay separated: RxDB = server persistence, GraphQL = operations, SSE = notifications, React Query = client state.
+
+### Integrated NPM packages
+
+| Package             | What                                                                                      | Why / problem solved                                                                                                                                                                                  | Where                                                                                            |
+| ------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `node-retry-kit`    | Zero-dep retry with exponential backoff, jitter, timeouts, abort, `shouldRetry`           | Transient `SQLITE_BUSY` under concurrent staff devices failed mutations outright; hand-rolled sleep loops would lack jitter/caps/cancellation                                                         | `backend/retry.ts`, used in `graphql/resolvers/order.ts`, `graphql/helpers/activityLog.ts`       |
+| `async-context-kit` | `AsyncLocalStorage` request scope + Express middleware, zero deps                         | No correlation existed (plain `morgan('dev')` logs); needed request IDs across async resolver chains without threading args or risking cross-request leaks                                            | `backend/requestContext.ts`, `backend/server.ts` (middleware, morgan `:request-id`, user attach) |
+| `node-sse-hub`      | Hub-registry SSE: connection tracking, heartbeat, backpressure, stats; zero required deps | The hand-rolled client `Set` leaked every disconnect (`delete` built a fresh object), had no backpressure/caps/stats; the hub fixes the leak and adds operational control with the same wire contract | `backend/sse.ts` (same `initSSE`/`emitEvent` signatures; resolvers untouched)

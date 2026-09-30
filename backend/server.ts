@@ -10,6 +10,7 @@ import connectDB from './config/db.js';
 import jwt from 'jsonwebtoken';
 import { initSSE } from './sse.js';
 import { formatGraphQLError } from './graphql/errors.js';
+import { getRequestId, requestContextMiddleware, setRequestUserId } from './requestContext.js';
 import fs from 'fs';
 import path from 'path';
 import { seed } from './seeds.js';
@@ -20,7 +21,11 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(morgan('dev'));
+// Correlation context first so every downstream handler (GraphQL, SSE,
+// static) and the access log can read the request id.
+app.use(requestContextMiddleware);
+morgan.token('request-id', () => getRequestId() ?? '-');
+app.use(morgan(':method :url :status :response-time ms - :res[content-length] :request-id'));
 
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
@@ -44,6 +49,8 @@ app.use(
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
         userId = decoded.id;
+        // Make the authenticated user visible to request-scoped logging.
+        if (userId) setRequestUserId(userId);
       } catch {
         userId = undefined;
       }

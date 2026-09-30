@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { getDB } from '../../config/rxdb.js';
 import { emitEvent } from '../../sse.js';
+import { withTransientRetry } from '../../retry.js';
 
 export interface ActivityInput {
   action: string;
@@ -74,7 +75,11 @@ export const recordActivity = async (
       summary: input.summary,
       createdAt: new Date().toISOString(),
     };
-    const doc = await db.activityLogs.insert(entry);
+    // Best-effort, but worth a few quick retries: a transient write-lock
+    // failure here would otherwise silently drop an audit entry.
+    const doc = await withTransientRetry(() => db.activityLogs.insert(entry), {
+      operation: 'activityLogs.insert',
+    });
     emitEvent('logs:changed', { activityLog: formatActivityLog(doc.toJSON()) }, context?.userId);
   } catch {
     // Activity logging is best-effort.

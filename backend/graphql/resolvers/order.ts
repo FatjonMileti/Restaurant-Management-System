@@ -7,6 +7,7 @@ import { formatOrder } from '../helpers/formatters.js';
 import { emitEvent } from '../../sse.js';
 import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 import { recordActivity } from '../helpers/activityLog.js';
+import { withTransientRetry } from '../../retry.js';
 
 const genId = () => crypto.randomUUID();
 
@@ -69,16 +70,22 @@ export const orderResolvers = {
     });
     if (busy) throw conflictError('Table is busy');
     const totalAmount = v.data.items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
-    const orderDoc = await db.orders.insert({
-      _id: genId(),
-      user: context.userId,
-      items: v.data.items,
-      totalAmount,
-      tableNumber: v.data.tableNumber,
-      paymentMethod: v.data.paymentMethod ?? 'cash',
-      status: 'pending',
-      createdAt: moment().toISOString(),
-    });
+    // Concurrent staff devices can collide on the SQLite write lock
+    // (SQLITE_BUSY) — retry the insert instead of failing the order.
+    const orderDoc = await withTransientRetry(
+      () =>
+        db.orders.insert({
+          _id: genId(),
+          user: context.userId,
+          items: v.data.items,
+          totalAmount,
+          tableNumber: v.data.tableNumber,
+          paymentMethod: v.data.paymentMethod ?? 'cash',
+          status: 'pending',
+          createdAt: moment().toISOString(),
+        }),
+      { operation: 'orders.insert' },
+    );
     emitEvent('tables:changed', {}, context?.userId);
     // Return the formatted order (populated user + menuItem objects), not the
     // raw doc: items store menuItem as a plain id string, which cannot resolve
@@ -122,7 +129,7 @@ export const orderResolvers = {
     }
     const doc = await db.orders.findOne(id).exec();
     if (!doc) return null;
-    await doc.update({ $set: updates });
+    await withTransientRetry(() => doc.update({ $set: updates }), { operation: 'orders.update' });
     const updated = await db.orders.findOne(id).exec();
     const menuItemMap = await buildMenuItemMap(db);
     const order = await formatOrder((updated || doc).toJSON(), menuItemMap);
@@ -142,7 +149,7 @@ export const orderResolvers = {
     const db = await getDB();
     const doc = await db.orders.findOne(id).exec();
     if (!doc) throw notFoundError('Order not found');
-    await doc.remove();
+    await withTransientRetry(() => doc.remove(), { operation: 'orders.remove' });
     await db.orders.cleanup(0);
     emitEvent('orders:changed', { order: { id, deleted: true } }, context?.userId);
     await recordActivity(context, {
@@ -159,7 +166,9 @@ export const orderResolvers = {
     const db = await getDB();
     const doc = await db.orders.findOne(id).exec();
     if (!doc) return null;
-    await doc.update({ $set: { status } });
+    await withTransientRetry(() => doc.update({ $set: { status } }), {
+      operation: 'orders.updateStatus',
+    });
     const updated = await db.orders.findOne(id).exec();
     const menuItemMap = await buildMenuItemMap(db);
     const order = await formatOrder((updated || doc).toJSON(), menuItemMap);

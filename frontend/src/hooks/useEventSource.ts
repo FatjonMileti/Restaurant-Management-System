@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQueryClient, QueryClient } from '@tanstack/react-query';
-import { getEventSource } from '../eventSource';
+import { closeEventSource, getEventSource } from '../eventSource';
 import { mapId, mapUserRef } from '../api/queries';
 import { useAuth } from '../store/authStore';
 
@@ -8,8 +8,10 @@ const parseData = (event: Event): any | null => {
   try {
     const raw = (event as MessageEvent).data;
     if (raw === undefined || raw === null || raw === '') return null;
-    return typeof raw === 'string' ? JSON.parse(raw) : raw;
-  } catch {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return parsed;
+  } catch (err) {
+    console.error('[useEventSource] Failed to parse event:', err);
     return null;
   }
 };
@@ -42,10 +44,21 @@ const normalizeSimple = (o: any) => mapId(o);
 export const useEventSource = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const userId = user?._id;
 
   useEffect(() => {
-    const eventSource = getEventSource(user?._id || '');
-    if (!eventSource) return;
+    if (!userId) {
+      return;
+    }
+    // The module holds a single shared EventSource: drop any stale stream
+    // (previous user, or none) so this session gets its own connection.
+    // Re-running on userId is what attaches listeners after a fresh login
+    // without requiring a page refresh.
+    closeEventSource();
+    const eventSource = getEventSource(userId);
+    if (!eventSource) {
+      return;
+    }
 
     // Apply an entity payload to its cached list; fall back to a refetch when
     // the event carries no usable payload (e.g. an older backend).
@@ -75,27 +88,35 @@ export const useEventSource = () => {
     };
 
     const handlers: Array<[string, (e: Event) => void]> = [
-      ['menu:changed', (e) => handleEntityEvent(e, ['menu'], 'menuItem', normalizeSimple)],
+      ['menu:changed', (e) => {
+        handleEntityEvent(e, ['menu'], 'menuItem', normalizeSimple);
+      }],
       [
         'orders:changed',
-        (e) =>
+        (e) => {
           handleEntityEvent(e, ['orders'], 'order', normalizeOrder, (removed) => {
             // Deletes emit no tables:changed — free the table from the payload.
             if (removed?.tableNumber != null) qc.invalidateQueries({ queryKey: ['tables'] });
-          }),
+          });
+        },
       ],
       [
         'reservations:changed',
-        (e) =>
+        (e) => {
           handleEntityEvent(e, ['reservations'], 'reservation', normalizeOrder, (removed) => {
             if (removed?.tableNumber != null) qc.invalidateQueries({ queryKey: ['tables'] });
-          }),
+          });
+        },
       ],
       [
         'categories:changed',
-        (e) => handleEntityEvent(e, ['categories'], 'category', normalizeSimple),
+        (e) => {
+          handleEntityEvent(e, ['categories'], 'category', normalizeSimple);
+        },
       ],
-      ['users:changed', (e) => handleEntityEvent(e, ['users'], 'user', normalizeSimple)],
+      ['users:changed', (e) => {
+        handleEntityEvent(e, ['users'], 'user', normalizeSimple);
+      }],
       [
         'settings:changed',
         (e) => {
@@ -142,6 +163,11 @@ export const useEventSource = () => {
           qc.invalidateQueries({ queryKey: ['dashboardStats'] });
         },
       ],
+      [
+        'connected',
+        (e) => {
+        },
+      ],
     ];
 
     const cleanups = handlers.map(([event, handler]) => {
@@ -151,6 +177,7 @@ export const useEventSource = () => {
 
     return () => {
       cleanups.forEach((unsub) => unsub());
+      closeEventSource();
     };
-  }, [qc]);
+  }, [qc, userId]);
 };
