@@ -225,6 +225,11 @@ const initRxDB = async (): Promise<any> => {
     activityLogs: { schema: activityLogSchema },
   });
 
+  // MongoDB replication (RxDB replication-mongodb plugin). No-op unless
+  // MONGODB_URI is set; never throws, never blocks on Mongo availability.
+  const { startMongoReplication } = await import('./mongoReplication.js');
+  await startMongoReplication(db);
+
   return db;
 };
 export const getDB = () => {
