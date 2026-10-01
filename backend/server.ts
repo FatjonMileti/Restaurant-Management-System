@@ -37,7 +37,7 @@ const imagesDirCandidates = [
   path.join(__dirname, '..', 'public', 'images'),
 ];
 const imagesDir = imagesDirCandidates.find((dir) => fs.existsSync(dir)) ?? imagesDirCandidates[0];
-app.use('/api/images', express.static(imagesDir));
+app.use('/images', express.static(imagesDir));
 
 app.use(
   '/graphql',
