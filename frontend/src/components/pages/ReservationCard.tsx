@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { motion } from 'framer-motion';
 import moment from 'moment';
 import { Reservation } from '../../api/queries';
 import StatusBadge from '../StatusBadge';
@@ -23,9 +24,12 @@ function ReservationCard({
   const canEdit = (isStaff || isOwner) && onEdit;
 
   return (
-    <div
+    <motion.div
       className={`card ${canEdit ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
       onClick={canEdit ? () => onEdit(res) : undefined}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
     >
       <div className="flex justify-between">
         <div>
@@ -72,7 +76,7 @@ function ReservationCard({
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

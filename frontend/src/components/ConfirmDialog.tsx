@@ -1,4 +1,5 @@
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { motion } from 'framer-motion';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -19,7 +20,13 @@ export default function ConfirmDialog({
     <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
       <DialogTitle className="font-bold">{title}</DialogTitle>
       <DialogContent>
-        <p className="text-sm text-gray-700">{message}</p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
+          <p className="text-sm text-gray-700">{message}</p>
+        </motion.div>
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel} variant="outlined">

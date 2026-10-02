@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
 import { TableStatus } from '../../api/queries';
 
@@ -10,7 +11,12 @@ interface Props {
 
 function TableCard({ table: t, order, reservation: res }: Props) {
   return (
-    <Box className={`table-card ${t.isBusy ? 'table-card-busy' : 'table-card-free'}`}>
+    <motion.div
+      className={`table-card ${t.isBusy ? 'table-card-busy' : 'table-card-free'}`}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+    >
       <Typography variant="h6" className="font-bold">
         Table {t.number}
       </Typography>
@@ -34,7 +40,7 @@ function TableCard({ table: t, order, reservation: res }: Props) {
           {!order && !res && <p>Occupied</p>}
         </Box>
       )}
-    </Box>
+    </motion.div>
   );
 }
 

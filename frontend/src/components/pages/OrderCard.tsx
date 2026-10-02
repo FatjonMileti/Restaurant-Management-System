@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { motion } from 'framer-motion';
 import moment from 'moment';
 import { Order } from '../../api/queries';
 import StatusBadge from '../StatusBadge';
@@ -16,7 +17,12 @@ function OrderCard({ order, isStaffView, isOwner, onEdit, onUpdateStatus, onDele
   const canAct = isStaffView || isOwner;
 
   return (
-    <div className="card">
+    <motion.div
+      className="card"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+    >
       <div className="flex justify-between">
         <div>
           <strong>Order #{order._id.slice(-6).toUpperCase()}</strong>
@@ -96,7 +102,7 @@ function OrderCard({ order, isStaffView, isOwner, onEdit, onUpdateStatus, onDele
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

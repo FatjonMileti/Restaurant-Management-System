@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { MenuItem } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
 import { useCachedImage } from '../../hooks/useCachedImage';
@@ -20,9 +21,12 @@ const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit, onDelete }
   const isAdmin = user?.role === 'admin';
   const imgSrc = useCachedImage(item.image, '/images/empty.jpg', item.updatedAt);
   return (
-    <div
+    <motion.div
       className={`card-grid ${isAdmin ? 'cursor-pointer' : ''} ${!item.available ? 'opacity-60 grayscale' : ''}`}
       onClick={() => isAdmin && onEdit(item)}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
     >
       <div className="w-full h-32 rounded-md overflow-hidden mb-3 bg-gray-100 relative">
         <img
@@ -51,7 +55,7 @@ const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit, onDelete }
           Delete
         </button>
       )}
-    </div>
+    </motion.div>
   );
 });
 
