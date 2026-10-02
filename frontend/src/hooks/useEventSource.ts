@@ -163,11 +163,6 @@ export const useEventSource = () => {
           qc.invalidateQueries({ queryKey: ['dashboardStats'] });
         },
       ],
-      [
-        'connected',
-        (e) => {
-        },
-      ],
     ];
 
     const cleanups = handlers.map(([event, handler]) => {

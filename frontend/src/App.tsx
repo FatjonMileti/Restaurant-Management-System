@@ -7,9 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
 import { useEventSource } from './hooks/useEventSource';
 
-const Home = React.lazy(() => import('./pages/Home'));
 const Login = React.lazy(() => import('./pages/Login'));
-const Register = React.lazy(() => import('./pages/Register'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Menu = React.lazy(() => import('./pages/Menu'));
 const Orders = React.lazy(() => import('./pages/Orders'));

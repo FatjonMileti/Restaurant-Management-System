@@ -1,8 +1,6 @@
-import React from 'react';
 import moment from 'moment';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import OrderList from '../OrderList';
-import { useOrders, useUpdateOrderStatus, useDeleteOrder } from '../../../api/queries';
 
 jest.mock('../../../api/queries', () => ({
   useOrders: jest.fn(),

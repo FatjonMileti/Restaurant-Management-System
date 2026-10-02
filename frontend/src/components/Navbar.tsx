@@ -1,4 +1,3 @@
-import React from 'react';
 import RestaurantDetails from './RestaurantDetails';
 import DesktopNav from './DesktopNav';
 import MobileHamburger from './MobileHamburger';

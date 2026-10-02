@@ -1,4 +1,3 @@
-import React from 'react';
 import Tab from './Tab';
 
 export interface TabOption<T extends string> {

@@ -1,11 +1,5 @@
-import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import Logs from '../Logs';
-import {
-  useInfiniteActivityLogs,
-  useActivityLogCount,
-  useClearActivityLogs,
-} from '../../api/queries';
 
 jest.mock('../../api/queries', () => ({
   useInfiniteActivityLogs: jest.fn(),

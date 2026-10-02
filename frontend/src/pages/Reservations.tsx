@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Box, Button } from '@mui/material';
-import { useAuth } from '../store/authStore';
 import ReservationFormComponent from '../components/pages/ReservationForm';
 import ReservationList from '../components/pages/ReservationList';
 import PageHeader from '../components/PageHeader';
 import { Reservation } from '../api/queries';
 
 export default function Reservations() {
-  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 

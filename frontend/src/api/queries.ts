@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { request as gqlRequest, gql } from 'graphql-request';
+import { request as gqlRequest } from 'graphql-request';
 import { useAuth, useAuthStore } from '../store/authStore';
 import {
   GET_CATEGORIES,
@@ -631,7 +631,7 @@ export const useUpdateRestaurantSettings = () => {
       if (payload.tableCount !== undefined) vars.tableCount = Number(payload.tableCount);
       return request(endpoint, UPDATE_RESTAURANT_SETTINGS, vars);
     },
-    onSuccess: (_, payload) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['restaurantSettings'] });
       qc.invalidateQueries({ queryKey: ['tables'] });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });

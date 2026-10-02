@@ -1,5 +1,3 @@
-import React from 'react';
-
 const statusColors: Record<string, string> = {
   pending: 'bg-amber-500',
   preparing: 'bg-blue-500',

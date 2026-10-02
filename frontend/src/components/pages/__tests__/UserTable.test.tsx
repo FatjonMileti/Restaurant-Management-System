@@ -1,7 +1,5 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import UserTable from '../UserTable';
-import { useUsers } from '../../../api/queries';
 
 jest.mock('../../../api/queries', () => ({
   useUsers: jest.fn(),

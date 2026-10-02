@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { useMenu, MenuItem, useCategories, Category, useDeleteMenuItem } from '../api/queries';
 import { useAuth } from '../store/authStore';

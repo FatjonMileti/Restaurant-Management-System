@@ -40,7 +40,6 @@ export const initSSE = (app: any) => {
   if (!initialized) {
     initialized = true;
     sse.on('disconnect', (connection) => {
-      const userId = connectionUsers.get(connection.id);
       connectionUsers.delete(connection.id);
     });
   }

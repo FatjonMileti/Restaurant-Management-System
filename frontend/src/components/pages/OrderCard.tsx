@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import { memo } from 'react';
 import moment from 'moment';
 import { Order } from '../../api/queries';
 import StatusBadge from '../StatusBadge';

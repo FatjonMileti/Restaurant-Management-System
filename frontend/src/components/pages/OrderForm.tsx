@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { getGraphQLErrorMessage } from '../../utils/graphqlErrors';
 import { useCreateOrder, useMenu, useUpdateOrder, Order } from '../../api/queries';
@@ -21,7 +20,6 @@ export default function OrderFormComponent({
   editingOrder,
   onEditDone,
 }: Props) {
-  const { user } = useAuth();
   const { data: menu = [] } = useMenu();
   const createOrder = useCreateOrder();
   const updateOrder = useUpdateOrder();
@@ -30,7 +28,6 @@ export default function OrderFormComponent({
 
   const [actionError, setActionError] = useState('');
   const {
-    register,
     handleSubmit,
     reset,
     watch,

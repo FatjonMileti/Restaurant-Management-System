@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import SectionCard from '../SectionCard';
 import PageHeader from '../PageHeader';
 import UserForm from './UserForm';

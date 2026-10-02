@@ -1,4 +1,3 @@
-import React from 'react';
 import moment from 'moment';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ReservationCard from '../ReservationCard';

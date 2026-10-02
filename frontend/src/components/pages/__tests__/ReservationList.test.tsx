@@ -1,8 +1,6 @@
-import React from 'react';
 import moment from 'moment';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import ReservationList from '../ReservationList';
-import { useReservations } from '../../../api/queries';
 
 jest.mock('../../../api/queries', () => ({
   useReservations: jest.fn(),

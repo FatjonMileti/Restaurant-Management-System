@@ -1,13 +1,13 @@
 import { getDB } from '../../config/rxdb.js';
 import { restaurantSettingsSchema, validate } from '../validation.js';
 import { notFoundError, validationError } from '../errors.js';
-import { formatRestaurantSettings, getOrCreateRestaurantSettings } from '../helpers/formatters.js';
+import { formatRestaurantSettings } from '../helpers/formatters.js';
 import { requireAdmin } from '../helpers/auth.js';
 import { emitEvent } from '../../sse.js';
 import { recordActivity } from '../helpers/activityLog.js';
 
 export const settingsResolvers = {
-  restaurantSettings: async (context: any) => {
+  restaurantSettings: async (_context: any) => {
     const db = await getDB();
     const doc = await db.settings.findOne().exec();
     if (!doc) throw notFoundError('Settings not found');
