@@ -14,11 +14,13 @@ import {
   CREATE_ORDER,
   UPDATE_ORDER,
   DELETE_ORDER,
+  DELETE_COMPLETED_ORDERS,
   UPDATE_ORDER_STATUS,
   GET_RESERVATIONS,
   CREATE_RESERVATION,
   UPDATE_RESERVATION,
   DELETE_RESERVATION,
+  DELETE_COMPLETED_RESERVATIONS,
   CANCEL_RESERVATION,
   GET_USERS,
   CREATE_USER,
@@ -402,6 +404,18 @@ export const useDeleteOrder = () => {
   });
 };
 
+export const useDeleteCompletedOrders = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => request(endpoint, DELETE_COMPLETED_ORDERS),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
+  });
+};
+
 export const useUpdateOrderStatus = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -472,6 +486,18 @@ export const useDeleteReservation = () => {
       qc.setQueryData(['reservations'], (oldData: any) => {
         return oldData?.filter((reservation: Reservation) => reservation._id !== id);
       });
+      qc.invalidateQueries({ queryKey: ['dashboardStats'] });
+    },
+  });
+};
+
+export const useDeleteCompletedReservations = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => request(endpoint, DELETE_COMPLETED_RESERVATIONS),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reservations'] });
+      qc.invalidateQueries({ queryKey: ['tables'] });
       qc.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
   });

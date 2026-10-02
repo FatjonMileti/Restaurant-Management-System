@@ -158,4 +158,51 @@ describe('order resolvers', () => {
     ).rejects.toThrow(/Table number is required/);
     expect(emitEvent).not.toHaveBeenCalled();
   });
+
+  it('deleteCompletedOrders removes only completed/cancelled and returns count', async () => {
+    const removed: string[] = [];
+    const mkDoc = (id: string, status: string) => ({
+      toJSON: () => ({ _id: id, status }),
+      remove: jest.fn().mockImplementation(async () => {
+        removed.push(id);
+      }),
+    });
+    const docs = [mkDoc('o1', 'completed'), mkDoc('o2', 'cancelled'), mkDoc('o3', 'pending')];
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: {
+        findOne: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue({ toJSON: () => ({ _id: 'a1', role: 'admin' }) }),
+        }),
+      },
+      orders: {
+        find: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(docs) }),
+        cleanup: jest.fn().mockResolvedValue(undefined),
+      },
+    });
+    const res: any = await orderResolvers.deleteCompletedOrders({}, { userId: 'a1' });
+    expect(res).toBe(2);
+    expect(removed).toEqual(['o1', 'o2']);
+    expect(emitEvent).toHaveBeenCalledWith(
+      'orders:changed',
+      { order: { id: 'o1', deleted: true } },
+      'a1',
+    );
+    expect(emitEvent).toHaveBeenCalledWith(
+      'orders:changed',
+      { order: { id: 'o2', deleted: true } },
+      'a1',
+    );
+  });
+
+  it('deleteCompletedOrders rejects non-admin', async () => {
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: {
+        findOne: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue({ toJSON: () => ({ _id: 's1', role: 'staff' }) }),
+        }),
+      },
+    });
+    await expect(orderResolvers.deleteCompletedOrders({}, { userId: 's1' })).rejects.toThrow();
+    expect(emitEvent).not.toHaveBeenCalled();
+  });
 });

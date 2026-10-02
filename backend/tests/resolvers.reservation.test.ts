@@ -90,6 +90,41 @@ describe('reservation resolvers', () => {
     expect(emitEvent).not.toHaveBeenCalled();
   });
 
+  it('deleteCompletedReservations removes only completed/cancelled and returns count', async () => {
+    const removed: string[] = [];
+    const mkDoc = (id: string, status: string) => ({
+      toJSON: () => ({ _id: id, status }),
+      remove: jest.fn().mockImplementation(async () => {
+        removed.push(id);
+      }),
+    });
+    const docs = [mkDoc('r1', 'completed'), mkDoc('r2', 'cancelled'), mkDoc('r3', 'confirmed')];
+    (getDB as unknown as jest.Mock).mockResolvedValue({
+      users: mockUsersById({ admin1: { _id: 'admin1', role: 'admin' } }),
+      reservations: {
+        find: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(docs) }),
+        cleanup: jest.fn().mockResolvedValue(undefined),
+      },
+    });
+    const res: any = await reservationResolvers.deleteCompletedReservations({}, { userId: 'admin1' });
+    expect(res).toBe(2);
+    expect(removed).toEqual(['r1', 'r2']);
+    expect(emitEvent).toHaveBeenCalledWith(
+      'reservations:changed',
+      { reservation: { id: 'r1', deleted: true } },
+      'admin1',
+    );
+    expect(emitEvent).toHaveBeenCalledWith('tables:changed', {}, 'admin1');
+  });
+
+  it('deleteCompletedReservations rejects non-admin', async () => {
+    (getDB as unknown as jest.Mock).mockResolvedValue({ users: staffUsers() });
+    await expect(
+      reservationResolvers.deleteCompletedReservations({}, { userId: 'staff1' }),
+    ).rejects.toThrow();
+    expect(emitEvent).not.toHaveBeenCalled();
+  });
+
   it('createReservation persists client contact fields', async () => {
     const insert = jest.fn().mockResolvedValue(
       mockDoc({

@@ -161,6 +161,28 @@ export const orderResolvers = {
     return 'Order removed';
   },
 
+  deleteCompletedOrders: async (_args: any, context?: any) => {
+    await requireAdmin(context);
+    const db = await getDB();
+    const docs = await db.orders.find().exec();
+    const targets = docs.filter((d: any) =>
+      ['completed', 'cancelled'].includes(d.toJSON().status),
+    );
+    for (const doc of targets) {
+      const json = doc.toJSON();
+      await withTransientRetry(() => doc.remove(), { operation: 'orders.remove' });
+      emitEvent('orders:changed', { order: { id: json._id, deleted: true } }, context?.userId);
+    }
+    await db.orders.cleanup(0);
+    await recordActivity(context, {
+      action: 'delete',
+      entity: 'order',
+      entityId: `${targets.length} completed/cancelled`,
+      summary: `Bulk deleted ${targets.length} completed/cancelled order(s)`,
+    });
+    return targets.length;
+  },
+
   updateOrderStatus: async ({ id, status }: any, context?: any) => {
     await requireStaffOrAdmin(context);
     const db = await getDB();

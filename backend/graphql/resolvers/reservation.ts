@@ -5,7 +5,7 @@ import { reservationSchema, validate } from '../validation.js';
 import { notFoundError, validationError } from '../errors.js';
 import { formatReservation } from '../helpers/formatters.js';
 import { emitEvent } from '../../sse.js';
-import { requireStaffOrAdmin } from '../helpers/auth.js';
+import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 import { recordActivity } from '../helpers/activityLog.js';
 
 const genId = () => crypto.randomUUID();
@@ -111,6 +111,32 @@ export const reservationResolvers = {
       summary: `Reservation ${id} deleted`,
     });
     return 'Reservation removed';
+  },
+  deleteCompletedReservations: async (_args: any, context?: any) => {
+    await requireAdmin(context);
+    const db = await getDB();
+    const docs = await db.reservations.find().exec();
+    const targets = docs.filter((d: any) =>
+      ['completed', 'cancelled'].includes(d.toJSON().status),
+    );
+    for (const doc of targets) {
+      const json = doc.toJSON();
+      await doc.remove();
+      emitEvent(
+        'reservations:changed',
+        { reservation: { id: json._id, deleted: true } },
+        context?.userId,
+      );
+    }
+    await db.reservations.cleanup(0);
+    emitEvent('tables:changed', {}, context?.userId);
+    await recordActivity(context, {
+      action: 'delete',
+      entity: 'reservation',
+      entityId: `${targets.length} completed/cancelled`,
+      summary: `Bulk deleted ${targets.length} completed/cancelled reservation(s)`,
+    });
+    return targets.length;
   },
   cancelReservation: async ({ id }: any, context?: any) => {
     await requireStaffOrAdmin(context);

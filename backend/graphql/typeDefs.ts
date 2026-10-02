@@ -184,11 +184,13 @@ export const typeDefs = `
     createOrder(items: [OrderItemInput!]!, tableNumber: Int!, paymentMethod: String): Order
     updateOrder(id: ID!, items: [OrderItemInput!], tableNumber: Int, paymentMethod: String, status: String, totalAmount: Float): Order
     deleteOrder(id: ID!): String
+    deleteCompletedOrders: Int
     updateOrderStatus(id: ID!, status: String!): Order
 
     createReservation(date: String!, time: String!, guests: Int!, tableNumber: Int, specialRequests: String, clientName: String, clientPhone: String, clientEmail: String): Reservation
     updateReservation(id: ID!, date: String, time: String, guests: Int, tableNumber: Int, status: String, specialRequests: String, clientName: String, clientPhone: String, clientEmail: String): Reservation
     deleteReservation(id: ID!): String
+    deleteCompletedReservations: Int
     cancelReservation(id: ID!): Reservation
 
     createCategory(name: String!): Category

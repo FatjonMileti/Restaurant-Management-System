@@ -188,6 +188,11 @@ export const DELETE_ORDER = gql`
     deleteOrder(id: $id)
   }
 `;
+export const DELETE_COMPLETED_ORDERS = gql`
+  mutation DeleteCompletedOrders {
+    deleteCompletedOrders
+  }
+`;
 export const UPDATE_ORDER_STATUS = gql`
   mutation UpdateOrderStatus($id: ID!, $status: String!) {
     updateOrderStatus(id: $id, status: $status) {
@@ -278,6 +283,11 @@ export const UPDATE_RESERVATION = gql`
 export const DELETE_RESERVATION = gql`
   mutation DeleteReservation($id: ID!) {
     deleteReservation(id: $id)
+  }
+`;
+export const DELETE_COMPLETED_RESERVATIONS = gql`
+  mutation DeleteCompletedReservations {
+    deleteCompletedReservations
   }
 `;
 export const CANCEL_RESERVATION = gql`
