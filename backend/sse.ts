@@ -1,7 +1,3 @@
-// See retry.ts for why the static import carries @ts-expect-error: the
-// package is dual CJS+ESM and every runtime resolves it correctly; only
-// tsc's CJS emit reports TS1479.
-// @ts-expect-error TS1479: dual-package ESM type resolution under CJS emit
 import { SSEServer } from 'node-sse-hub';
 
 /**
@@ -16,11 +12,12 @@ import { SSEServer } from 'node-sse-hub';
  * - Keep-alive comments every 15s keep proxies (Caddy `flush_interval -1`)
  *   from treating idle streams as dead; `EventSource` ignores them.
  *
- * Deliberately NOT using the hub's history/replay store: history is a
- * global log, while this app broadcasts except-sender. Storing excluded
- * events globally would replay them to whoever reconnects next (the
- * library documents the same caveat for direct messages), so replay
- * stays disabled and delivery remains live-only — exactly like before.
+ * Deliberately NOT using the hub's history/replay store: this is a single
+ * node with live-only delivery, exactly like before. Note the exclusion
+ * broadcast used below stays history-compatible by design — if history
+ * were ever enabled, a reconnecting excluded client could still receive
+ * the event via replay, which is safe here because all frontend handlers
+ * are idempotent (upsert/remove/dedupe).
  *
  * This replaces the previous hand-rolled client `Set`, which leaked:
  * `clients.delete({ userId, res })` built a fresh object every time, so
@@ -60,15 +57,12 @@ export const initSSE = (app: any) => {
 
 // emit event to all clients except those of the given userId
 export const emitEvent = (event: string, data?: any, excludeUserId?: string) => {
-  const payload = { event, data: data ?? {} };
-  const connections = sse.getConnections();
-  for (const connection of connections) {
-    const userId = connectionUsers.get(connection.id);
-    if (excludeUserId && userId === excludeUserId) {
-      continue;
-    }
-    sse.sendTo(connection.id, payload);
-  }
+  // The hub speaks connection ids while resolvers speak user ids —
+  // translate via the tracked mapping, then use the exclusion broadcast.
+  const exceptConnectionIds = [...connectionUsers]
+    .filter(([, userId]) => excludeUserId !== undefined && userId === excludeUserId)
+    .map(([connectionId]) => connectionId);
+  sse.broadcast({ event, data: data ?? {} }, { exceptConnectionIds });
 };
 
 /** Test/ops introspection: hub stats plus tracked user mappings. */

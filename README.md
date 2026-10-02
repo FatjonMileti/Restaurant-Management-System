@@ -132,7 +132,7 @@ Caddyfile.
 ### Testing
 
 ```bash
-# Backend — 17 suites, 160 tests (incl. retry, request-context, SSE hub)
+# Backend — 18 suites, 180 tests (incl. retry, request-context, SSE hub)
 cd backend && npm test                 # jest --runInBand
 npm run test:coverage
 

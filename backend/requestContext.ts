@@ -1,7 +1,3 @@
-// See retry.ts for why the static import carries @ts-expect-error: the
-// package is dual CJS+ESM and every runtime resolves it correctly; only
-// tsc's CJS emit reports TS1479.
-// @ts-expect-error TS1479: dual-package ESM type resolution under CJS emit
 import { RequestContext } from 'async-context-kit';
 import type { RequestHandler } from 'express';
 

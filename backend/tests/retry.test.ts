@@ -5,6 +5,7 @@ import {
   notFoundError,
   validationError,
 } from '../graphql/errors';
+import { TimeoutError } from 'node-retry-kit';
 import { isTransientError, withTransientRetry } from '../retry';
 
 const sqliteBusy = () => Object.assign(new Error('database is locked'), { code: 'SQLITE_BUSY' });
@@ -14,12 +15,15 @@ const immediateSleep = (seen: number[]) => async (ms: number) => {
 };
 
 describe('isTransientError', () => {
-  it.each([['SQLITE_BUSY'], ['SQLITE_LOCKED'], ['SQLITE_PROTOCOL'], ['SQLITE_IOERR']])(
-    'treats %s as transient',
-    (code) => {
-      expect(isTransientError(Object.assign(new Error(code), { code }))).toBe(true);
-    },
-  );
+  it.each([['SQLITE_BUSY'], ['SQLITE_LOCKED']])('treats %s as transient', (code) => {
+    expect(isTransientError(Object.assign(new Error(code), { code }))).toBe(true);
+  });
+
+  it('treats disk/corruption failures as permanent, not transient', () => {
+    for (const code of ['SQLITE_IOERR', 'SQLITE_FULL', 'SQLITE_CORRUPT', 'SQLITE_PROTOCOL']) {
+      expect(isTransientError(Object.assign(new Error(code), { code }))).toBe(false);
+    }
+  });
 
   it('treats lock messages without a code as transient', () => {
     expect(isTransientError(new Error('database is locked'))).toBe(true);
@@ -30,9 +34,7 @@ describe('isTransientError', () => {
     expect(isTransientError(Object.assign(new Error('reset'), { code: 'ECONNRESET' }))).toBe(true);
     expect(isTransientError(Object.assign(new Error('x'), { statusCode: 503 }))).toBe(true);
     expect(isTransientError(Object.assign(new Error('x'), { status: 429 }))).toBe(true);
-    const timeout = new Error('attempt timed out');
-    timeout.name = 'TimeoutError';
-    expect(isTransientError(timeout)).toBe(true);
+    expect(isTransientError(new TimeoutError(20))).toBe(true);
   });
 
   it('never treats permanent application errors as transient', () => {
