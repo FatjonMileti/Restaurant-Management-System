@@ -34,23 +34,23 @@ describe('eventSource URL resolution', () => {
       process.env.REACT_APP_WS_URL = wsUrl;
     }
     const mod = await import('../eventSource');
-    mod.getEventSource();
+    mod.getEventSource('user-1');
     const url = MockEventSource.urls[0];
     mod.closeEventSource();
     return url;
   };
 
-  it('defaults to the local backend when REACT_APP_WS_URL is unset', async () => {
-    await expect(loadUrl(undefined)).resolves.toBe('http://localhost:5000/events');
+  it('defaults to same-origin when REACT_APP_WS_URL is unset', async () => {
+    await expect(loadUrl(undefined)).resolves.toBe('/events/user-1');
   });
 
   it('uses same-origin /events when REACT_APP_WS_URL is empty (Caddy)', async () => {
-    await expect(loadUrl('')).resolves.toBe('/events');
+    await expect(loadUrl('')).resolves.toBe('/events/user-1');
   });
 
   it('prefixes an absolute base URL', async () => {
     await expect(loadUrl('https://api.example.com')).resolves.toBe(
-      'https://api.example.com/events',
+      'https://api.example.com/events/user-1',
     );
   });
 });

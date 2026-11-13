@@ -31,8 +31,11 @@ describe('DesktopNav', () => {
   it('shows guest links when logged out', () => {
     renderNav();
     expect(screen.getByRole('link', { name: 'Menu' })).toHaveAttribute('href', '/menu');
+    expect(screen.getByRole('link', { name: 'Assistant' })).toHaveAttribute(
+      'href',
+      '/assistant',
+    );
     expect(screen.getByRole('link', { name: 'Login' })).toHaveAttribute('href', '/login');
-    expect(screen.getByRole('link', { name: 'Register' })).toHaveAttribute('href', '/register');
     expect(screen.queryByText('Logout')).not.toBeInTheDocument();
   });
 

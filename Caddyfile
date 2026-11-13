@@ -3,6 +3,7 @@
 # What it does (single public entrypoint, same-origin — no CORS issues):
 #   /graphql*   -> backend (Express + express-graphql)
 #   /events*    -> backend (SSE stream in backend/sse.ts, unbuffered)
+#   /api/ai*    -> backend (virtual waitress JSON API)
 #   /api-docs*  -> backend (Swagger UI)
 #   /images*    -> backend (static menu photos / logos in backend/public/images)
 #   /*          -> frontend static build (frontend/build, SPA fallback to index.html)
@@ -43,6 +44,10 @@
 		reverse_proxy {$BACKEND_UPSTREAM:localhost:5000} {
 			flush_interval -1
 		}
+	}
+
+	handle /api/ai* {
+		reverse_proxy {$BACKEND_UPSTREAM:localhost:5000}
 	}
 
 	handle /api-docs* {

@@ -77,6 +77,7 @@ describe('reservation resolvers', () => {
     expect(emitEvent).toHaveBeenCalledWith(
       'reservations:changed',
       expect.objectContaining({ reservation: expect.objectContaining({ id: 'r2' }) }),
+      'staff1',
     );
   });
 
@@ -170,6 +171,7 @@ describe('reservation resolvers', () => {
       expect.objectContaining({
         reservation: expect.objectContaining({ clientName: 'Jane' }),
       }),
+      'staff1',
     );
   });
 });

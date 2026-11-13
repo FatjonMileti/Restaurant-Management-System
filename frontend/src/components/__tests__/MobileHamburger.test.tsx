@@ -37,9 +37,9 @@ describe('MobileHamburger', () => {
     renderNav('/menu');
     const dialog = openMenu();
     expect(within(dialog).getByText('Login')).toBeInTheDocument();
-    expect(within(dialog).getByText('Register')).toBeInTheDocument();
-    fireEvent.click(within(dialog).getByText('Register'));
-    expect(screen.getByTestId('location')).toHaveTextContent('/register');
+    expect(within(dialog).getByText('Assistant')).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByText('Assistant'));
+    expect(screen.getByTestId('location')).toHaveTextContent('/assistant');
   });
 
   it('shows admin links for admins', () => {

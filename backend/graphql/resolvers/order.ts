@@ -2,12 +2,13 @@ import crypto from 'crypto';
 import moment from 'moment';
 import { getDB } from '../../config/rxdb.js';
 import { createOrderSchema, updateOrderSchema, validate } from '../validation.js';
-import { authError, conflictError, notFoundError, validationError } from '../errors.js';
+import { authError, notFoundError, validationError } from '../errors.js';
 import { formatOrder } from '../helpers/formatters.js';
 import { emitEvent } from '../../sse.js';
 import { requireAdmin, requireStaffOrAdmin } from '../helpers/auth.js';
 import { recordActivity } from '../helpers/activityLog.js';
 import { withTransientRetry } from '../../retry.js';
+import { assertTableAvailable, computeOrderTotal } from '../../services/orderService.js';
 
 const genId = () => crypto.randomUUID();
 
@@ -61,15 +62,8 @@ export const orderResolvers = {
     const v = validate(createOrderSchema, { items, tableNumber, paymentMethod });
     if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
-    const allOrders = await db.orders.find().exec();
-    const busy = allOrders.some((d: any) => {
-      const o = d.toJSON();
-      return (
-        o.tableNumber === v.data.tableNumber && ['pending', 'preparing', 'ready'].includes(o.status)
-      );
-    });
-    if (busy) throw conflictError('Table is busy');
-    const totalAmount = v.data.items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0);
+    await assertTableAvailable(db, v.data.tableNumber);
+    const totalAmount = computeOrderTotal(v.data.items);
     // Concurrent staff devices can collide on the SQLite write lock
     // (SQLITE_BUSY) — retry the insert instead of failing the order.
     const orderDoc = await withTransientRetry(
@@ -109,23 +103,9 @@ export const orderResolvers = {
     if (!v.success) throw validationError(v.errors.join(', '));
     const db = await getDB();
     const updates: any = { ...v.data };
-    if (v.data.items) {
-      updates.totalAmount = v.data.items.reduce(
-        (sum: number, i: any) => sum + i.price * i.quantity,
-        0,
-      );
-    }
+    if (v.data.items) updates.totalAmount = computeOrderTotal(v.data.items);
     if (v.data.tableNumber) {
-      const allOrders = await db.orders.find().exec();
-      const busy = allOrders.some((d: any) => {
-        const o = d.toJSON();
-        return (
-          o.tableNumber === v.data.tableNumber &&
-          o._id !== id &&
-          ['pending', 'preparing'].includes(o.status)
-        );
-      });
-      if (busy) throw conflictError('Table is busy');
+      await assertTableAvailable(db, v.data.tableNumber, id);
     }
     const doc = await db.orders.findOne(id).exec();
     if (!doc) return null;

@@ -11,6 +11,7 @@ import { useEventSource } from './hooks/useEventSource';
 const Login = React.lazy(() => import('./pages/Login'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Menu = React.lazy(() => import('./pages/Menu'));
+const Assistant = React.lazy(() => import('./pages/Assistant'));
 const Orders = React.lazy(() => import('./pages/Orders'));
 const Reservations = React.lazy(() => import('./pages/Reservations'));
 const Tables = React.lazy(() => import('./pages/Tables'));
@@ -82,6 +83,14 @@ function App() {
                     element={
                       <PageTransition>
                         <Menu />
+                      </PageTransition>
+                    }
+                  />
+                  <Route
+                    path="/assistant"
+                    element={
+                      <PageTransition>
+                        <Assistant />
                       </PageTransition>
                     }
                   />

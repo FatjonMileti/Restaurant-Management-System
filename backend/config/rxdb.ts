@@ -19,6 +19,11 @@ type Collections = {
   reservations: any;
   settings: any;
   activityLogs: any;
+  aiConversations: any;
+  aiMessages: any;
+  aiKnowledgeDocuments: any;
+  aiKnowledgeChunks: any;
+  aiDrafts: any;
 };
 
 let dbInstance: any = null;
@@ -206,6 +211,112 @@ const initRxDB = async (): Promise<any> => {
     indexes: ['createdAt', 'entity', 'action'],
   };
 
+  // ---- AI assistant collections -------------------------------------------------
+  // New collections only; existing schemas/versions above are untouched.
+  // Embeddings are stored as JSON strings because the RxDB SQLite adapter has no
+  // vector-search extension. Retrieval loads a bounded set and scores in process.
+  const aiConversationSchema = {
+    title: 'aiConversation schema',
+    version: 0,
+    description: 'virtual waitress conversation',
+    type: 'object',
+    primaryKey: '_id',
+    properties: {
+      _id: { type: 'string', maxLength: 100 },
+      userId: { type: 'string' },
+      title: { type: 'string' },
+      status: { type: 'string' },
+      createdAt: { type: 'string' },
+      updatedAt: { type: 'string' },
+    },
+    required: ['userId', 'createdAt', 'updatedAt'],
+    indexes: ['userId', 'updatedAt'],
+  };
+
+  const aiMessageSchema = {
+    title: 'aiMessage schema',
+    version: 0,
+    description: 'virtual waitress message',
+    type: 'object',
+    primaryKey: '_id',
+    properties: {
+      _id: { type: 'string', maxLength: 100 },
+      conversationId: { type: 'string' },
+      role: { type: 'string' },
+      content: { type: 'string' },
+      toolName: { type: 'string' },
+      toolPayload: { type: 'string' },
+      createdAt: { type: 'string' },
+    },
+    required: ['conversationId', 'role', 'content', 'createdAt'],
+    indexes: ['conversationId', 'createdAt'],
+  };
+
+  const aiKnowledgeDocumentSchema = {
+    title: 'aiKnowledgeDocument schema',
+    version: 0,
+    description: 'approved customer-facing knowledge document',
+    type: 'object',
+    primaryKey: '_id',
+    properties: {
+      _id: { type: 'string', maxLength: 100 },
+      title: { type: 'string' },
+      sourceType: { type: 'string' },
+      content: { type: 'string' },
+      metadata: { type: 'string' },
+      checksum: { type: 'string' },
+      embeddingStatus: { type: 'string' },
+      chunkCount: { type: 'number' },
+      createdAt: { type: 'string' },
+      updatedAt: { type: 'string' },
+    },
+    required: ['title', 'content', 'createdAt', 'updatedAt'],
+    indexes: ['sourceType', 'updatedAt'],
+  };
+
+  const aiKnowledgeChunkSchema = {
+    title: 'aiKnowledgeChunk schema',
+    version: 0,
+    description: 'knowledge chunk with serialized embedding',
+    type: 'object',
+    primaryKey: '_id',
+    properties: {
+      _id: { type: 'string', maxLength: 100 },
+      documentId: { type: 'string' },
+      chunkIndex: { type: 'number' },
+      content: { type: 'string' },
+      embedding: { type: 'string' },
+      embeddingModel: { type: 'string' },
+      createdAt: { type: 'string' },
+    },
+    required: ['documentId', 'chunkIndex', 'content', 'createdAt'],
+    indexes: ['documentId'],
+  };
+
+  const aiDraftSchema = {
+    title: 'aiDraft schema',
+    version: 0,
+    description: 'server-validated order/reservation draft awaiting explicit confirmation',
+    type: 'object',
+    primaryKey: '_id',
+    properties: {
+      _id: { type: 'string', maxLength: 100 },
+      kind: { type: 'string' },
+      userId: { type: 'string' },
+      status: { type: 'string' },
+      payload: { type: 'string' },
+      confirmationHash: { type: 'string' },
+      idempotencyKey: { type: 'string' },
+      expiresAt: { type: 'string' },
+      createdAt: { type: 'string' },
+      updatedAt: { type: 'string' },
+      completedAt: { type: 'string' },
+      result: { type: 'string' },
+    },
+    required: ['kind', 'userId', 'status', 'payload', 'expiresAt', 'createdAt', 'updatedAt'],
+    indexes: ['userId', 'status'],
+  };
+
   // Identity migrations: v0 -> v1 only adds `ref` metadata (no stored data changes).
   // Convention: whenever a collection schema changes, bump its `version` and add a
   // migration strategy here — otherwise RxDB throws a schema-mismatch error on
@@ -223,6 +334,11 @@ const initRxDB = async (): Promise<any> => {
     },
     settings: { schema: settingsSchema, migrationStrategies: { 1: identityMigration } },
     activityLogs: { schema: activityLogSchema },
+    aiConversations: { schema: aiConversationSchema },
+    aiMessages: { schema: aiMessageSchema },
+    aiKnowledgeDocuments: { schema: aiKnowledgeDocumentSchema },
+    aiKnowledgeChunks: { schema: aiKnowledgeChunkSchema },
+    aiDrafts: { schema: aiDraftSchema },
   });
 
   // MongoDB replication (RxDB replication-mongodb plugin). No-op unless

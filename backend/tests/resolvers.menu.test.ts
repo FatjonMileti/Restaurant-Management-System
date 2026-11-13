@@ -10,23 +10,32 @@ jest.mock('../sse', () => ({
 
 jest.mock('../graphql/helpers/auth', () => ({
   requireAdmin: jest.fn(),
+  requireStaffOrAdmin: jest.fn(),
 }));
 
 import { menuResolvers } from '../graphql/resolvers/menu';
-import { requireAdmin } from '../graphql/helpers/auth';
+import { requireAdmin, requireStaffOrAdmin } from '../graphql/helpers/auth';
 
 const mockRequireAdmin = requireAdmin as unknown as jest.Mock;
+const mockRequireStaffOrAdmin = requireStaffOrAdmin as unknown as jest.Mock;
 
 const mockMenuItems = {
   find: jest.fn(),
   findOne: jest.fn(),
   insert: jest.fn(),
+  count: jest.fn(),
+  cleanup: jest.fn().mockResolvedValue(undefined),
 };
 
 (getDB as jest.Mock).mockResolvedValue({ menuItems: mockMenuItems });
 
 describe('menu resolvers (RxDB)', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockMenuItems.count.mockReturnValue({ exec: jest.fn().mockResolvedValue(1) });
+    mockRequireStaffOrAdmin.mockResolvedValue({ role: 'staff' });
+    mockRequireAdmin.mockResolvedValue({ role: 'admin' });
+  });
 
   describe('menuItems', () => {
     it('filters by category and available', async () => {
@@ -133,7 +142,12 @@ describe('menu resolvers (RxDB)', () => {
 
   describe('deleteMenuItem', () => {
     it('removes item when found', async () => {
-      const doc = { _id: '6', remove: jest.fn().mockResolvedValue(undefined) };
+      const doc = {
+        _id: '6',
+        name: 'Old',
+        toJSON: () => ({ _id: '6', name: 'Old' }),
+        remove: jest.fn().mockResolvedValue(undefined),
+      };
       mockMenuItems.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(doc) });
       const res = await menuResolvers.deleteMenuItem({ id: '6' }, {});
       expect(doc.remove).toHaveBeenCalled();

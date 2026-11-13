@@ -116,8 +116,8 @@ describe('OrderCard', () => {
         onDelete={jest.fn()}
       />,
     );
-    fireEvent.click(screen.getByText('Mark Completed'));
-    expect(onUpdateStatus).toHaveBeenCalledWith('abc123def456', 'completed');
+    fireEvent.click(screen.getByText('Mark Ready'));
+    expect(onUpdateStatus).toHaveBeenCalledWith('abc123def456', 'ready');
   });
 
   it('shows Delete for completed', () => {

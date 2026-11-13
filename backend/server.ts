@@ -14,6 +14,8 @@ import { getRequestId, requestContextMiddleware, setRequestUserId } from './requ
 import fs from 'fs';
 import path from 'path';
 import { seed } from './seeds.js';
+import { createAiRouter } from './ai/routes.js';
+import { initializeAi } from './ai/runtime.js';
 
 dotenv.config();
 
@@ -26,6 +28,10 @@ app.use(express.json());
 app.use(requestContextMiddleware);
 morgan.token('request-id', () => getRequestId() ?? '-');
 app.use(morgan(':method :url :status :response-time ms - :res[content-length] :request-id'));
+
+// Virtual waitress API. The router enforces its own auth, validation, rate
+// limits, and timeouts; provider secrets stay server-side.
+app.use('/api/ai', createAiRouter());
 
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
@@ -109,6 +115,7 @@ if (frontendBuildDir) {
       req.path.startsWith('/events') ||
       req.path.startsWith('/images') ||
       req.path.startsWith('/api-docs') ||
+      req.path.startsWith('/api/ai') ||
       req.path.startsWith('/seed')
     ) {
       next();
@@ -124,6 +131,9 @@ const PORT = process.env.PORT || 5000;
 // "Database not initialized" error otherwise, and early requests would fail.
 const start = async () => {
   await connectDB();
+  // Validates AI env and optionally seeds approved knowledge. A broken AI
+  // configuration must not take down the restaurant's existing APIs.
+  await initializeAi();
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 };
 

@@ -4,6 +4,11 @@ jest.mock('../config/rxdb', () => ({
 
 jest.mock('../sse', () => ({ emitEvent: jest.fn() }));
 
+jest.mock('../graphql/helpers/auth', () => ({
+  requireAdmin: jest.fn().mockResolvedValue({ _id: 'admin1', role: 'admin' }),
+  requireStaffOrAdmin: jest.fn(),
+}));
+
 import { getDB } from '../config/rxdb';
 import { categoryResolvers } from '../graphql/resolvers/category';
 
@@ -20,6 +25,7 @@ beforeEach(() => {
       find: mockFind,
       findOne: mockFindOne,
       insert: mockInsert,
+      cleanup: jest.fn().mockResolvedValue(undefined),
     },
   });
   mockFind.mockReturnValue({

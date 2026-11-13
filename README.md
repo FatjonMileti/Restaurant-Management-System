@@ -1,6 +1,6 @@
 # Restaurant Management System
 
-Full-stack MERN restaurant platform — menu, orders, reservations, tables and admin settings with real-time updates, role-based access and an optimized GraphQL API.
+Full-stack MERN restaurant platform — menu, orders, reservations, tables and admin settings with real-time updates, role-based access and an optimized GraphQL API. Includes an optional customer-facing AI virtual waitress with tool calling, retrieval-augmented knowledge and safely confirmed order/reservation drafts.
 
 ## Features
 
@@ -11,11 +11,12 @@ Full-stack MERN restaurant platform — menu, orders, reservations, tables and a
 - **Tables** – `tableCount` from `RestaurantSettings` drives `TableSelect` everywhere; `tables` query computes busy from `pending`/`preparing` orders + `confirmed` reservations.
 - **Settings (admin)** – Restaurant details (name/logo/address/phone/email/`tableCount`), Users (create/delete/role change), Categories (CRUD). Tabs are lazy-loaded.
 - **Real-time** – SSE events (`menu:changed`, `orders:changed`, `reservations:changed`, `categories:changed`, `users:changed`, `settings:changed`, `tables:changed`, `logs:changed`) auto-patch `react-query` caches (see Architecture).
+- **AI virtual waitress (optional)** – `/assistant` chat grounded in live menu/restaurant data and approved knowledge. Tools can prepare server-priced order and reservation drafts; writes happen only after the customer presses Confirm, then the backend revalidates ownership, expiry, availability, table/price state and idempotency. Disabled by default (`AI_ENABLED=false`).
 
 ## Tech Stack
 
-- **Frontend:** React 18 (CRA 5 + TypeScript), React Router 6, `@tanstack/react-query` 5, `zustand` (auth/cart), `react-hook-form` + `zod`, `graphql-request` + `@apollo/client` (`gql` docs), `@mui/material` styled with **Tailwind CSS**, native `EventSource` (SSE), Testing Library/Jest
-- **Backend:** Node 18+, Express 4, RxDB 17 + SQLite (`@basepurpose/rxdb-sqlite`, `better-sqlite3`), TypeScript (`moduleResolution: node16` — imports require `.js` suffix), GraphQL (`graphql` + `express-graphql`, `graphiql: true`), `jsonwebtoken` + `bcryptjs`, `node-sse-hub` (SSE), `node-retry-kit` (transient retry), `async-context-kit` (request correlation), `zod`, `moment`, `swagger-jsdoc`/`swagger-ui-express`
+- **Frontend:** React 18 (CRA 5 + TypeScript), React Router 6, `@tanstack/react-query` 5, `zustand` (auth/cart), `react-hook-form` + `zod`, `graphql-request` + `@apollo/client` (`gql` docs), `@mui/material` styled with **Tailwind CSS**, native `EventSource` (SSE), manual `fetch` client for `/api/ai`, Testing Library/Jest
+- **Backend:** Node 18+, Express 4, RxDB 17 + SQLite (`@basepurpose/rxdb-sqlite`, `better-sqlite3`), TypeScript (`moduleResolution: node16` — imports require `.js` suffix), GraphQL (`graphql` + `express-graphql`, `graphiql: true`), OpenAI-compatible LLM/embedding client via native `fetch` (no AI SDK), `jsonwebtoken` + `bcryptjs`, `node-sse-hub` (SSE), `node-retry-kit` (transient retry), `async-context-kit` (request correlation), `zod`, `moment`, `swagger-jsdoc`/`swagger-ui-express`
 - **Auth:** JWT Bearer (`protect` → `req.user`), `admin`/`staff` guards; frontend `useAuthStore` persists `user+token` in `localStorage`
 - **Testing:** Backend Jest + `ts-jest` (ESM), Frontend `react-scripts` Jest + Testing Library
 
@@ -23,7 +24,13 @@ Full-stack MERN restaurant platform — menu, orders, reservations, tables and a
 
 ```
 backend/
-  config/db.ts                Mongoose connection
+  config/db.ts                RxDB connection wrapper
+  ai/                         virtual waitress: config, provider, agent, tools,
+                              RAG, conversation/draft lifecycle, confirm actions,
+                              rate limiting, `/api/ai` router
+  services/                   shared availability, server-priced order and
+                              customer reservation services
+  knowledge/                  approved customer-facing Markdown for optional RAG
   graphql/
     typeDefs.ts               SDL (User, MenuItem, Category, Order, Reservation, RestaurantSettings, TableStatus, DashboardStats, StatusCount)
     helpers/
@@ -47,18 +54,20 @@ backend/
 frontend/
   src/
     api/queries.ts            graphql-request + useAuthStore token, mapId/mapArray, use* hooks (staleTime 30-60s, dashboardStats invalidation)
+    api/ai.ts                 typed `/api/ai` client (chat, conversation restore, confirm)
     graphql/queries.ts        gql documents (GET_MENU_ITEMS, GET_DASHBOARD_STATS, etc.)
     store/                    authStore (zustand), cartStore
     validation/schemas.ts     Zod schemas for forms
     hooks/useSocket.ts        invalidates queries on socket events (incl. dashboardStats)
     components/
       PageHeader.tsx          reusable flex justify-between header (replaces repeated className)
+      assistant/              chat message, menu cards, citations, draft confirmation
       FilterBar.tsx, StatusBadge.tsx, SectionCard.tsx, TableSelect.tsx, LoadingSpinner, etc.
       pages/
         DashboardStatCard.tsx, MenuCategoryFilter.tsx, OrderCard.tsx, ReservationCard.tsx, TableCard.tsx,
         MenuItemCard.tsx (memo + lazy image), MenuItemForm.tsx, OrderForm.tsx, ReservationForm.tsx,
         UserForm.tsx, UserTable.tsx, CategorySection.tsx, RestaurantSection.tsx
-    pages/                    Dashboard, Menu, Orders, Reservations, Tables, Settings, Home, Login, Register
+    pages/                    Dashboard, Menu, Assistant, Orders, Reservations, Tables, Settings, Home, Login, Register
     App.tsx                   lazy routes + global useIsFetching/useIsMutating overlay
     setupTests.ts
   tailwind.config.js, postcss.config.js   Tailwind at root, utilities in src/index.css (@layer components)
@@ -81,7 +90,7 @@ PORT=5000
 JWT_SECRET=your_jwt_secret
 ```
 
-Frontend proxy is `http://localhost:5000` (`frontend/package.json:proxy`) or set `REACT_APP_GRAPHQL_URL=http://localhost:5000/graphql`.
+Frontend proxy is `http://localhost:5000` (`frontend/package.json:proxy`) or set `REACT_APP_GRAPHQL_URL=http://localhost:5000/graphql`. The AI client defaults to same-origin `/api/ai`; override with `REACT_APP_AI_API_URL` only if it is hosted elsewhere. AI environment variables are optional and documented in [`backend/.env.example`](backend/.env.example) and [AI Virtual Waitress](#ai-virtual-waitress-optional).
 
 ### Install & Run
 
@@ -90,6 +99,7 @@ Frontend proxy is `http://localhost:5000` (`frontend/package.json:proxy`) or set
 cd backend
 npm install --legacy-peer-deps
 npm run seed        # seed sample data
+npm run ai:ingest   # optional: embed backend/knowledge/*.md for RAG
 npm run dev         # tsx + nodemon (handles .js extensions)
 
 # Frontend
@@ -111,8 +121,8 @@ cd frontend && npm run build    # build/
 ### Caddy (production reverse proxy)
 
 Root `Caddyfile` (Caddy v2, validated with `caddy validate`) exposes one public
-entrypoint: `/graphql*`, `/events*` (SSE, unbuffered via `flush_interval -1`)
-and `/api-docs*` proxy to the backend (`$BACKEND_UPSTREAM`, default
+entrypoint: `/graphql*`, `/events*` (SSE, unbuffered via `flush_interval -1`),
+`/api/ai*` and `/api-docs*` proxy to the backend (`$BACKEND_UPSTREAM`, default
 `localhost:5000`); everything else serves the frontend `build/` output mounted
 at `/srv/frontend` with SPA fallback to `index.html`. Full HTTPS deployment
 guide (DNS, firewall, commands): [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
@@ -132,13 +142,15 @@ Caddyfile.
 ### Testing
 
 ```bash
-# Backend — 18 suites, 180 tests (incl. retry, request-context, SSE hub)
+# Backend — 26 suites, 234 tests (incl. AI config/provider/tools/RAG/actions/security)
 cd backend && npm test                 # jest --runInBand
 npm run test:coverage
+npm run build
 
-# Frontend — 13 suites, ~73 tests
-cd frontend && npm test                # react-scripts test --watchAll=false
-npm run test:coverage
+# Frontend — 30 suites, 192 tests (incl. /assistant chat, drafts, accessibility)
+cd frontend && CI=true npm test -- --watchAll=false
+npx tsc --noEmit
+CI=true npm run build
 ```
 
 ## Seed Credentials
@@ -153,7 +165,7 @@ npm run test:coverage
 
 ## API
 
-Active API is **GraphQL** at `POST /graphql` (`backend/graphql/*`, `express-graphql`). REST routers in `backend/routes/*` are currently commented out in `server.ts`.
+The core domain API is **GraphQL** at `POST /graphql` (`backend/graphql/*`, `express-graphql`). The AI virtual waitress adds a narrowly scoped REST API at `/api/ai` (see below). Legacy REST routers in `backend/routes/*` remain commented out in `server.ts`.
 
 - **Swagger:** `GET /api-docs` (REST docs, legacy)
 - **GraphiQL:** enabled at `/graphql` when `graphiql: true`
@@ -176,6 +188,91 @@ mutation CreateOrder($items: [OrderItemInput!]!, $tableNumber: Int) { createOrde
 ```
 
 All `graphql-request` calls in `frontend/src/api/queries.ts` attach `Authorization: Bearer <token>` from `useAuthStore`.
+
+## AI Virtual Waitress (optional)
+
+`/assistant` is a responsive customer chat that answers from live restaurant tools and, when configured, approved knowledge documents with citations. Guests can ask read-only questions; signed-in customers also get persisted history and can prepare order/reservation drafts. The feature is **disabled by default** and does not affect the core GraphQL API when `AI_ENABLED=false`.
+
+### Configuration
+
+Use any endpoint that implements the OpenAI-compatible `/v1` chat and embeddings APIs. Provider credentials stay server-side; never put them in `REACT_APP_*` variables.
+
+Hosted example:
+
+```bash
+AI_ENABLED=true
+AI_LLM_BASE_URL=https://api.openai.com/v1
+AI_LLM_API_KEY=your_key_here
+AI_LLM_MODEL=gpt-4o-mini
+AI_EMBEDDING_MODEL=text-embedding-3-small
+```
+
+Local Ollama example (an API key is optional for local endpoints):
+
+```bash
+AI_ENABLED=true
+AI_LLM_BASE_URL=http://localhost:11434/v1
+AI_LLM_MODEL=llama3.1
+AI_EMBEDDING_BASE_URL=http://localhost:11434/v1
+AI_EMBEDDING_MODEL=nomic-embed-text
+```
+
+Embeddings fall back to the LLM base URL/API key when `AI_EMBEDDING_BASE_URL`/`AI_EMBEDDING_API_KEY` are omitted. Set `AI_RAG_ENABLED=false` if you only want tool-based answers; the knowledge tool then reports that retrieval is unavailable instead of inventing an answer. Other limits (timeouts, iterations, tool calls, history, RAG top-K/score, draft TTL, per-IP rate limits, IANA time zone) are documented with defaults in `backend/.env.example`.
+
+### Knowledge ingestion and re-indexing
+
+Approved Markdown/text lives in `backend/knowledge/`. After configuring embeddings:
+
+```bash
+cd backend
+npm run ai:ingest                    # seed all .md/.txt files in backend/knowledge
+npm run ai:ingest -- --dir ./path    # ingest another directory
+```
+
+`AI_AUTO_SEED_KNOWLEDGE=true` seeds the built-in directory on startup only when there are no documents or every document failed embedding. Ingestion stores a checksum, chunk count and embedding status; failures leave the document visible as `failed` with no chunks and do not fabricate retrieval results. Admins can manage documents through the API below; `POST /api/ai/knowledge/:id/reindex` regenerates chunks/embeddings after a model or content change.
+
+### Model tools
+
+Read-only: `search_menu`, `get_menu_item_details`, `get_restaurant_information`, `check_reservation_availability`, `search_restaurant_knowledge`.
+
+Draft-only (authenticated): `prepare_order_draft`, `prepare_reservation_draft`.
+
+There is deliberately **no** create/confirm/write tool available to the model. Tools use zod-validated arguments, allow-listed services, bounded output and timeouts; the model cannot issue SQL, shell commands, arbitrary HTTP requests or direct RxDB queries. Retrieved documents and customer messages are treated as untrusted data.
+
+### API
+
+| Method | Path | Access | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/ai/health` | public | Enabled/configured status without secrets |
+| `POST` | `/api/ai/chat` | optional JWT | Bounded chat; guests send recent history, signed-in users persist conversations |
+| `GET` | `/api/ai/conversations/:id` | JWT, owner | Restore the caller's conversation |
+| `POST` | `/api/ai/actions/confirm` | JWT, draft owner | Explicitly confirm one draft |
+| `GET` | `/api/ai/knowledge` | admin | List knowledge documents/status |
+| `GET` | `/api/ai/knowledge/:id` | admin | Read a knowledge document |
+| `POST` | `/api/ai/knowledge` | admin | Ingest a document |
+| `PUT` | `/api/ai/knowledge/:id` | admin | Update and re-ingest a document |
+| `DELETE` | `/api/ai/knowledge/:id` | admin | Delete a document and chunks |
+| `POST` | `/api/ai/knowledge/:id/reindex` | admin | Re-chunk and re-embed a document |
+
+Requests are body-validated, rate-limited per IP and bounded by request/provider/tool timeouts. Errors return a stable `{ error: { code, message } }` shape; provider bodies, prompts, keys and stacks are not forwarded.
+
+### Confirmation and write safety
+
+1. The model may call a draft tool. The backend prices the order from current menu documents or checks reservation availability, then stores a draft with an expiry and a server-side price/availability snapshot.
+2. The customer reviews the draft in `/assistant` and presses **Confirm**. A chat message such as “yes” is never consent.
+3. `POST /api/ai/actions/confirm` authenticates the customer, enforces draft ownership and expiry, re-checks table count/occupancy, current menu prices and reservation availability, then writes through the shared order/reservation services.
+4. Writes use deterministic ids (`ai-<draftId>`) plus an in-process draft lock, so duplicate clicks/retries return the original result instead of creating duplicates.
+5. Successful actions emit the existing SSE events and write an activity log. The model never chooses the final price, user identity or confirmation state.
+
+### Limitations
+
+- The database has no opening-hours, per-table capacity or dietary/allergen fields. The assistant explicitly reports these as unverified and must not infer them.
+- Reservation availability follows the existing conservative convention: confirmed reservations occupy their table for the whole requested date and today's active orders occupy tables. `capacityVerified`/`openingHoursVerified` are returned as `false`.
+- Prices are displayed in USD (`$`) because the app has no currency setting.
+- Retrieval uses bounded in-process cosine similarity over RxDB chunks (`AI_RAG_MAX_CHUNKS`), not a dedicated vector database. Replace `VectorStore` if the knowledge base grows beyond that design.
+- Rate limiting, draft processing locks and embedding search are single-backend-process features. Deterministic write ids remain the durable duplicate guard.
+- The AI customer flow is additive. The existing GraphQL reservation mutation remains staff/admin-only, and no payment integration is added.
+- Provider integration is covered by mocked tests; a live LLM/embedding smoke test requires provider credentials and is not run automatically.
 
 ## Auth & Roles
 
@@ -212,32 +309,39 @@ flowchart LR
     end
 
     subgraph Caddy["Caddy v2 single entrypoint"]
-        PX["/graphql, /events, /api-docs, /images/"]
+        PX["/graphql, /events, /api/ai, /api-docs, /images/"]
         SPA["frontend build + SPA fallback"]
     end
 
     subgraph Server["Express backend"]
         MW["request-context middleware"]
         GQL["/graphql resolvers"]
+        AI["/api/ai virtual waitress"]
         SSE["SSE hub"]
         RTY["transient retry"]
         RX["RxDB collections"]
     end
 
     DB["SQLite via better-sqlite3"]
+    LLM["OpenAI-compatible chat/embeddings API"]
 
     RQ -->|"queries/mutations + JWT"| PX
     ES -->|"entity events"| PX
-    PX --> MW --> GQL
+    PX --> MW
+    MW --> GQL
+    MW --> AI
     PX --> SSE
     GQL --> RTY --> RX --> DB
+    AI --> RTY
+    AI -->|"tools + RAG"| RX
+    AI -->|"bounded requests"| LLM
     GQL -->|"emitEvent"| SSE
 ```
 
 
-1. **React frontend** — routes in `frontend/src/pages/`, sections in `src/components/pages/`, data via typed React Query hooks (`src/api/queries.ts`), client state in zustand. No direct DB access; the single server contract is GraphQL + SSE.
-2. **RxDB** — server-side embedded database (`backend/config/rxdb.ts`, 7 collections). There is **no** RxDB client/replication on the frontend: "synchronization" is GraphQL for reads/writes plus SSE notifications that patch the React Query cache. No redundant sync framework sits on top.
-3. **GraphQL** — sole API at `POST /graphql` (`express-graphql`, SDL in `graphql/typeDefs.ts`, resolvers per domain). Errors are coded `AppError`s surfaced as `extensions.code`; the frontend renders them only through `getGraphQLErrorMessage`.
+1. **React frontend** — routes in `frontend/src/pages/`, sections in `src/components/pages/`, data via typed React Query hooks (`src/api/queries.ts`), client state in zustand. The AI page uses a small typed `fetch` client (`src/api/ai.ts`). No direct DB access; server contracts are GraphQL + SSE for restaurant operations and `/api/ai` for the assistant.
+2. **RxDB** — server-side embedded database (`backend/config/rxdb.ts`, 12 collections: 7 domain + 5 AI conversation/knowledge/draft collections). There is **no** RxDB client/replication on the frontend: "synchronization" is GraphQL for reads/writes plus SSE notifications that patch the React Query cache. No redundant sync framework sits on top.
+3. **GraphQL** — core domain API at `POST /graphql` (`express-graphql`, SDL in `graphql/typeDefs.ts`, resolvers per domain). Errors are coded `AppError`s surfaced as `extensions.code`; the frontend renders them only through `getGraphQLErrorMessage`. The optional `/api/ai` REST surface is intentionally separate so model/tool traffic cannot widen GraphQL permissions.
 4. **Express backend** — `server.ts` awaits `connectDB()` before `listen()`; JWT Bearer auth (`protect`/`admin`/`staff`) enforced in resolvers via `requireAuth`/`requireAdmin`/`requireStaffOrAdmin`, mirrored by frontend route/gate hiding.
 5. **SQLite** — persistence via `@basepurpose/rxdb-sqlite` (`better-sqlite3`), single file (`restaurant-db.db`, volume-mounted in Docker). Concurrent writes can surface transient `SQLITE_BUSY`/`SQLITE_LOCKED` — handled by retry (7), never by adding infrastructure.
 6. **SSE** — live invalidation events (`menu/orders/reservations/categories/users/settings/tables/logs:changed`, deletes as `{ id, deleted: true }`) from `backend/sse.ts` (`node-sse-hub`); the frontend `useEventSource` hook upserts/removes entities in the React Query cache and invalidates derived queries (`tables`, `dashboardStats`). Heartbeat comments every 15s keep the stream alive through Caddy (`flush_interval -1`); the browser `EventSource` reconnects on its own.

@@ -27,7 +27,7 @@ beforeEach(() => {
 
 describe('auth resolvers', () => {
   it('register creates user and returns token', async () => {
-    mockUsers.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([]) });
+    mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
     const mockUser = {
       _id: '123',
       name: 'John',
@@ -53,14 +53,14 @@ describe('auth resolvers', () => {
 
   it('register throws if user exists', async () => {
     const existingUser = { toJSON: () => ({ email: 'john@example.com' }) };
-    mockUsers.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([existingUser]) });
+    mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(existingUser) });
     await expect(
       authResolvers.register({ name: 'John', email: 'john@example.com', password: 'secret123' }),
     ).rejects.toThrow('User already exists');
   });
 
   it('login throws on invalid credentials', async () => {
-    mockUsers.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([]) });
+    mockUsers.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
     await expect(authResolvers.login({ email: 'a@b.com', password: 'wrong' })).rejects.toThrow(
       'Invalid email or password',
     );

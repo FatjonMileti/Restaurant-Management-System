@@ -30,7 +30,13 @@ describe('frontend validation schemas', () => {
   describe('menuItemSchema', () => {
     it('validates correct item', () => {
       expect(
-        menuItemSchema.safeParse({ name: 'Pizza', price: 10, category: 'Food', image: '' }).success,
+        menuItemSchema.safeParse({
+          name: 'Pizza',
+          price: 10,
+          category: 'Food',
+          image: '',
+          available: true,
+        }).success,
       ).toBe(true);
     });
     it('rejects negative price', () => {
@@ -45,7 +51,13 @@ describe('frontend validation schemas', () => {
         'http://localhost:5000/images/x.jpg',
       ]) {
         expect(
-          menuItemSchema.safeParse({ name: 'Pizza', price: 10, category: 'Food', image }).success,
+          menuItemSchema.safeParse({
+            name: 'Pizza',
+            price: 10,
+            category: 'Food',
+            image,
+            available: true,
+          }).success,
         ).toBe(true);
       }
     });

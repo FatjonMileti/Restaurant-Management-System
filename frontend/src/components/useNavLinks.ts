@@ -26,6 +26,7 @@ export const useNavLinks = () => {
   const navLinks: NavLink[] = user
     ? [
         { label: 'Menu', path: '/menu' },
+        { label: 'Assistant', path: '/assistant' },
         ...(user.role === 'admin' ? [{ label: 'Dashboard', path: '/dashboard' }] : []),
         { label: 'Orders', path: '/orders' },
         { label: 'Reservations', path: '/reservations' },
@@ -37,6 +38,7 @@ export const useNavLinks = () => {
       ]
     : [
         { label: 'Menu', path: '/menu' },
+        { label: 'Assistant', path: '/assistant' },
         { label: 'Login', path: '/login' },
         // { label: 'Register', path: '/register' },
       ];

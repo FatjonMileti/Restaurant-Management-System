@@ -4,8 +4,8 @@ Caddy is the single public entrypoint for this app and handles HTTPS
 automatically — it fetches and renews the Let's Encrypt certificate itself.
 The config lives in the root `Caddyfile`:
 
-- `/graphql*`, `/events*` (SSE, unbuffered), `/api-docs*` → backend
-  (`{$BACKEND_UPSTREAM:localhost:5000}`)
+- `/graphql*`, `/events*` (SSE, unbuffered), `/api/ai*` (virtual waitress) and
+  `/api-docs*` → backend (`{$BACKEND_UPSTREAM:localhost:5000}`)
 - `/*` → frontend `build/` output mounted at `/srv/frontend` (SPA fallback to
   `index.html`)
 
@@ -25,7 +25,7 @@ cd frontend && REACT_APP_GRAPHQL_URL=/graphql REACT_APP_WS_URL= npm run build
 # 2. Put the build where Caddy expects it
 sudo mkdir -p /srv/frontend && sudo cp -r build/* /srv/frontend/
 
-# 3. Start the backend (from backend/, with JWT_SECRET set)
+# 3. Start the backend (from backend/, with JWT_SECRET set; add AI_* vars if enabled)
 npm run build && npm start
 
 # 4. Start Caddy with your domain (needs privilege for ports 80/443)
@@ -35,6 +35,37 @@ DOMAIN=restaurant.example.com BACKEND_UPSTREAM=localhost:5000 \
 
 Then open **`https://restaurant.example.com`** — plain `http://` redirects to
 HTTPS automatically.
+
+## AI virtual waitress (optional)
+
+The assistant stays off unless `AI_ENABLED=true`. Configure the backend
+environment before starting it:
+
+```bash
+AI_ENABLED=true
+AI_LLM_BASE_URL=https://api.openai.com/v1   # or http://localhost:11434/v1
+AI_LLM_API_KEY=...                          # optional for local Ollama
+AI_LLM_MODEL=gpt-4o-mini                    # or e.g. llama3.1
+AI_EMBEDDING_MODEL=text-embedding-3-small   # required for RAG
+AI_RESTAURANT_TIMEZONE=Europe/Rome          # IANA zone used for dates/times
+```
+
+Provider keys remain on the server. Do not add them to the frontend build.
+`/api/ai*` is already proxied by the `Caddyfile`; no extra Caddy rule is needed.
+If the AI config is invalid, startup logs an error but the existing GraphQL
+site keeps running.
+
+After deploying the backend, ingest approved knowledge (requires an embedding
+provider):
+
+```bash
+cd backend
+npm run ai:ingest
+```
+
+Alternatively set `AI_AUTO_SEED_KNOWLEDGE=true` to seed `backend/knowledge/`
+on first startup. The Docker image copies that directory; persist the SQLite
+volume so conversations, drafts and knowledge chunks survive restarts.
 
 ## Notes
 

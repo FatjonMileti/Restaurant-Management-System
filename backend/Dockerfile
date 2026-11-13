@@ -30,6 +30,9 @@ RUN npm prune --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
+# Built-in customer-facing knowledge documents for optional RAG auto-seeding
+# (`AI_AUTO_SEED_KNOWLEDGE=true`) or `npm run ai:ingest`.
+COPY --from=builder /app/knowledge ./knowledge
 
 # RxDB (@basepurpose/rxdb-sqlite) creates `restaurant-db.db` in the process
 # cwd (/app). Redirect it onto the persistent volume via symlink so `dist/`
