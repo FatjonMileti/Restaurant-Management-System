@@ -19,8 +19,8 @@ restaurant platform that can:
   customer action outside the LLM tool loop, with backend revalidation,
   authorization, expiry, and idempotency.
 - Help human waiters communicate with customers in different languages through
-  a dedicated two-way interpreter mode. This is a new follow-up phase; it is not
-  implemented by the current chat-only feature.
+  a dedicated two-way interpreter mode at `/interpreter`, with text translation
+  as the core workflow and optional browser speech support.
 
 Out of scope unless already supported safely by the repository:
 
@@ -117,12 +117,13 @@ The LLM never receives a finalize/confirm tool. Retrieved documents and customer
 messages are treated as untrusted data. Tools only access allow-listed services,
 never arbitrary SQL/RxDB documents, shell, code, or HTTP.
 
-### Planned multilingual waiter-assist extension (not yet implemented)
+### Multilingual waiter interpreter
 
-The current branch implements a text chat assistant; it does not yet provide
-translation mode, microphone capture, speech recognition, or spoken translation.
-Add these as a separate, explicitly scoped phase rather than treating ordinary
-LLM chat as a reliable interpreter.
+The dedicated staff-facing interpreter is implemented in Phase 10. It is separate
+from the customer-facing chat agent, uses a translation-specific provider with no
+business tools, and does not persist translations. Browser speech recognition and
+speech synthesis are optional and depend on browser support. See
+`docs/AI-INTERPRETER-FLOW.md` for the code path and limitations.
 
 ### New backend modules
 
