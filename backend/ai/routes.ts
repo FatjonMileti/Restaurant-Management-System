@@ -7,8 +7,21 @@ import {
 } from 'express';
 import { z } from 'zod';
 import { getOrCreateRestaurantSettings } from '../graphql/helpers/formatters.js';
-import { AiError, AiErrorCodes, aiValidationError, toSafeErrorPayload } from './errors.js';
-import { requireAiAuth, requireAiAdmin, optionalAiAuth, toAiUser } from './middleware.js';
+import {
+  AiError,
+  AiErrorCodes,
+  aiValidationError,
+  interpreterDisabledError,
+  toSafeErrorPayload,
+} from './errors.js';
+import {
+  requireAiAuth,
+  requireAiAdmin,
+  requireAiWaiter,
+  optionalAiAuth,
+  toAiUser,
+} from './middleware.js';
+import { listInterpreterLanguages } from './interpreter/languages.js';
 import { createRateLimiter } from './rateLimit.js';
 import { getAiStatus, requireAiRuntime } from './runtime.js';
 import { buildSystemPrompt, suggestedFollowUps } from './prompts.js';
@@ -42,6 +55,15 @@ const chatBodySchema = z
 
 const confirmBodySchema = z.object({ draftId: z.string().trim().min(1).max(100) }).strict();
 
+const translateBodySchema = z
+  .object({
+    message: z.string().max(20000),
+    sourceLanguage: z.string().trim().min(1).max(35),
+    targetLanguage: z.string().trim().min(1).max(35),
+    direction: z.enum(['waiter-to-customer', 'customer-to-waiter']),
+  })
+  .strict();
+
 const knowledgeBodySchema = z
   .object({
     title: z.string().trim().min(1).max(200),
@@ -67,25 +89,28 @@ const validateBody = <T>(schema: z.ZodType<T>, body: unknown): T => {
 const runWithTimeout = async <T>(
   operation: (signal: AbortSignal) => Promise<T>,
   timeoutMs: number,
+  parentSignal?: AbortSignal,
+  timeoutMessage = 'The assistant took too long to respond. Please try again.',
 ): Promise<T> => {
   const controller = new AbortController();
+  const onParentAbort = () => controller.abort();
+  if (parentSignal) {
+    if (parentSignal.aborted) controller.abort();
+    else parentSignal.addEventListener('abort', onParentAbort, { once: true });
+  }
+
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       controller.abort();
-      reject(
-        new AiError(
-          AiErrorCodes.PROVIDER_TIMEOUT,
-          'The assistant took too long to respond. Please try again.',
-          504,
-        ),
-      );
+      reject(new AiError(AiErrorCodes.PROVIDER_TIMEOUT, timeoutMessage, 504));
     }, timeoutMs);
   });
   try {
     return await Promise.race([operation(controller.signal), timeout]);
   } finally {
     if (timer) clearTimeout(timer);
+    parentSignal?.removeEventListener('abort', onParentAbort);
   }
 };
 
@@ -115,6 +140,76 @@ export const createAiRouter = (): Router => {
         knowledgeDocuments = null;
       }
       res.json({ ...status, knowledgeDocuments });
+    }),
+  );
+
+  // Curated language options are safe to list without authentication. The
+  // translate endpoint itself is staff-only.
+  router.get(
+    '/interpreter/languages',
+    asyncHandler(async (_req, res) => {
+      const status = await getAiStatus();
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({
+        enabled: Boolean(
+          (status as { interpreterEnabled?: boolean }).interpreterEnabled,
+        ),
+        languages: listInterpreterLanguages(),
+      });
+    }),
+  );
+
+  router.post(
+    '/interpreter/translate',
+    requireAiWaiter,
+    asyncHandler(async (req, res) => {
+      const config = await configProvider();
+      const limiter = interpreterLimiterFor(
+        config.limits.windowMs,
+        config.interpreter.rateLimitMax,
+      );
+      await new Promise<void>((resolve, reject) => {
+        limiter(req, res, (error?: unknown) => (error ? reject(error) : resolve()));
+      });
+      if (res.headersSent) return;
+
+      const body = validateBody(translateBodySchema, req.body);
+      if (body.message.trim().length === 0) {
+        throw aiValidationError('Message must not be empty.');
+      }
+      if (body.message.length > config.interpreter.maxInputChars) {
+        throw aiValidationError(
+          `Message must be at most ${config.interpreter.maxInputChars} characters.`,
+        );
+      }
+
+      const runtime = await requireAiRuntime();
+      if (!runtime.interpreter) throw interpreterDisabledError();
+
+      const clientAbort = new AbortController();
+      const onClose = () => {
+        if (!res.writableEnded) clientAbort.abort();
+      };
+      res.on('close', onClose);
+      try {
+        const result = await runWithTimeout(
+          (signal) =>
+            runtime.interpreter!.translate({
+              text: body.message,
+              sourceLanguage: body.sourceLanguage,
+              targetLanguage: body.targetLanguage,
+              direction: body.direction,
+              signal,
+            }),
+          (config.interpreter.translation?.timeoutMs ?? config.requestTimeoutMs) + 5000,
+          clientAbort.signal,
+          'The translation took too long. Please try again.',
+        );
+        if (res.writableEnded) return;
+        res.json(result);
+      } finally {
+        res.off('close', onClose);
+      }
     }),
   );
 
@@ -384,9 +479,12 @@ export const createAiRouter = (): Router => {
   );
 
   router.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    // The client may disconnect while a provider request is in flight. Never
+    // attempt to write another response after that.
+    if (res.writableEnded || res.destroyed) return;
     const payload = toSafeErrorPayload(error);
     const status = error instanceof AiError ? error.status : 500;
-    if (status >= 500) {
+    if (status >= 500 && status !== 499) {
       console.error(`AI request failed: ${payload.code}`);
     }
     res.status(status).json({ error: payload });
@@ -432,6 +530,26 @@ const confirmLimiterFor = (windowMs: number, max: number) => {
     };
   }
   return confirmLimiter.handler;
+};
+
+let interpreterLimiter: {
+  windowMs: number;
+  max: number;
+  handler: ReturnType<typeof createRateLimiter>;
+} | null = null;
+const interpreterLimiterFor = (windowMs: number, max: number) => {
+  if (
+    !interpreterLimiter ||
+    interpreterLimiter.windowMs !== windowMs ||
+    interpreterLimiter.max !== max
+  ) {
+    interpreterLimiter = {
+      windowMs,
+      max,
+      handler: createRateLimiter({ windowMs, max, keyPrefix: 'ai-interpreter' }),
+    };
+  }
+  return interpreterLimiter.handler;
 };
 
 let knowledgeLimiter: {

@@ -67,6 +67,31 @@ Alternatively set `AI_AUTO_SEED_KNOWLEDGE=true` to seed `backend/knowledge/`
 on first startup. The Docker image copies that directory; persist the SQLite
 volume so conversations, drafts and knowledge chunks survive restarts.
 
+### Multilingual waiter interpreter
+
+The staff-facing `/interpreter` page reuses the AI gate but can use a separate
+translation endpoint. It is disabled unless `AI_ENABLED=true` and a translation
+base URL + model resolve; translation calls are made without tools and cannot
+create orders or reservations.
+
+```bash
+AI_INTERPRETER_ENABLED=true                    # set false to remove the page
+AI_TRANSLATION_BASE_URL=https://api.openai.com/v1   # defaults to AI_LLM_BASE_URL
+AI_TRANSLATION_API_KEY=...                     # defaults to AI_LLM_API_KEY
+AI_TRANSLATION_MODEL=gpt-4o-mini               # defaults to AI_LLM_MODEL
+AI_TRANSLATION_MAX_INPUT_CHARS=2000
+AI_INTERPRETER_RATE_LIMIT_MAX=30               # per AI_RATE_LIMIT_WINDOW_MS/IP
+```
+
+Only `staff`/`admin` tokens can call `POST /api/ai/interpreter/translate`;
+`GET /api/ai/interpreter/languages` is public but returns no credentials.
+Translations are not persisted, so no extra volume or migration is needed.
+The language registry is curated by the app and does not guarantee provider
+coverage for every pair. After deployment, sign in as staff, open
+`/interpreter`, translate a greeting both ways and verify that an allergy/price
+sentence raises the human-verification warning. Full behavior, privacy notes and
+manual checks are in the [README](../README.md#multilingual-waiter-interpreter-optional).
+
 ## Notes
 
 - Verify DNS first: `dig +short restaurant.example.com` must return your

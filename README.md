@@ -12,6 +12,7 @@ Full-stack MERN restaurant platform — menu, orders, reservations, tables and a
 - **Settings (admin)** – Restaurant details (name/logo/address/phone/email/`tableCount`), Users (create/delete/role change), Categories (CRUD). Tabs are lazy-loaded.
 - **Real-time** – SSE events (`menu:changed`, `orders:changed`, `reservations:changed`, `categories:changed`, `users:changed`, `settings:changed`, `tables:changed`, `logs:changed`) auto-patch `react-query` caches (see Architecture).
 - **AI virtual waitress (optional)** – `/assistant` chat grounded in live menu/restaurant data and approved knowledge. Tools can prepare server-priced order and reservation drafts; writes happen only after the customer presses Confirm, then the backend revalidates ownership, expiry, availability, table/price state and idempotency. Disabled by default (`AI_ENABLED=false`).
+- **Waiter interpreter (optional)** – `/interpreter` is a staff/admin-only, text-first translator for conversations between a waiter and a customer. It keeps originals and translations visible, flags safety-sensitive wording for human verification, never calls business tools, and stores no history. Optional browser speech input/output degrade to text.
 
 ## Tech Stack
 
@@ -273,6 +274,55 @@ Requests are body-validated, rate-limited per IP and bounded by request/provider
 - Rate limiting, draft processing locks and embedding search are single-backend-process features. Deterministic write ids remain the durable duplicate guard.
 - The AI customer flow is additive. The existing GraphQL reservation mutation remains staff/admin-only, and no payment integration is added.
 - Provider integration is covered by mocked tests; a live LLM/embedding smoke test requires provider credentials and is not run automatically.
+
+### Multilingual waiter interpreter (optional)
+
+`/interpreter` is a separate, staff/admin-only tool for a human waiter talking with a customer. It is **not** the conversational virtual waitress: it has no system prompt built from the assistant role, no conversation persistence and no access to the tool registry, drafts or confirm endpoints. The translation provider is called with an explicit source/target language, `tools` omitted and a bounded restaurant glossary; it therefore cannot create an order, reservation or any other write.
+
+Configuration uses the same AI gate plus optional translation overrides:
+
+```bash
+AI_ENABLED=true
+AI_INTERPRETER_ENABLED=true          # default; false disables the page/endpoint
+AI_TRANSLATION_BASE_URL=https://api.openai.com/v1   # defaults to AI_LLM_BASE_URL
+AI_TRANSLATION_API_KEY=your_key      # defaults to AI_LLM_API_KEY
+AI_TRANSLATION_MODEL=gpt-4o-mini     # defaults to AI_LLM_MODEL
+```
+
+Translation is disabled unless AI is enabled and a translation base URL + model resolve. Keys stay on the backend. The language list is curated by the app (code, English/native labels, text direction and browser speech locale); it does **not** assert that the configured provider supports every pair. Translation quality and coverage for a given pair must be verified by the restaurant.
+
+API (served under `/api/ai`):
+
+| Method | Path | Access | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/ai/interpreter/languages` | public | Curated languages plus whether the interpreter is enabled; no secrets |
+| `POST` | `/api/ai/interpreter/translate` | staff/admin JWT | Translate one bounded message in either direction |
+
+Requests are zod-validated, capped by `AI_TRANSLATION_MAX_INPUT_CHARS`, rate-limited per IP by `AI_INTERPRETER_RATE_LIMIT_MAX`, time-bounded and cancelled when the client disconnects. Responses include the original, translation, detected source language and conservative `uncertain` / `requiresHumanVerification` flags; malformed provider output and provider errors map to safe errors without forwarding prompts, keys or stacks.
+
+Safety behavior:
+
+- Allergy/dietary terms, cross-contamination wording, negation, quantities, prices/currency and reservation details are flagged for explicit human verification. Numeric tokens are compared between source and translation; a mismatch is surfaced.
+- The translation prompt receives only stored restaurant/menu names, categories and truncated descriptions as terminology. Prices, availability, allergens, dietary facts and policies are not included, so the model cannot repeat or infer them as facts.
+- A translated allergy or dietary statement is **never** proof that a dish is safe. Waiters must confirm with the customer and the restaurant before acting.
+- The page keeps both the original and translation visible, supports manual edit/re-translate, and keeps history in React state only. Nothing is written to RxDB or a log. Messages are sent to the configured provider, so normal provider data-handling rules apply.
+- Browser speech recognition and speech synthesis are optional adapters. Microphone access is requested only after **Dictate** is pressed, transcripts are inserted for review, and text mode remains fully functional if the APIs are missing or permission is denied. Playback only happens after **Listen** and can be stopped.
+
+Local run and smoke test:
+
+1. Start the backend and frontend as described above, sign in as `staff` or `admin`, and open `/interpreter`.
+2. Confirm the language selectors load. With `AI_ENABLED=false` or missing translation config, the page must show a disabled notice and typing must not enable Translate.
+3. With a configured provider, translate a simple greeting in both directions and confirm the original stays visible. Rehearse an allergy/price sentence and confirm the verification warning appears.
+4. Deny microphone permission (or use a browser without Web Speech) and confirm typing/translation still works.
+
+Automated checks (provider calls are mocked; no live credentials are required):
+
+```bash
+cd backend && npm run build && npx jest --runInBand
+cd frontend && npx tsc --noEmit
+cd frontend && CI=true npx react-scripts test --watchAll=false --runInBand
+cd frontend && npm run build
+```
 
 ## Auth & Roles
 

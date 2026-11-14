@@ -6,6 +6,8 @@ import { seedBuiltInKnowledge } from './rag/seed.js';
 import { RxDbVectorStore } from './rag/vectorStore.js';
 import { createToolRegistry } from './tools/index.js';
 import { WaitressAgent } from './agent.js';
+import { InterpreterService } from './interpreter/service.js';
+import { OpenAICompatibleTranslationProvider } from './interpreter/translationProvider.js';
 import type { LLMProvider } from './types.js';
 import type { ToolRegistry } from './toolRegistry.js';
 
@@ -15,6 +17,7 @@ export interface AiRuntime {
   registry: ToolRegistry;
   knowledge: KnowledgeService | null;
   agent: WaitressAgent;
+  interpreter: InterpreterService | null;
 }
 
 type InitStatus = 'disabled' | 'ready' | 'error';
@@ -72,7 +75,26 @@ const initialize = async (options: { seedKnowledge?: boolean }): Promise<AiRunti
       maxToolResultChars: config.maxToolResultChars,
     });
 
-    runtime = { config, provider, registry, knowledge, agent };
+    let interpreter: InterpreterService | null = null;
+    if (config.interpreter.enabled && config.interpreter.translation) {
+      const translationLlm = new OpenAICompatibleProvider({
+        baseUrl: config.interpreter.translation.baseUrl,
+        apiKey: config.interpreter.translation.apiKey,
+        model: config.interpreter.translation.model,
+        timeoutMs: config.interpreter.translation.timeoutMs,
+        temperature: config.interpreter.translation.temperature,
+      });
+      interpreter = new InterpreterService({
+        provider: new OpenAICompatibleTranslationProvider({
+          llm: translationLlm,
+          temperature: config.interpreter.translation.temperature,
+        }),
+        maxInputChars: config.interpreter.maxInputChars,
+        maxGlossaryItems: config.interpreter.maxGlossaryItems,
+      });
+    }
+
+    runtime = { config, provider, registry, knowledge, agent, interpreter };
 
     if (knowledge && (config.rag.autoSeed || options.seedKnowledge)) {
       try {

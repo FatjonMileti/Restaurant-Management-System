@@ -169,6 +169,9 @@ export class OpenAICompatibleProvider implements LLMProvider {
       body.tools = request.tools;
       body.tool_choice = 'auto';
     }
+    if (request.maxTokens !== undefined) {
+      body.max_tokens = request.maxTokens;
+    }
 
     const payload = await this.post('/chat/completions', body, this.timeoutMs, request.signal);
     const parsed = chatResponseSchema.safeParse(payload);

@@ -12,6 +12,7 @@ const Login = React.lazy(() => import('./pages/Login'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Menu = React.lazy(() => import('./pages/Menu'));
 const Assistant = React.lazy(() => import('./pages/Assistant'));
+const Interpreter = React.lazy(() => import('./pages/Interpreter'));
 const Orders = React.lazy(() => import('./pages/Orders'));
 const Reservations = React.lazy(() => import('./pages/Reservations'));
 const Tables = React.lazy(() => import('./pages/Tables'));
@@ -92,6 +93,16 @@ function App() {
                       <PageTransition>
                         <Assistant />
                       </PageTransition>
+                    }
+                  />
+                  <Route
+                    path="/interpreter"
+                    element={
+                      <ProtectedRoute>
+                        <PageTransition>
+                          <Interpreter />
+                        </PageTransition>
+                      </ProtectedRoute>
                     }
                   />
                   <Route

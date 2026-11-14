@@ -30,6 +30,8 @@ export interface ChatRequest {
   messages: ChatMessage[];
   tools?: ToolDefinition[];
   temperature?: number;
+  /** Optional provider output cap, used by the bounded translation path. */
+  maxTokens?: number;
   signal?: AbortSignal;
 }
 

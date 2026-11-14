@@ -27,6 +27,9 @@ export const useNavLinks = () => {
     ? [
         { label: 'Menu', path: '/menu' },
         { label: 'Assistant', path: '/assistant' },
+        ...(user.role === 'admin' || user.role === 'staff'
+          ? [{ label: 'Interpreter', path: '/interpreter' }]
+          : []),
         ...(user.role === 'admin' ? [{ label: 'Dashboard', path: '/dashboard' }] : []),
         { label: 'Orders', path: '/orders' },
         { label: 'Reservations', path: '/reservations' },

@@ -174,7 +174,7 @@ const readError = async (response: Response): Promise<AiApiError> => {
   return new AiApiError(message, response.status, code);
 };
 
-const requestJson = async <T>(
+export const requestAiJson = async <T>(
   path: string,
   options: { method?: string; body?: unknown; token?: string | null } = {},
 ): Promise<T> => {
@@ -205,13 +205,13 @@ export const sendAiMessage = (
   payload: AiChatRequest,
   token?: string | null,
 ): Promise<AiChatResponse> =>
-  requestJson<AiChatResponse>('/chat', { method: 'POST', body: payload, token });
+  requestAiJson<AiChatResponse>('/chat', { method: 'POST', body: payload, token });
 
 export const confirmAiDraft = (
   draftId: string,
   token?: string | null,
 ): Promise<AiConfirmResponse> =>
-  requestJson<AiConfirmResponse>('/actions/confirm', {
+  requestAiJson<AiConfirmResponse>('/actions/confirm', {
     method: 'POST',
     body: { draftId },
     token,
@@ -221,7 +221,7 @@ export const getAiConversation = (
   conversationId: string,
   token?: string | null,
 ): Promise<AiConversationResponse> =>
-  requestJson<AiConversationResponse>(`/conversations/${encodeURIComponent(conversationId)}`, {
+  requestAiJson<AiConversationResponse>(`/conversations/${encodeURIComponent(conversationId)}`, {
     token,
   });
 

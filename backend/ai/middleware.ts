@@ -64,6 +64,19 @@ export const requireAiAuth: RequestHandler = (req, res, next) => {
   next();
 };
 
+/** The waiter interpreter is a staff tool, not a customer chat surface. */
+export const requireAiWaiter: RequestHandler = (req, res, next) => {
+  if (!req.user) {
+    sendError(res, 401, AiErrorCodes.UNAUTHENTICATED, 'Please log in to use this feature.');
+    return;
+  }
+  if (req.user.role !== 'staff' && req.user.role !== 'admin') {
+    sendError(res, 403, AiErrorCodes.FORBIDDEN, 'Only restaurant staff can use the interpreter.');
+    return;
+  }
+  next();
+};
+
 export const requireAiAdmin: RequestHandler = (req, res, next) => {
   if (!req.user) {
     sendError(res, 401, AiErrorCodes.UNAUTHENTICATED, 'Please log in to use this feature.');

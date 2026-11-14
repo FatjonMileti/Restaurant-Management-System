@@ -79,6 +79,19 @@ export const aiEnvSchema = z
     AI_RATE_LIMIT_MAX: intEnv(20, 1, 1000),
     AI_CONFIRM_RATE_LIMIT_MAX: intEnv(10, 1, 200),
     AI_ADMIN_RATE_LIMIT_MAX: intEnv(30, 1, 500),
+
+    // Staff-facing waiter interpreter. Translation is a separate provider path
+    // with no tools. Base/model/key fall back to the virtual-waitress LLM so a
+    // single provider can serve both features without duplicated secrets.
+    AI_INTERPRETER_ENABLED: booleanEnv(true),
+    AI_TRANSLATION_BASE_URL: optionalUrl,
+    AI_TRANSLATION_API_KEY: optionalString,
+    AI_TRANSLATION_MODEL: optionalString,
+    AI_TRANSLATION_TIMEOUT_MS: intEnv(20000, 1000, 120000),
+    AI_TRANSLATION_TEMPERATURE: numberEnv(0, 0, 1),
+    AI_TRANSLATION_MAX_INPUT_CHARS: intEnv(2000, 20, 12000),
+    AI_TRANSLATION_MAX_GLOSSARY_ITEMS: intEnv(40, 0, 200),
+    AI_INTERPRETER_RATE_LIMIT_MAX: intEnv(30, 1, 1000),
   })
   .superRefine((value, ctx) => {
     if (value.AI_ENABLED && !value.AI_LLM_BASE_URL) {
@@ -130,10 +143,19 @@ export interface EmbeddingConfig {
   timeoutMs: number;
 }
 
+export interface InterpreterConfig {
+  enabled: boolean;
+  translation?: LlmConfig;
+  maxInputChars: number;
+  maxGlossaryItems: number;
+  rateLimitMax: number;
+}
+
 export interface AiConfig {
   enabled: boolean;
   llm?: LlmConfig;
   embeddings?: EmbeddingConfig;
+  interpreter: InterpreterConfig;
   rag: {
     enabled: boolean;
     topK: number;
@@ -198,10 +220,30 @@ export const loadAiConfig = (env: NodeJS.ProcessEnv = process.env): AiConfig => 
         }
       : undefined;
 
+  const translationBase = value.AI_TRANSLATION_BASE_URL ?? value.AI_LLM_BASE_URL;
+  const translationModel = value.AI_TRANSLATION_MODEL ?? value.AI_LLM_MODEL;
+  const translation =
+    value.AI_ENABLED && value.AI_INTERPRETER_ENABLED && translationBase && translationModel
+      ? {
+          baseUrl: normalizeBaseUrl(translationBase),
+          apiKey: value.AI_TRANSLATION_API_KEY ?? value.AI_LLM_API_KEY,
+          model: translationModel,
+          timeoutMs: value.AI_TRANSLATION_TIMEOUT_MS,
+          temperature: value.AI_TRANSLATION_TEMPERATURE,
+        }
+      : undefined;
+
   return {
     enabled: value.AI_ENABLED,
     llm,
     embeddings,
+    interpreter: {
+      enabled: value.AI_ENABLED && value.AI_INTERPRETER_ENABLED && Boolean(translation),
+      translation,
+      maxInputChars: value.AI_TRANSLATION_MAX_INPUT_CHARS,
+      maxGlossaryItems: value.AI_TRANSLATION_MAX_GLOSSARY_ITEMS,
+      rateLimitMax: value.AI_INTERPRETER_RATE_LIMIT_MAX,
+    },
     rag: {
       enabled: value.AI_ENABLED && value.AI_RAG_ENABLED && Boolean(embeddings),
       topK: value.AI_RAG_TOP_K,
@@ -250,5 +292,8 @@ export const describeAiConfig = (config: AiConfig) => ({
   embeddingsConfigured: Boolean(config.embeddings),
   embeddingModel: config.embeddings?.model ?? null,
   ragEnabled: config.rag.enabled,
+  interpreterEnabled: config.interpreter.enabled,
+  translationConfigured: Boolean(config.interpreter.translation),
+  translationModel: config.interpreter.translation?.model ?? null,
   restaurantTimeZone: config.restaurantTimeZone,
 });

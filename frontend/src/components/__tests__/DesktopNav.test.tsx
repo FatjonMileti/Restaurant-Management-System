@@ -48,6 +48,10 @@ describe('DesktopNav', () => {
   it('shows admin-only links for admins', () => {
     mockUser = { _id: 'u1', name: 'Admin', role: 'admin' };
     renderNav();
+    expect(screen.getByRole('link', { name: 'Interpreter' })).toHaveAttribute(
+      'href',
+      '/interpreter',
+    );
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Tables' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
@@ -58,6 +62,10 @@ describe('DesktopNav', () => {
   it('shows Tables but not Dashboard/Settings for staff', () => {
     mockUser = { _id: 'u2', name: 'Sam', role: 'staff' };
     renderNav();
+    expect(screen.getByRole('link', { name: 'Interpreter' })).toHaveAttribute(
+      'href',
+      '/interpreter',
+    );
     expect(screen.getByRole('link', { name: 'Tables' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();

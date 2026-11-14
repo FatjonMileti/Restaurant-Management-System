@@ -289,46 +289,77 @@ behind an interface so a dedicated store can replace it later.
       without any real secret committed.
 
 
-### Phase 10 — Multilingual human-waiter assist (planned; not implemented)
+### Phase 10 — Multilingual waiter interpreter (text first, optional voice)
 
 **Goal:** help a human waiter and customer communicate across languages while
-keeping the waiter in control. This phase is additive to the existing virtual
-waitress and must not change current ordering or reservation behavior.
+keeping the waiter in control. This is a distinct interpreter mode, not a new
+customer assistant. It is additive to the existing virtual waitress and must not
+change current ordering or reservation behavior. Translation has no access to
+the business tool registry and can never submit an order or reservation.
 
-- [ ] 10.1 Define an explicit interpreter mode separate from the general AI
-      assistant, with source language, target language, and auto-detect options.
-- [ ] 10.2 Add text-first, two-way translation: customer-to-waiter and
-      waiter-to-customer, preserving the original text alongside the translation.
-- [ ] 10.3 Add translation provider interfaces and configuration; evaluate
-      provider language coverage, privacy, latency, cost, and Ollama compatibility
-      instead of assuming every chat model is a reliable translator.
-- [ ] 10.4 Add restaurant terminology/context support for menu item names and
-      common service phrases without silently changing dish names or intent.
-- [ ] 10.5 Add a React waiter-assist UI with clear speaker/language labels,
-      editable translations, copy/replay controls, and a manual correction path.
-- [ ] 10.6 Add push-to-talk speech-to-text as an optional adapter after text
-      translation works; request microphone permission only after user action.
-- [ ] 10.7 Add translated speech playback via a configurable text-to-speech
-      adapter; provide text fallback when audio is unavailable.
-- [ ] 10.8 Show uncertainty and ask for clarification on ambiguous speech,
-      numbers, quantities, dates, prices, negation, or allergy-related statements.
-      Never treat a translation as verified medical/allergen advice.
-- [ ] 10.9 Keep translated transcripts transient by default; if conversation
-      history is stored, obtain appropriate notice/consent and define retention.
-- [ ] 10.10 Ensure microphone audio and transcripts are not logged by default;
-      document third-party processing and privacy implications.
-- [ ] 10.11 Add tests for language selection/detection, translation direction,
-      provider errors, low-confidence/empty results, UI corrections, and fallback.
-- [ ] 10.12 Add end-to-end scenarios for menu requests, quantities, prices,
-      reservations, negation, and allergy statements; require waiter review before
-      any order/reservation tool is invoked from translated intent.
-- [ ] 10.13 Document supported languages, known limitations, environment
-      variables, local development setup, and a manual live-provider smoke test.
-- Completion criteria: a waiter can exchange text in two selected languages;
-      translations remain visible for correction; unsupported or uncertain
-      translations are clearly surfaced; no action is executed solely because a
-      translated sentence appears to request it. Voice support is optional until
-      its provider and privacy requirements are verified.
+- [x] 10.1 Inspect the existing AI provider, config, routes, middleware, rate
+      limiting, runtime, menu/settings services, tests and frontend assistant
+      patterns; confirm branch/working tree before changes.
+- [x] 10.2 Expand this Phase 10 checklist before application changes.
+- [x] 10.3 Add a curated language registry (codes, English/native labels, text
+      direction, browser speech locales) with explicit unsupported-code handling.
+      Do not claim that the configured model supports a language pair; document
+      that provider coverage is unverified.
+- [x] 10.4 Add translation configuration validated with zod: env-overridable
+      base URL/key/model/timeout, safe fallback to the existing LLM settings,
+      input-length/glossary/rate limits and a separate disable switch. Do not
+      expose keys in status output.
+- [x] 10.5 Add a translation-specific provider interface over the existing
+      OpenAI-compatible client. Use explicit source/target language parameters,
+      send no tools, request structured JSON, validate output (including empty/
+      oversized content) and map timeout/rate-limit/network/malformed failures to
+      safe typed errors.
+- [x] 10.6 Add restaurant-aware terminology context built only from live menu
+      names/categories/stored descriptions and restaurant name, bounded to a
+      small glossary with a graceful DB-failure fallback. Never invent
+      ingredients, prices, availability, allergens or policies.
+- [x] 10.7 Add conservative safety checks for allergy/dietary terms,
+      cross-contamination, negation/conditions, quantities, prices, currency and
+      reservation details. Flag numeric mismatches and provider uncertainty, and
+      require explicit human verification for every safety-sensitive result. A
+      translated allergy statement is never proof that food is safe.
+- [x] 10.8 Add `GET /api/ai/interpreter/languages` and staff/admin-only
+      `POST /api/ai/interpreter/translate`. Validate bodies/languages with zod,
+      enforce input limits and rate limiting, apply request timeout/cancellation,
+      keep provider keys server-side and return stable safe errors. Do not persist
+      translations or conversation history.
+- [x] 10.9 Implement the `/interpreter` staff UI with waiter/customer language
+      selectors, swap/direction controls, separate waiter and customer inputs,
+      session-local history, distinct original/translated display, loading/empty/
+      success/error states, retry/edit/copy, safety/uncertainty warnings and a new
+      conversation action. Keep it responsive and keyboard accessible.
+- [x] 10.10 Add an optional browser speech-recognition adapter behind an
+      interface: explicit push-to-talk, permission request only after user action,
+      transcript inserted for review, cancel, stop microphone on completion and
+      graceful unsupported/denied handling. Text mode remains fully functional.
+- [x] 10.11 Add an optional browser speech-synthesis adapter behind an interface:
+      explicit speak action only, stop control, target-language locale, and
+      graceful unsupported/voice-unavailable fallback. Never auto-speak safety-
+      sensitive or other translated text.
+- [x] 10.12 Add backend tests for both directions, language validation, empty/
+      oversized input, timeouts/rate limits/provider errors, malformed output,
+      auth/roles, no tool access, bounded restaurant context, safety/negation/
+      quantities and secret-free errors. Use mocks only.
+- [x] 10.13 Add frontend tests for language/direction selection, sending both
+      directions, preserved originals, loading/error/retry/edit/copy, safety
+      warnings, and microphone denial/unsupported plus TTS fallback.
+- [x] 10.14 Document interpreter purpose vs. virtual waitress, configuration,
+      curated languages/provider-coverage caveat, privacy/provider disclosure,
+      limitations, local run, test commands, manual smoke test and mandatory human
+      verification for allergy/price/quantity/reservation details.
+- [x] 10.15 Run backend build/tests, frontend typecheck/tests/build and a
+      disabled/no-provider smoke test; review the complete diff for regressions,
+      secrets, unsafe behavior and unfinished tasks. Record actual results.
+- Completion criteria: a signed-in staff waiter can exchange text in both
+      directions with both originals and translations preserved; errors and
+      uncertainty are surfaced; no order/reservation action can be triggered from
+      translation; provider credentials remain server-side; text mode works when
+      speech APIs are absent; checks pass and limitations are documented honestly.
 
 ## 5. Dependencies between tasks
 
@@ -376,14 +407,16 @@ waitress and must not change current ordering or reservation behavior.
 
 ## 7. Progress log
 
-### Status: core virtual waitress complete; multilingual extension planned
+### Status: core virtual waitress complete; multilingual interpreter implemented
 
 Phases 0–9 describe the core text-based AI virtual waitress and are recorded as
-implemented in this branch. Phase 10 is a newly added follow-up scope for the
-human-waiter multilingual interpreter and remains unimplemented. The feature is
-disabled by default (`AI_ENABLED=false`). The branch comparison shows one commit
-ahead of `feature/rxdb-migration`; see Git history for repository state. Do not
-assume the remote branch contains uncommitted local changes.
+implemented in this branch. Phase 10 adds the staff-facing multilingual waiter
+interpreter. It is additive: `/assistant` behavior, order/reservation drafts and
+the confirm flow are unchanged, and translation has no tool access. The feature
+is disabled by default (`AI_ENABLED=false` and/or missing translation provider
+settings). The branch comparison shows one commit ahead of
+`feature/rxdb-migration`; see Git history for repository state. Do not assume
+the remote branch contains uncommitted local changes.
 
 ### Completed
 
@@ -404,8 +437,16 @@ assume the remote branch contains uncommitted local changes.
 - Phase 8: backend AI suites and frontend assistant suite; full checks run.
 - Phase 9: env example, README setup/API/safety/limitations, deployment notes,
   TODO verification record, final report.
-- Phase 10: planned only. No multilingual translation mode, microphone capture,
-  speech recognition, or text-to-speech implementation is present in this branch.
+- Phase 10: curated language registry; dedicated zod-validated translation
+  config with LLM fallback; no-tools translation provider with structured output
+  and safe errors; bounded live menu/settings glossary; conservative
+  allergy/diet/contamination/negation/quantity/price/reservation safety flags and
+  numeric-mismatch detection; staff/admin languages/translate endpoints with
+  input limits, rate limiting, timeout/client cancellation and no persistence;
+  `/interpreter` UI with language selection, swap, both directions, preserved
+  originals, session-only history, retry/edit/copy, uncertainty warnings, and
+  optional speech recognition/synthesis that degrades to text; backend and
+  frontend tests; env/docs updates; build/test/smoke verification.
 
 ### Blocked / not run
 
@@ -413,6 +454,10 @@ assume the remote branch contains uncommitted local changes.
   credentials, which are not available in this environment. Provider, agent,
   RAG and action paths are covered by mocked tests. Run the commands below
   against the intended hosted or Ollama endpoint before production rollout.
+- Real interpreter translation smoke test: no translation provider
+  endpoint/credentials were available, so every translation test uses a mocked
+  provider. Manual browser speech recognition/synthesis was not exercised in a
+  real browser; the adapters are tested through mocks and text mode is verified.
 
 ### Final verification record (2026-11-13)
 
@@ -442,11 +487,40 @@ Notes:
 - Pre-existing mode-only working-tree changes were preserved; no files were
   committed or discarded.
 
+### Phase 10 verification record (2026-11-14)
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Backend compile | `cd backend && npm run build` | Passed (`tsc`) |
+| Backend tests | `cd backend && npx jest --runInBand` | 27 suites, 252 tests passed |
+| Frontend typecheck | `cd frontend && npx tsc --noEmit` | Passed |
+| Frontend tests | `cd frontend && CI=true npx react-scripts test --watchAll=false --runInBand` | 31 suites, 204 tests passed |
+| Frontend production build | `cd frontend && npm run build` | Compiled successfully |
+| Disabled smoke test | `AI_ENABLED=false node dist/server.js` on port 5055 | `GET /api/ai/interpreter/languages` → 200, `GET /api/ai/health` → `status: "disabled"`, `interpreterEnabled: false`, `translationConfigured: false`; unauthenticated `POST /api/ai/interpreter/translate` → 401 `UNAUTHENTICATED` |
+
+Notes:
+
+- The new interpreter suite covers both directions, language/input validation,
+  timeouts/provider failures, malformed output, auth roles, no-tools behavior,
+  bounded glossary context, safety/negation/quantities, numeric mismatches and
+  secret-free errors. The frontend suite covers language/swap controls, both
+  directions, preserved originals, loading/error/retry/edit/copy, safety
+  warnings, unsupported speech, denied microphone and explicit TTS playback.
+- No live translation provider call was made (no endpoint/credentials). The
+  model's coverage for each curated language pair remains unverified and must be
+  checked by the restaurant before relying on it.
+- No lint script exists in either package.
+
 ### Known limitations
 
-- Multilingual waiter-assist is not implemented yet. The current `/assistant`
-  interface is text chat, not a two-way interpreter; it does not capture or play
-  speech. See Phase 10 for the proposed scope.
+- The interpreter is an assistance tool, not a guarantee: curated languages do
+  not prove provider coverage for a pair, and translations of allergy, dietary,
+  cross-contamination, price, quantity or reservation details always require
+  human verification. Translation has no tools and cannot write; history is not
+  persisted.
+- The virtual waitress `/assistant` is text chat, not a two-way interpreter;
+  speech recognition/synthesis in `/interpreter` depends on browser Web Speech
+  support and falls back to text when unavailable.
 - No opening-hours, per-table capacity, dietary or allergen data exists, so the
   assistant must report those as unavailable rather than infer them.
 - Reservation availability uses the existing conservative whole-date occupancy

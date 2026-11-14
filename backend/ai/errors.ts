@@ -6,6 +6,7 @@
  */
 export const AiErrorCodes = {
   AI_DISABLED: 'AI_DISABLED',
+  INTERPRETER_DISABLED: 'INTERPRETER_DISABLED',
   AI_CONFIG_INVALID: 'AI_CONFIG_INVALID',
   UNAUTHENTICATED: 'UNAUTHENTICATED',
   FORBIDDEN: 'FORBIDDEN',
@@ -42,6 +43,13 @@ export class AiError extends Error {
 
 export const aiDisabledError = () =>
   new AiError(AiErrorCodes.AI_DISABLED, 'The AI assistant is not enabled.', 503);
+
+export const interpreterDisabledError = () =>
+  new AiError(
+    AiErrorCodes.INTERPRETER_DISABLED,
+    'The waiter interpreter is not enabled.',
+    503,
+  );
 
 export const aiConfigError = (message: string) =>
   new AiError(AiErrorCodes.AI_CONFIG_INVALID, message, 503);
