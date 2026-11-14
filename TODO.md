@@ -18,6 +18,9 @@ restaurant platform that can:
 - Perform order submission and reservation creation only after an explicit
   customer action outside the LLM tool loop, with backend revalidation,
   authorization, expiry, and idempotency.
+- Help human waiters communicate with customers in different languages through
+  a dedicated two-way interpreter mode. This is a new follow-up phase; it is not
+  implemented by the current chat-only feature.
 
 Out of scope unless already supported safely by the repository:
 
@@ -113,6 +116,13 @@ React /assistant
 The LLM never receives a finalize/confirm tool. Retrieved documents and customer
 messages are treated as untrusted data. Tools only access allow-listed services,
 never arbitrary SQL/RxDB documents, shell, code, or HTTP.
+
+### Planned multilingual waiter-assist extension (not yet implemented)
+
+The current branch implements a text chat assistant; it does not yet provide
+translation mode, microphone capture, speech recognition, or spoken translation.
+Add these as a separate, explicitly scoped phase rather than treating ordinary
+LLM chat as a reliable interpreter.
 
 ### New backend modules
 
@@ -278,6 +288,48 @@ behind an interface so a dedicated store can replace it later.
 - Completion criteria: a new developer can configure and run the feature locally
       without any real secret committed.
 
+
+### Phase 10 — Multilingual human-waiter assist (planned; not implemented)
+
+**Goal:** help a human waiter and customer communicate across languages while
+keeping the waiter in control. This phase is additive to the existing virtual
+waitress and must not change current ordering or reservation behavior.
+
+- [ ] 10.1 Define an explicit interpreter mode separate from the general AI
+      assistant, with source language, target language, and auto-detect options.
+- [ ] 10.2 Add text-first, two-way translation: customer-to-waiter and
+      waiter-to-customer, preserving the original text alongside the translation.
+- [ ] 10.3 Add translation provider interfaces and configuration; evaluate
+      provider language coverage, privacy, latency, cost, and Ollama compatibility
+      instead of assuming every chat model is a reliable translator.
+- [ ] 10.4 Add restaurant terminology/context support for menu item names and
+      common service phrases without silently changing dish names or intent.
+- [ ] 10.5 Add a React waiter-assist UI with clear speaker/language labels,
+      editable translations, copy/replay controls, and a manual correction path.
+- [ ] 10.6 Add push-to-talk speech-to-text as an optional adapter after text
+      translation works; request microphone permission only after user action.
+- [ ] 10.7 Add translated speech playback via a configurable text-to-speech
+      adapter; provide text fallback when audio is unavailable.
+- [ ] 10.8 Show uncertainty and ask for clarification on ambiguous speech,
+      numbers, quantities, dates, prices, negation, or allergy-related statements.
+      Never treat a translation as verified medical/allergen advice.
+- [ ] 10.9 Keep translated transcripts transient by default; if conversation
+      history is stored, obtain appropriate notice/consent and define retention.
+- [ ] 10.10 Ensure microphone audio and transcripts are not logged by default;
+      document third-party processing and privacy implications.
+- [ ] 10.11 Add tests for language selection/detection, translation direction,
+      provider errors, low-confidence/empty results, UI corrections, and fallback.
+- [ ] 10.12 Add end-to-end scenarios for menu requests, quantities, prices,
+      reservations, negation, and allergy statements; require waiter review before
+      any order/reservation tool is invoked from translated intent.
+- [ ] 10.13 Document supported languages, known limitations, environment
+      variables, local development setup, and a manual live-provider smoke test.
+- Completion criteria: a waiter can exchange text in two selected languages;
+      translations remain visible for correction; unsupported or uncertain
+      translations are clearly surfaced; no action is executed solely because a
+      translated sentence appears to request it. Voice support is optional until
+      its provider and privacy requirements are verified.
+
 ## 5. Dependencies between tasks
 
 - Phase 1 config/provider/registry block all tool, RAG, agent, and route work.
@@ -291,6 +343,10 @@ behind an interface so a dedicated store can replace it later.
 - Phase 7 depends on routes/actions existing.
 - Phases 8–9 depend on the implemented feature; tests are written alongside each
   phase and finalized at the end.
+- Phase 10 depends on the existing assistant UI and provider abstraction, but its
+  translation service should remain separate from the order/reservation tool
+  dispatcher. Voice adapters depend on a verified speech provider and explicit
+  microphone/privacy UX.
 
 ## 6. Decisions requiring verification / limitations
 
@@ -320,11 +376,14 @@ behind an interface so a dedicated store can replace it later.
 
 ## 7. Progress log
 
-### Status: complete (uncommitted)
+### Status: core virtual waitress complete; multilingual extension planned
 
-All planned phases are implemented. The feature is disabled by default
-(`AI_ENABLED=false`) and all work remains uncommitted on
-`feature/ai-virtual-waitress`; nothing was committed, pushed or opened as a PR.
+Phases 0–9 describe the core text-based AI virtual waitress and are recorded as
+implemented in this branch. Phase 10 is a newly added follow-up scope for the
+human-waiter multilingual interpreter and remains unimplemented. The feature is
+disabled by default (`AI_ENABLED=false`). The branch comparison shows one commit
+ahead of `feature/rxdb-migration`; see Git history for repository state. Do not
+assume the remote branch contains uncommitted local changes.
 
 ### Completed
 
@@ -345,6 +404,8 @@ All planned phases are implemented. The feature is disabled by default
 - Phase 8: backend AI suites and frontend assistant suite; full checks run.
 - Phase 9: env example, README setup/API/safety/limitations, deployment notes,
   TODO verification record, final report.
+- Phase 10: planned only. No multilingual translation mode, microphone capture,
+  speech recognition, or text-to-speech implementation is present in this branch.
 
 ### Blocked / not run
 
@@ -383,6 +444,9 @@ Notes:
 
 ### Known limitations
 
+- Multilingual waiter-assist is not implemented yet. The current `/assistant`
+  interface is text chat, not a two-way interpreter; it does not capture or play
+  speech. See Phase 10 for the proposed scope.
 - No opening-hours, per-table capacity, dietary or allergen data exists, so the
   assistant must report those as unavailable rather than infer them.
 - Reservation availability uses the existing conservative whole-date occupancy
