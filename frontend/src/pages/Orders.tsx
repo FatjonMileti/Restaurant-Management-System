@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../store/authStore';
 import { useDeleteCompletedOrders } from '../api/queries';
 import { getGraphQLErrorMessage } from '../utils/graphqlErrors';
@@ -39,15 +42,34 @@ export default function Orders() {
         title="Orders"
         action={
           user?.role !== 'customer' ? (
-            <Box className="flex gap-2">
+            <Box className="flex items-center gap-1 sm:gap-2">
               {isAdmin && (
-                <Button variant="outlined" color="error" onClick={() => setConfirmBulkDelete(true)}>
-                  Delete Completed
-                </Button>
+                <>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                    onClick={() => setConfirmBulkDelete(true)}
+                  >
+                    Delete Completed
+                  </Button>
+                  <Tooltip title="Delete completed orders">
+                    <IconButton
+                      aria-label="Delete completed orders"
+                      color="error"
+                      sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                      onClick={() => setConfirmBulkDelete(true)}
+                      size="medium"
+                    >
+                      <DeleteSweepIcon />
+                    </IconButton>
+                  </Tooltip>
+                </>
               )}
               <Button
                 variant="contained"
                 color="secondary"
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                 onClick={() => {
                   setShowCreate(!showCreate);
                   setEditingOrder(null);
@@ -55,6 +77,19 @@ export default function Orders() {
               >
                 {showCreate ? 'Cancel' : '+ New Order'}
               </Button>
+              <Tooltip title={showCreate ? 'Cancel new order' : 'Create new order'}>
+                <IconButton
+                  aria-label={showCreate ? 'Cancel new order' : 'Create new order'}
+                  color="secondary"
+                  sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                  onClick={() => {
+                    setShowCreate(!showCreate);
+                    setEditingOrder(null);
+                  }}
+                >
+                  {showCreate ? <CloseIcon /> : <AddIcon />}
+                </IconButton>
+              </Tooltip>
             </Box>
           ) : undefined
         }

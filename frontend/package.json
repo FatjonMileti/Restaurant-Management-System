@@ -32,7 +32,7 @@
     "test:watch": "react-scripts test",
     "test:coverage": "react-scripts test --coverage --watchAll=false"
   },
-  "proxy": "http://localhost:5000",
+  "proxy": "https://209-38-239-97.sslip.io/",
   "jest": {
     "transformIgnorePatterns": [
       "node_modules/(?!(graphql-request|graphql|@apollo)/)"

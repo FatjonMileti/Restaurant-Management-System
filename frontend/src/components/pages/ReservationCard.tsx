@@ -1,6 +1,9 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import moment from 'moment';
+import { Button, IconButton, Tooltip } from '@mui/material';
+import CancelIcon from '@mui/icons-material/Cancel';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { Reservation } from '../../api/queries';
 import StatusBadge from '../StatusBadge';
 
@@ -63,14 +66,48 @@ function ReservationCard({
           {(isStaff || isOwner) && (
             <div className="mt-2.5" onClick={(e) => e.stopPropagation()}>
               {res.status === 'confirmed' && (
-                <button onClick={() => onCancel(res._id)} className="btn-danger-sm">
-                  Cancel
-                </button>
+                <>
+                  <Button
+                    onClick={() => onCancel(res._id)}
+                    className="btn-danger-sm"
+                    sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                  >
+                    Cancel
+                  </Button>
+                  <Tooltip title="Cancel reservation">
+                    <IconButton
+                      aria-label="Cancel reservation"
+                      color="error"
+                      size="small"
+                      sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                      onClick={() => onCancel(res._id)}
+                    >
+                      <CancelIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </>
               )}
               {(res.status === 'cancelled' || res.status === 'completed') && (
-                <button onClick={() => onDelete(res._id)} className="btn-danger-sm">
-                  Delete
-                </button>
+                <>
+                  <Button
+                    onClick={() => onDelete(res._id)}
+                    className="btn-danger-sm"
+                    sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                  >
+                    Delete
+                  </Button>
+                  <Tooltip title="Delete reservation">
+                    <IconButton
+                      aria-label="Delete reservation"
+                      color="error"
+                      size="small"
+                      sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                      onClick={() => onDelete(res._id)}
+                    >
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </>
               )}
             </div>
           )}

@@ -108,7 +108,7 @@ describe('OrderCard', () => {
     const onUpdateStatus = jest.fn();
     render(
       <OrderCard
-        order={mockOrder({ status: 'preparing' })}
+        order={mockOrder({ status: 'ready' })}
         isStaffView
         isOwner
         onEdit={jest.fn()}
