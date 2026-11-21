@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, IconButton, Tooltip } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import { useMenu, MenuItem, useCategories, Category, useDeleteMenuItem } from '../api/queries';
 import { useAuth } from '../store/authStore';
 import MenuItemForm from '../components/pages/MenuItemForm';
@@ -63,16 +65,32 @@ function Menu() {
         title="Menu"
         action={
           isAdmin ? (
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => {
-                setShowForm(!showForm);
-                setEditingItem(null);
-              }}
-            >
-              {showForm ? 'Cancel' : '+ Add Item'}
-            </Button>
+            <Box>
+              <Button
+                variant="contained"
+                color="secondary"
+                className="hidden sm:inline-flex"
+                onClick={() => {
+                  setShowForm(!showForm);
+                  setEditingItem(null);
+                }}
+              >
+                {showForm ? 'Cancel' : '+ Add Item'}
+              </Button>
+              <Tooltip title={showForm ? 'Cancel adding item' : 'Add menu item'}>
+                <IconButton
+                  aria-label={showForm ? 'Cancel adding item' : 'Add menu item'}
+                  color="secondary"
+                  className="sm:!hidden"
+                  onClick={() => {
+                    setShowForm(!showForm);
+                    setEditingItem(null);
+                  }}
+                >
+                  {showForm ? <CloseIcon /> : <AddIcon />}
+                </IconButton>
+              </Tooltip>
+            </Box>
           ) : undefined
         }
       />
