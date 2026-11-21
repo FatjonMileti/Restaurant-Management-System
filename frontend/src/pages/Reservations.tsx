@@ -47,7 +47,7 @@ export default function Reservations() {
                 <Button
                   variant="outlined"
                   color="error"
-                  className="hidden sm:inline-flex"
+                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                   onClick={() => setConfirmBulkDelete(true)}
                 >
                   Delete Completed
@@ -56,7 +56,7 @@ export default function Reservations() {
                   <IconButton
                     aria-label="Delete completed reservations"
                     color="error"
-                    className="sm:!hidden"
+                    sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
                     onClick={() => setConfirmBulkDelete(true)}
                     size="medium"
                   >
@@ -68,7 +68,7 @@ export default function Reservations() {
             <Button
               variant="contained"
               color="secondary"
-              className="hidden sm:inline-flex"
+              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               onClick={() => {
                 setShowForm(!showForm);
                 setEditingReservation(null);
@@ -80,7 +80,7 @@ export default function Reservations() {
               <IconButton
                 aria-label={showForm ? 'Cancel new reservation' : 'Create new reservation'}
                 color="secondary"
-                className="sm:!hidden"
+                sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
                 onClick={() => {
                   setShowForm(!showForm);
                   setEditingReservation(null);

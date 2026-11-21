@@ -1,6 +1,12 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import moment from 'moment';
+import { IconButton, Tooltip } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import CancelIcon from '@mui/icons-material/Cancel';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { Order } from '../../api/queries';
 import StatusBadge from '../StatusBadge';
 
@@ -50,53 +56,135 @@ function OrderCard({ order, isStaffView, isOwner, onEdit, onUpdateStatus, onDele
             <div className="flex flex-col gap-1.5 items-end">
               {order.status === 'pending' && (
                 <>
-                  <button onClick={() => onEdit(order)} className="btn-blue-sm">
+                  <button onClick={() => onEdit(order)} className="btn-blue-sm !hidden sm:!inline-flex">
                     Edit
                   </button>
+                  <Tooltip title="Edit order">
+                    <IconButton
+                      aria-label="Edit order"
+                      color="primary"
+                      size="small"
+                      className="sm:!hidden"
+                      onClick={() => onEdit(order)}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                   <button
                     onClick={() => onUpdateStatus(order._id, 'preparing')}
-                    className="btn-blue-sm"
+                    className="btn-blue-sm !hidden sm:!inline-flex"
                   >
                     Start Preparing
                   </button>
+                  <Tooltip title="Start preparing">
+                    <IconButton
+                      aria-label="Start preparing"
+                      color="primary"
+                      size="small"
+                      className="sm:!hidden"
+                      onClick={() => onUpdateStatus(order._id, 'preparing')}
+                    >
+                      <PlayArrowIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                   <button
                     onClick={() => onUpdateStatus(order._id, 'cancelled')}
-                    className="btn-danger-sm"
+                    className="btn-danger-sm !hidden sm:!inline-flex"
                   >
                     Cancel
                   </button>
+                  <Tooltip title="Cancel order">
+                    <IconButton
+                      aria-label="Cancel order"
+                      color="error"
+                      size="small"
+                      className="sm:!hidden"
+                      onClick={() => onUpdateStatus(order._id, 'cancelled')}
+                    >
+                      <CancelIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </>
               )}
               {order.status === 'ready' && (
                 <>
                   <button
                     onClick={() => onUpdateStatus(order._id, 'completed')}
-                    className="btn-blue-sm"
+                    className="btn-blue-sm !hidden sm:!inline-flex"
                   >
                     Mark Completed
                   </button>
+                  <Tooltip title="Mark completed">
+                    <IconButton
+                      aria-label="Mark completed"
+                      color="primary"
+                      size="small"
+                      className="sm:!hidden"
+                      onClick={() => onUpdateStatus(order._id, 'completed')}
+                    >
+                      <CheckCircleIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </>
               )}
               {order.status === 'preparing' && (
                 <>
                   <button
                     onClick={() => onUpdateStatus(order._id, 'ready')}
-                    className="btn-blue-sm"
+                    className="btn-blue-sm !hidden sm:!inline-flex"
                   >
                     Mark Ready
                   </button>
+                  <Tooltip title="Mark ready">
+                    <IconButton
+                      aria-label="Mark ready"
+                      color="primary"
+                      size="small"
+                      className="sm:!hidden"
+                      onClick={() => onUpdateStatus(order._id, 'ready')}
+                    >
+                      <CheckCircleIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                   <button
                     onClick={() => onUpdateStatus(order._id, 'cancelled')}
-                    className="btn-danger-sm"
+                    className="btn-danger-sm !hidden sm:!inline-flex"
                   >
                     Cancel
                   </button>
+                  <Tooltip title="Cancel order">
+                    <IconButton
+                      aria-label="Cancel order"
+                      color="error"
+                      size="small"
+                      className="sm:!hidden"
+                      onClick={() => onUpdateStatus(order._id, 'cancelled')}
+                    >
+                      <CancelIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </>
               )}
               {(order.status === 'completed' || order.status === 'cancelled') && (
-                <button onClick={() => onDelete(order._id)} className="btn-danger-sm">
-                  Delete
-                </button>
+                <>
+                  <button
+                    onClick={() => onDelete(order._id)}
+                    className="btn-danger-sm !hidden sm:!inline-flex"
+                  >
+                    Delete
+                  </button>
+                <Tooltip title="Delete order">
+                  <IconButton
+                    aria-label="Delete order"
+                    color="error"
+                    size="small"
+                    className="sm:!hidden"
+                    onClick={() => onDelete(order._id)}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                </>
               )}
             </div>
           )}

@@ -48,7 +48,7 @@ export default function Orders() {
                   <Button
                     variant="outlined"
                     color="error"
-                    className="hidden sm:inline-flex"
+                    sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                     onClick={() => setConfirmBulkDelete(true)}
                   >
                     Delete Completed
@@ -57,7 +57,7 @@ export default function Orders() {
                     <IconButton
                       aria-label="Delete completed orders"
                       color="error"
-                      className="sm:!hidden"
+                      sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
                       onClick={() => setConfirmBulkDelete(true)}
                       size="medium"
                     >
@@ -69,7 +69,7 @@ export default function Orders() {
               <Button
                 variant="contained"
                 color="secondary"
-                className="hidden sm:inline-flex"
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                 onClick={() => {
                   setShowCreate(!showCreate);
                   setEditingOrder(null);
@@ -81,7 +81,7 @@ export default function Orders() {
                 <IconButton
                   aria-label={showCreate ? 'Cancel new order' : 'Create new order'}
                   color="secondary"
-                  className="sm:!hidden"
+                  sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
                   onClick={() => {
                     setShowCreate(!showCreate);
                     setEditingOrder(null);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { IconButton, Tooltip } from '@mui/material';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { MenuItem } from '../../api/queries';
 import { useAuth } from '../../store/authStore';
 import { useCachedImage } from '../../hooks/useCachedImage';
@@ -54,7 +54,7 @@ const MenuItemCard = React.memo(function MenuItemCard({ item, onEdit, onDelete }
       </p>
       {isAdmin && (
         <div className="mt-3">
-          <button onClick={handleDelete} className="btn-danger-sm hidden sm:inline-flex">
+          <button onClick={handleDelete} className="btn-danger-sm !hidden sm:!inline-flex">
             Delete
           </button>
           <Tooltip title={`Delete ${item.name}`}>

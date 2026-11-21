@@ -69,7 +69,7 @@ function Menu() {
               <Button
                 variant="contained"
                 color="secondary"
-                className="hidden sm:inline-flex"
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                 onClick={() => {
                   setShowForm(!showForm);
                   setEditingItem(null);
@@ -81,7 +81,7 @@ function Menu() {
                 <IconButton
                   aria-label={showForm ? 'Cancel adding item' : 'Add menu item'}
                   color="secondary"
-                  className="sm:!hidden"
+                  sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
                   onClick={() => {
                     setShowForm(!showForm);
                     setEditingItem(null);
