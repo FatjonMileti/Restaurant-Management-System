@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../store/authStore';
 import { useDeleteCompletedReservations } from '../api/queries';
 import { getGraphQLErrorMessage } from '../utils/graphqlErrors';
@@ -38,15 +41,34 @@ export default function Reservations() {
       <PageHeader
         title="Reservations"
         action={
-          <Box className="flex gap-2">
+          <Box className="flex items-center gap-1 sm:gap-2">
             {isAdmin && (
-              <Button variant="outlined" color="error" onClick={() => setConfirmBulkDelete(true)}>
-                Delete Completed
-              </Button>
+              <>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  className="hidden sm:inline-flex"
+                  onClick={() => setConfirmBulkDelete(true)}
+                >
+                  Delete Completed
+                </Button>
+                <Tooltip title="Delete completed reservations">
+                  <IconButton
+                    aria-label="Delete completed reservations"
+                    color="error"
+                    className="sm:!hidden"
+                    onClick={() => setConfirmBulkDelete(true)}
+                    size="medium"
+                  >
+                    <DeleteSweepIcon />
+                  </IconButton>
+                </Tooltip>
+              </>
             )}
             <Button
               variant="contained"
               color="secondary"
+              className="hidden sm:inline-flex"
               onClick={() => {
                 setShowForm(!showForm);
                 setEditingReservation(null);
@@ -54,6 +76,19 @@ export default function Reservations() {
             >
               {showForm ? 'Cancel' : '+ New Reservation'}
             </Button>
+            <Tooltip title={showForm ? 'Cancel new reservation' : 'Create new reservation'}>
+              <IconButton
+                aria-label={showForm ? 'Cancel new reservation' : 'Create new reservation'}
+                color="secondary"
+                className="sm:!hidden"
+                onClick={() => {
+                  setShowForm(!showForm);
+                  setEditingReservation(null);
+                }}
+              >
+                {showForm ? <CloseIcon /> : <AddIcon />}
+              </IconButton>
+            </Tooltip>
           </Box>
         }
       />
