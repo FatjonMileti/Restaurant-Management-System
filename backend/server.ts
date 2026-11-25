@@ -11,11 +11,13 @@ import jwt from 'jsonwebtoken';
 import { initSSE } from './sse.js';
 import { formatGraphQLError } from './graphql/errors.js';
 import { getRequestId, requestContextMiddleware, setRequestUserId } from './requestContext.js';
+import { initMetrics, metricsHandler, metricsMiddleware } from './metrics.js';
 import fs from 'fs';
 import path from 'path';
 import { seed } from './seeds.js';
 
 dotenv.config();
+initMetrics();
 
 const app = express();
 
@@ -26,6 +28,11 @@ app.use(express.json());
 app.use(requestContextMiddleware);
 morgan.token('request-id', () => getRequestId() ?? '-');
 app.use(morgan(':method :url :status :response-time ms - :res[content-length] :request-id'));
+
+// Prometheus metrics are internal-only: the compose stack does not publish the
+// backend port and Caddy does not proxy /metrics.
+app.use(metricsMiddleware);
+app.get('/metrics', metricsHandler);
 
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
@@ -101,7 +108,7 @@ app.get('/seed', async (_req, res) => {
 initSSE(app);
 
 // SPA fallback for React Router — serves index.html for any non-API GET.
-// Must come after /graphql, /events, /images, /api-docs and /seed.
+// Must come after /graphql, /events, /images, /api-docs, /metrics and /seed.
 if (frontendBuildDir) {
   app.get('*', (req, res, next) => {
     if (
@@ -109,6 +116,7 @@ if (frontendBuildDir) {
       req.path.startsWith('/events') ||
       req.path.startsWith('/images') ||
       req.path.startsWith('/api-docs') ||
+      req.path.startsWith('/metrics') ||
       req.path.startsWith('/seed')
     ) {
       next();

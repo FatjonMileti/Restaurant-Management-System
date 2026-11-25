@@ -1,4 +1,5 @@
 import { SSEServer } from 'node-sse-hub';
+import { sseConnections } from './metrics.js';
 
 /**
  * Server-Sent Events hub (`node-sse-hub`).
@@ -40,7 +41,9 @@ export const initSSE = (app: any) => {
   if (!initialized) {
     initialized = true;
     sse.on('disconnect', (connection) => {
-      connectionUsers.delete(connection.id);
+      // Only decrement for connections we actually counted; a duplicate
+      // disconnect must not drive the gauge negative.
+      if (connectionUsers.delete(connection.id)) sseConnections.dec();
     });
   }
   app.get('/events/:userId', (req: any, res: any) => {
@@ -50,6 +53,7 @@ export const initSSE = (app: any) => {
     const connection = sse.connect(req, res);
     const userId = req.params.userId as string;
     connectionUsers.set(connection.id, userId);
+    sseConnections.inc();
     sse.sendTo(connection.id, { event: 'connected', data: {} });
   });
 };
@@ -71,4 +75,7 @@ export const getSSEStats = () => ({
 });
 
 /** Graceful shutdown / test teardown. Idempotent. */
-export const closeSSE = (): Promise<void> => sse.close();
+export const closeSSE = (): Promise<void> => {
+  sseConnections.set(0);
+  return sse.close();
+};

@@ -15,7 +15,7 @@ Full-stack MERN restaurant platform — menu, orders, reservations, tables and a
 ## Tech Stack
 
 - **Frontend:** React 18 (CRA 5 + TypeScript), React Router 6, `@tanstack/react-query` 5, `zustand` (auth/cart), `react-hook-form` + `zod`, `graphql-request` + `@apollo/client` (`gql` docs), `@mui/material` styled with **Tailwind CSS**, native `EventSource` (SSE), Testing Library/Jest
-- **Backend:** Node 18+, Express 4, RxDB 17 + SQLite (`@basepurpose/rxdb-sqlite`, `better-sqlite3`), TypeScript (`moduleResolution: node16` — imports require `.js` suffix), GraphQL (`graphql` + `express-graphql`, `graphiql: true`), `jsonwebtoken` + `bcryptjs`, `node-sse-hub` (SSE), `node-retry-kit` (transient retry), `async-context-kit` (request correlation), `zod`, `moment`, `swagger-jsdoc`/`swagger-ui-express`
+- **Backend:** Node 22+, Express 4, RxDB 17 + SQLite (`@basepurpose/rxdb-sqlite`, `better-sqlite3`), TypeScript (`moduleResolution: node16` — imports require `.js` suffix), GraphQL (`graphql` + `express-graphql`, `graphiql: true`), `jsonwebtoken` + `bcryptjs`, `node-sse-hub` (SSE), `node-retry-kit` (transient retry), `async-context-kit` (request correlation), `@prometheus-io/client` (Prometheus metrics), `zod`, `moment`, `swagger-jsdoc`/`swagger-ui-express`
 - **Auth:** JWT Bearer (`protect` → `req.user`), `admin`/`staff` guards; frontend `useAuthStore` persists `user+token` in `localStorage`
 - **Testing:** Backend Jest + `ts-jest` (ESM), Frontend `react-scripts` Jest + Testing Library
 
@@ -68,7 +68,7 @@ frontend/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+
 - No external database — data is stored locally via RxDB/SQLite
   (`better-sqlite3`)
 
@@ -140,6 +140,23 @@ npm run test:coverage
 cd frontend && npm test                # react-scripts test --watchAll=false
 npm run test:coverage
 ```
+
+## Observability
+
+The compose stack includes Prometheus, Grafana and Loki:
+
+- **Grafana** — http://localhost:3000 (provisioned dashboard + datasources)
+- **Prometheus** — http://localhost:9090 (scrapes backend `GET /metrics`)
+- **Loki** — http://localhost:3100 (container logs via Promtail)
+
+```bash
+docker compose up --build -d
+```
+
+The backend exposes request, latency, GraphQL-error and SSE-connection metrics;
+Promtail ships Docker logs to Loki. Observability ports bind to localhost by
+default. Configuration, queries, retention and troubleshooting are documented
+in [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md).
 
 ## Seed Credentials
 

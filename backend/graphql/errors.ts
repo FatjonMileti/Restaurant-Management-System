@@ -1,3 +1,5 @@
+import { graphqlErrorsTotal } from '../metrics.js';
+
 /**
  * Coded application errors for GraphQL resolvers.
  *
@@ -51,8 +53,8 @@ export const conflictError = (message: string): AppError =>
  */
 export const formatGraphQLError = (err: any) => {
   const original = (err as any)?.originalError as { code?: unknown } | undefined;
-  const code =
-    typeof original?.code === 'string' ? (original.code as string) : ErrorCodes.INTERNAL;
+  const code = typeof original?.code === 'string' ? (original.code as string) : ErrorCodes.INTERNAL;
+  graphqlErrorsTotal.inc({ code });
   return {
     message: (err as any)?.message || 'Unknown error',
     path: (err as any)?.path,

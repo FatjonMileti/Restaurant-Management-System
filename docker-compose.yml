@@ -1,12 +1,23 @@
 # Restaurant Management System — production stack (Caddy single entrypoint).
 #
 # Services:
-#   backend — Express + GraphQL + SSE on :5000 (internal only, no published
-#             ports). SQLite file persists in the `backend-data` volume via a
-#             /data symlink (see backend/Dockerfile).
-#   web     — Caddy v2: serves the frontend production bundle from
-#             /srv/frontend and reverse-proxies /graphql, /events, /api-docs
-#             and /images to `backend:5000` (see root Caddyfile).
+#   backend    — Express + GraphQL + SSE on :5000 (internal only, no published
+#                ports). SQLite file persists in the `backend-data` volume via
+#                a /data symlink (see backend/Dockerfile).
+#   web        — Caddy v2: serves the frontend production bundle from
+#                /srv/frontend and reverse-proxies /graphql, /events, /api-docs
+#                and /images to `backend:5000` (see root Caddyfile).
+#   prometheus — scrapes backend /metrics (plus itself, Loki and Promtail).
+#   loki       — log store; receives container logs from Promtail.
+#   promtail   — tails Docker container logs via the Docker socket.
+#   grafana    — provisioned dashboards for Prometheus + Loki.
+#
+# Observability endpoints are bound to localhost by default:
+#   Grafana    http://localhost:3000  (admin / admin unless overridden)
+#   Prometheus http://localhost:9090
+#   Loki       http://localhost:3100
+# Set GRAFANA_BIND=0.0.0.0 (or similar) only if you intentionally expose them
+# and put authentication/TLS in front. See docs/OBSERVABILITY.md.
 #
 # First-time setup:
 #   cp backend/.env.example backend/.env   # then set a strong JWT_SECRET
@@ -63,7 +74,68 @@ services:
       - caddy-data:/data
       - caddy-config:/config
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - '${PROMETHEUS_BIND:-127.0.0.1}:${PROMETHEUS_PORT:-9090}:9090'
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  loki:
+    image: grafana/loki:3.2.1
+    restart: unless-stopped
+    command: ['-config.file=/etc/loki/local-config.yaml']
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - '${LOKI_BIND:-127.0.0.1}:${LOKI_PORT:-3100}:3100'
+
+  promtail:
+    image: grafana/promtail:3.2.1
+    restart: unless-stopped
+    command: ['-config.file=/etc/promtail/config.yml']
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail-positions:/positions
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/restaurant-overview.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - '${GRAFANA_BIND:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000'
+    depends_on:
+      - prometheus
+      - loki
+
 volumes:
   backend-data:
   caddy-data:
   caddy-config:
+  prometheus-data:
+  loki-data:
+  promtail-positions:
+  grafana-data:
